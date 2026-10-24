@@ -474,9 +474,18 @@ export class Netplay {
     _captureHostAudio() {
         try {
             let audioCtx = null;
+            const rwa = this.emu.Module && this.emu.Module.RWA && this.emu.Module.RWA.gain ? this.emu.Module.RWA : null;
 
-            // Method 1: EmulatorJS OpenAL audio context
-            if (this.emu.Module && this.emu.Module.AL && this.emu.Module.AL.currentCtx) {
+            // Method 1: RetroArch RWebAudio context
+            if (rwa) {
+                audioCtx = rwa.context;
+                if (audioCtx.state !== "running") {
+                    audioCtx.resume().catch(() => {});
+                }
+            }
+
+            // Method 2: EmulatorJS OpenAL audio context
+            if (!audioCtx && this.emu.Module && this.emu.Module.AL && this.emu.Module.AL.currentCtx) {
                 const alCtx = this.emu.Module.AL.currentCtx;
                 if (alCtx.audioCtx) {
                     audioCtx = alCtx.audioCtx;
@@ -486,7 +495,7 @@ export class Netplay {
                 }
             }
 
-            // Method 2: gameManager audioContext
+            // Method 3: gameManager audioContext
             if (!audioCtx && this.emu.gameManager && this.emu.gameManager.audioContext) {
                 audioCtx = this.emu.gameManager.audioContext;
             }
@@ -509,8 +518,19 @@ export class Netplay {
 
             let connected = false;
 
-            // Method 1: Connect gameManager's audioNode
-            if (this.emu.gameManager && this.emu.gameManager.audioNode) {
+            // Method 1: Connect RWebAudio master gain node
+            if (rwa && audioCtx === rwa.context) {
+                try {
+                    rwa.gain.connect(boostGain);
+                    connected = true;
+                    this._dlog("[NETPLAY HOST] Connected RWA gain node -> boostGain -> capture dest (boost:", this._audioBoostFactor + "x)");
+                } catch (e) {
+                    console.warn("[NETPLAY HOST] Failed to connect RWA gain:", e);
+                }
+            }
+
+            // Method 2: Connect gameManager's audioNode
+            if (!connected && this.emu.gameManager && this.emu.gameManager.audioNode) {
                 try {
                     this.emu.gameManager.audioNode.connect(boostGain);
                     connected = true;
@@ -520,7 +540,7 @@ export class Netplay {
                 }
             }
 
-            // Method 2: Connect OpenAL gain/source nodes
+            // Method 3: Connect OpenAL gain/source nodes
             if (!connected && this.emu.Module && this.emu.Module.AL && this.emu.Module.AL.currentCtx) {
                 const alCtx = this.emu.Module.AL.currentCtx;
                 if (alCtx.gain) {
@@ -546,7 +566,7 @@ export class Netplay {
                 }
             }
 
-            // Method 3: Use createMediaElementSource if there's an audio element
+            // Method 4: Use createMediaElementSource if there's an audio element
             if (!connected) {
                 try {
                     const audioElements = document.querySelectorAll("audio");
@@ -703,6 +723,11 @@ export class Netplay {
         if (this.emu.gameManager && this.emu.gameManager.audioNode) {
             try { this.emu.gameManager.audioNode.disconnect(); } catch (e) {}
         }
+        if (this.emu.Module && this.emu.Module.RWA && this.emu.Module.RWA.gain) {
+            const rwa = this.emu.Module.RWA;
+            try { rwa.gain.gain.value = 0; } catch (e) {}
+            rwa.context.suspend().catch(() => {});
+        }
         if (this.emu.Module && this.emu.Module.AL && this.emu.Module.AL.currentCtx) {
             const ctx = this.emu.Module.AL.currentCtx;
             if (ctx.sources) {
@@ -724,6 +749,11 @@ export class Netplay {
         if (orig.handleResize) this.emu.frontend.handleResize = orig.handleResize;
 
         // Restore audio
+        if (this.emu.Module && this.emu.Module.RWA && this.emu.Module.RWA.gain) {
+            const rwa = this.emu.Module.RWA;
+            rwa.context.resume().catch(() => {});
+            try { rwa.gain.gain.value = this.emu.muted ? 0 : this.emu.volume; } catch (e) {}
+        }
         if (this.emu.Module && this.emu.Module.AL && this.emu.Module.AL.currentCtx && this.emu.Module.AL.currentCtx.audioCtx) {
             this.emu.Module.AL.currentCtx.audioCtx.resume().catch(() => {});
             const vol = this.emu.muted ? 0 : this.emu.volume;

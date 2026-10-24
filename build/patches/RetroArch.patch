@@ -19,3 +19,45 @@ index b5862b3..7ecaba2 100644
             -lidbfs.js \
             -s MODULARIZE=1 -s EXPORT_NAME="EJS_Runtime" \
             -s ENVIRONMENT=web,worker -s WASM_BIGINT=1 \
+diff --git a/emscripten/library_rwebaudio.js b/emscripten/library_rwebaudio.js
+index d97bfea..311940f 100644
+--- a/emscripten/library_rwebaudio.js
++++ b/emscripten/library_rwebaudio.js
+@@ -9,6 +9,9 @@ var LibraryRWebAudio = {
+       EXTRA_LATENCY_SEC_CHROME: 0,
+       PLATFORM_EMSCRIPTEN_BROWSER_CHROMIUM: 1,
+       context: null,
++      /* master volume, set from the frontend through Module.RWA */
++      gain: null,
++      volume: 1,
+       contextRunning: false,
+       nonblock: false,
+       endTime: 0,
+@@ -38,6 +41,10 @@ var LibraryRWebAudio = {
+       if (!ac) return 0;
+ 
+       RWA.context = new ac();
++      RWA.gain = RWA.context.createGain();
++      RWA.gain.gain.value = RWA.volume;
++      RWA.gain.connect(RWA.context.destination);
++      Module["RWA"] = RWA;
+       RWA.currentTimeDiff = performance.now() / 1000 - RWA.context.currentTime;
+       RWA.nonblock = false;
+       RWA.endTime = 0;
+@@ -64,7 +71,7 @@ var LibraryRWebAudio = {
+       buffer.getChannelData(1).set(HEAPF32.subarray(right >> 2, (right >> 2) + num_frames));
+       var bufferSource = RWA.context.createBufferSource();
+       bufferSource.buffer = buffer;
+-      bufferSource.connect(RWA.context.destination);
++      bufferSource.connect(RWA.gain);
+ 
+       var currentTime = RWebAudioGetCurrentTime();
+       /* when empty, start rounded up to nearest 1 ms, add MIN_START_OFFSET_SEC */
+@@ -91,6 +98,7 @@ var LibraryRWebAudio = {
+    RWebAudioFree: function() {
+       RWA.context.removeEventListener("statechange", RWebAudioStateChangeCB);
+       RWA.context.close();
++      RWA.gain = null;
+       RWA.contextRunning = false;
+    },
+ 

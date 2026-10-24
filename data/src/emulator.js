@@ -421,8 +421,13 @@ class EmulatorJS {
         this.frontend.updateVolumeSliderState(volume);
 
         const skipLocalAudio = this.isNetplay && this.netplay && this.netplay.setVolume(volume);
+        if (skipLocalAudio) return;
 
-        if (!skipLocalAudio && this.Module.AL && this.Module.AL.currentCtx && this.Module.AL.currentCtx.sources) {
+        if (this.Module.RWA) {
+            this.Module.RWA.volume = volume;
+            if (this.Module.RWA.gain) this.Module.RWA.gain.gain.value = volume;
+        }
+        if (this.Module.AL && this.Module.AL.currentCtx && this.Module.AL.currentCtx.sources) {
             this.Module.AL.currentCtx.sources.forEach(e => {
                 e.gain.gain.value = volume;
             })
@@ -1113,13 +1118,21 @@ class EmulatorJS {
             let state = "suspended";
             let popup;
             while (state === "suspended") {
-                if (!this.Module.AL) return;
-                this.Module.AL.currentCtx.sources.forEach(ctx => {
-                    state = ctx.gain.context.state;
-                });
+                if (this.Module.RWA && this.Module.RWA.context) {
+                    state = this.Module.RWA.context.state;
+                } else if (this.Module.AL && this.Module.AL.currentCtx) {
+                    this.Module.AL.currentCtx.sources.forEach(ctx => {
+                        state = ctx.gain.context.state;
+                    });
+                } else {
+                    return;
+                }
                 if (state !== "suspended") break;
                 if (!popup) {
                     popup = this.frontend.showResumePrompt();
+                    popup.addEventListener("click", () => {
+                        if (this.Module.RWA && this.Module.RWA.context) this.Module.RWA.context.resume();
+                    });
                 }
                 await sleep(10);
             }
@@ -2170,7 +2183,14 @@ class EmulatorJS {
         }
 
         let audioTrack = null;
-        if (this.Module.AL && this.Module.AL.currentCtx && this.Module.AL.currentCtx.audioCtx) {
+        if (this.Module.RWA && this.Module.RWA.gain) {
+            const destination = this.Module.RWA.context.createMediaStreamDestination();
+            this.Module.RWA.gain.connect(destination);
+            const audioTracks = destination.stream.getAudioTracks();
+            if (audioTracks.length !== 0) {
+                audioTrack = audioTracks[0];
+            }
+        } else if (this.Module.AL && this.Module.AL.currentCtx && this.Module.AL.currentCtx.audioCtx) {
             const alContext = this.Module.AL.currentCtx;
             const audioContext = alContext.audioCtx;
 
