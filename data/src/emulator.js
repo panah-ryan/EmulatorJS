@@ -192,6 +192,8 @@ class EmulatorJS {
         })
     }
     checkForUpdates() {
+        // Update check against cdn.emulatorjs.org disabled
+        return;
         if (this.ejs_version.endsWith("-beta")) {
             console.warn("Using EmulatorJS beta. Not checking for updates. This instance may be out of date. Using stable is highly recommended unless you build and ship your own cores.");
             return;
@@ -346,7 +348,7 @@ class EmulatorJS {
         // Populate downloadTypes
         this.downloadType = {
             "rom": { "name": "ROM", "dontCache": false, "dontExtractIfCore": ["arcade", "fbneo", "fbalpha2012_cps1", "fbalpha2012_cps2", "same_cdi", "mame", "mame2003_plus", "mame2003"] },
-            "core": { "name": "Core", "dontCache": false, "cdnFallback": true },
+            "core": { "name": "Core", "dontCache": false, "cdnFallback": false }, // cores are served locally from data/cores only
             "bios": { "name": "BIOS", "dontCache": false, "dontExtractIfCore": ["arcade", "fbneo", "fbalpha2012_cps1", "fbalpha2012_cps2", "same_cdi", "mame", "mame2003_plus", "mame2003"] },
             "parent": { "name": "Parent", "dontCache": false },
             "patch": { "name": "Patch", "dontCache": false },
@@ -1852,38 +1854,27 @@ class EmulatorJS {
         return null;
     }
     getCoreSettings() {
-        if (!window.localStorage || this.config.disableLocalStorage) {
-            if (this.config.defaultOptions) {
-                let rv = "";
-                for (const k in this.config.defaultOptions) {
-                    let value = isNaN(this.config.defaultOptions[k]) ? `"${this.config.defaultOptions[k]}"` : this.config.defaultOptions[k];
-                    rv += `${k} = ${value}\n`;
+        // RetroArch overwrites the core's .opt file with this on startup, so it has to carry every
+        // layer: core defaults from cores.json, then EJS_defaultOptions, then the user's saved settings
+        const settings = Object.assign({}, this.defaultCoreOpts && this.defaultCoreOpts.settings, this.config.defaultOptions);
+        if (window.localStorage && !this.config.disableLocalStorage) {
+            let coreSpecific = localStorage.getItem(this.getLocalStorageKey());
+            if (coreSpecific) {
+                try {
+                    coreSpecific = JSON.parse(coreSpecific);
+                    if (!(coreSpecific.settings instanceof Object)) throw new Error("Not a JSON object");
+                    Object.assign(settings, coreSpecific.settings);
+                } catch(e) {
+                    console.warn("Could not load previous settings", e);
                 }
-                return rv;
-            }
-            return "";
-        };
-        let coreSpecific = localStorage.getItem(this.getLocalStorageKey());
-        if (coreSpecific) {
-            try {
-                coreSpecific = JSON.parse(coreSpecific);
-                if (!(coreSpecific.settings instanceof Object)) throw new Error("Not a JSON object");
-                let rv = "";
-                for (const k in coreSpecific.settings) {
-                    let value = isNaN(coreSpecific.settings[k]) ? `"${coreSpecific.settings[k]}"` : coreSpecific.settings[k];
-                    rv += `${k} = ${value}\n`;
-                }
-                for (const k in this.config.defaultOptions) {
-                    if (rv.includes(k)) continue;
-                    let value = isNaN(this.config.defaultOptions[k]) ? `"${this.config.defaultOptions[k]}"` : this.config.defaultOptions[k];
-                    rv += `${k} = ${value}\n`;
-                }
-                return rv;
-            } catch(e) {
-                console.warn("Could not load previous settings", e);
             }
         }
-        return "";
+        let rv = "";
+        for (const k in settings) {
+            let value = isNaN(settings[k]) ? `"${settings[k]}"` : settings[k];
+            rv += `${k} = ${value}\n`;
+        }
+        return rv;
     }
     loadSettings() {
         if (!window.localStorage || this.config.disableLocalStorage) return;

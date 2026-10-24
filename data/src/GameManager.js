@@ -71,7 +71,9 @@ class EJS_GameManager {
         return new Promise(async resolve => {
             this.mkdir("/data");
             this.mkdir("/data/saves");
-            this.FS.mount(this.FS.filesystems.IDBFS, { autoPersist: true }, "/data/saves");
+            // FS.filesystems was removed in emscripten 6.0.13; IDBFS is exported directly instead
+            const IDBFS = this.Module.IDBFS || this.FS.filesystems.IDBFS;
+            this.FS.mount(IDBFS, { autoPersist: true }, "/data/saves");
             this.FS.syncfs(true, resolve);
         });
     }
