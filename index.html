@@ -160,6 +160,10 @@
                     <label for="cacheToggle"> Enable Cache</label>
                 </div>
                 <div class="advancedOptionsBoxRow">
+                    <button id="clearCacheButton">Clear Cache</button>
+                    <span id="clearCacheStatus"></span>
+                </div>
+                <div class="advancedOptionsBoxRow">
                     <span>Browser mode: </span>
                     <input type="radio" id="browserModeAuto" name="browserMode" value="auto">
                     <label for="browserModeAuto"> Auto </label>
@@ -207,6 +211,23 @@
                 const cacheEnabled = event.target.checked;
                 console.log(`Cache is ${cacheEnabled ? "enabled" : "disabled"}`);
                 window.EJS_cacheConfig.enabled = cacheEnabled;
+            });
+            // removes downloaded cores/roms only; save states live in a separate database
+            const clearCacheButton = document.getElementById("clearCacheButton");
+            const clearCacheStatus = document.getElementById("clearCacheStatus");
+            clearCacheButton.addEventListener("click", () => {
+                const request = indexedDB.deleteDatabase("EmulatorJS-Cache");
+                request.onsuccess = () => {
+                    clearCacheStatus.textContent = " Cache cleared";
+                    console.log("Cache cleared");
+                };
+                request.onerror = () => {
+                    clearCacheStatus.textContent = " Failed to clear cache";
+                    console.error("Failed to clear cache", request.error);
+                };
+                request.onblocked = () => {
+                    clearCacheStatus.textContent = " Cache is in use, close other EmulatorJS tabs and try again";
+                };
             });
             const threadsToggleAvailable = document.getElementById("advancedOptionsBoxThreads");
             const threadsToggle = document.getElementById("threadsToggle");
@@ -304,6 +325,27 @@
                     if (["pce"].includes(ext))
                         return "pce"
 
+                    if (["xfd", "atr", "atx", "dcm", "cas", "car", "xex"].includes(ext))
+                        return "atari800"
+
+                    if (["d98", "98d", "fdi", "hdm", "hdi", "nhd", "thd"].includes(ext))
+                        return "pc98"
+
+                    if (["st", "msa", "stx"].includes(ext))
+                        return "atarist"
+
+                    if (["xdf", "2hd", "dup", "hdf"].includes(ext))
+                        return "x68000"
+
+                    if (["mx1", "mx2", "ri"].includes(ext))
+                        return "msx"
+
+                    if (["d88", "u88"].includes(ext))
+                        return "pc88"
+
+                    if (["do", "po", "nib", "woz", "2mg", "2img", "hdv", "apl", "iie"].includes(ext))
+                        return "apple2"
+
                     if (["ngp", "ngc"].includes(ext))
                         return "ngp"
 
@@ -342,12 +384,17 @@
                             "Sega 32X": "sega32x",
                             "Atari Jaguar": "jaguar",
                             "Sega Game Gear": "segaGG",
-                            "Sega Saturn": "segaSaturn",
                             "Atari 7800": "atari7800",
                             "Atari 2600": "atari2600",
+                            "Atari 8-bit (400/800/XL/XE)": "atari800",
+                            "Atari ST/STE/TT/Falcon": "atarist",
                             "Arcade": "arcade",
                             "NEC TurboGrafx-16/SuperGrafx/PC Engine": "pce",
                             "NEC PC-FX": "pcfx",
+                            "NEC PC-8801": "pc88",
+                            "NEC PC-9801": "pc98",
+                            "MSX": "msx",
+                            "Sharp X68000": "x68000",
                             "SNK NeoGeo Pocket (Color)": "ngp",
                             "Bandai WonderSwan (Color)": "ws",
                             "ColecoVision": "coleco",
@@ -363,6 +410,8 @@
                             coreValues["DOSBOX-PURE"] = "dosbox_pure";
                             coreValues["PlayStation Portable"] = "ppsspp";
                             coreValues["Nintendo 3DS"] = "3ds";
+                            coreValues["Apple II"] = "apple2";
+                            coreValues["Sega Saturn"] = "segaSaturn";
                         }
 
                         for (let core in coreValues) {

@@ -2,6 +2,7 @@ export const version = "4.3.0-pre";
 
 export const cores = {
     "atari5200": ["a5200"],
+    "atari800": ["atari800"],
     "vb": ["beetle_vb"],
     "nds": ["melonds", "desmume", "desmume2015"],
     "arcade": ["fbneo", "fbalpha2012_cps1", "fbalpha2012_cps2", "same_cdi"],
@@ -18,6 +19,12 @@ export const cores = {
     "mame": ["mame2003_plus", "mame2003"],
     "ngp": ["mednafen_ngp"],
     "pce": ["mednafen_pce"],
+    "pc88": ["quasi88"],
+    "pc98": ["nekop2"],
+    "msx": ["bluemsx"],
+    "atarist": ["hatarib"],
+    "x68000": ["px68k"],
+    "apple2": ["applewin"],
     "pcfx": ["mednafen_pcfx"],
     "psx": ["pcsx_rearmed", "mednafen_psx_hw"],
     "ws": ["mednafen_wswan"],
@@ -29,7 +36,7 @@ export const cores = {
     "snes": ["snes9x", "bsnes"],
     "atari2600": ["stella2014"],
     "jaguar": ["virtualjaguar"],
-    "segaSaturn": ["yabause"],
+    "segaSaturn": ["beetle_saturn", "yabause"],
     "amiga": ["puae"],
     "c64": ["vice_x64sc"],
     "c128": ["vice_x128"],
@@ -41,6 +48,6 @@ export const cores = {
     "3ds": ["azahar"]
 };
 
-export const requiresThreads = ["ppsspp", "dosbox_pure", "azahar"];
+export const requiresThreads = ["ppsspp", "dosbox_pure", "azahar", "applewin", "beetle_saturn"];
 
 export const requiresWebGL2 = ["ppsspp", "azahar"];

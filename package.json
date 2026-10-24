@@ -15,6 +15,7 @@
     },
     "scripts": {
         "start": "http-server",
+        "serve": "node serve.js",
         "minify": "node minify/minify.js",
         "build": "node build.js",
         "update": "node update.js",
