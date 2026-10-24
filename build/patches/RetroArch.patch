@@ -61,3 +61,18 @@ index d97bfea..311940f 100644
        RWA.contextRunning = false;
     },
  
+diff --git a/libretro-common/compat/compat_strcasestr.c b/libretro-common/compat/compat_strcasestr.c
+index c5db669..34ecef6 100644
+--- a/libretro-common/compat/compat_strcasestr.c
++++ b/libretro-common/compat/compat_strcasestr.c
+@@ -54,3 +54,10 @@ char *strcasestr_retro__(const char *haystack, const char *needle)
+    }
+    return NULL;
+ }
++
++/* Name used by newer libretro-common, which statically linked cores may call */
++char *compat_strcasestr(const char *haystack, const char *needle);
++char *compat_strcasestr(const char *haystack, const char *needle)
++{
++   return strcasestr_retro__(haystack, needle);
++}
