@@ -1,0 +1,29 @@
+diff --git a/Makefile.common b/Makefile.common
+index ed6d457..f2984f0 100644
+--- a/Makefile.common
++++ b/Makefile.common
+@@ -306,12 +306,20 @@ SOURCES_CXX  := $(CORE_DIR)/Src/SoundChips/Moonsound.cpp \
+ 
+ #SOURCES_CXX  += $(CORE_DIR)/Src/IoDevice/msxgr.cpp
+ 
+-# rxml performs no file I/O and is not part of the libretro-common
+-# subset that statically linked frontends provide, so the core always
+-# carries its own copy. On static targets the archive member is only
+-# pulled in when the frontend leaves rxml symbols unresolved.
++# rxml performs no file I/O, so the core always carries its own copy.
++# Statically linked frontends (e.g. EmulatorJS's RetroArch) may link an
++# older, incompatible rxml of their own, so on static targets the core's
++# copy gets private symbol names to avoid duplicate-symbol link errors.
+ SOURCES_C += $(LIBRETRO_COMM_DIR)/formats/xml/rxml.c
+ 
++ifeq ($(STATIC_LINKING), 1)
++RXML_SYMBOLS := rxml_root_node rxml_parse_begin_owned rxml_parse_step \
++	rxml_parse_end rxml_parse_abort rxml_load_document_string_opts \
++	rxml_load_document_owned_opts rxml_load_document_owned \
++	rxml_load_document_string rxml_free_document rxml_node_attrib
++COREDEFINES += $(foreach sym,$(RXML_SYMBOLS),-D$(sym)=bluemsx_$(sym))
++endif
++
+ ifneq ($(STATIC_LINKING), 1)
+ SOURCES_C += $(LIBRETRO_COMM_DIR)/file/retro_dirent.c \
+ 	     $(LIBRETRO_COMM_DIR)/file/file_path.c \

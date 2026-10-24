@@ -1,0 +1,15 @@
+diff --git a/source/frontends/common2/gnuframe.cpp b/source/frontends/common2/gnuframe.cpp
+index 388f7bd..0e369ce 100644
+--- a/source/frontends/common2/gnuframe.cpp
++++ b/source/frontends/common2/gnuframe.cpp
+@@ -34,7 +34,9 @@ namespace
+             executable = self;
+         }
+ #else
+-        executable = std::filesystem::read_symlink("/proc/self/exe");
++        // /proc/self/exe may not exist (e.g. emscripten), so don't throw
++        std::error_code ec;
++        executable = std::filesystem::read_symlink("/proc/self/exe", ec);
+ #endif
+         return executable;
+     }

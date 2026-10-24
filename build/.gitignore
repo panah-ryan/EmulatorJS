@@ -1,0 +1,15 @@
+/*
+!/.devcontainer
+!/.gitignore
+!/build.sh
+!/build_env.sh
+!/LICENSE
+!/.github
+!/.github/workflows/compile.yml
+!/build.json
+!/cores.json
+!/.vscode/settings.json
+!/README.md
+!/VERSION
+!/patches
+!/cmake

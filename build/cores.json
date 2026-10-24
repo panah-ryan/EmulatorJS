@@ -1,0 +1,236 @@
+[
+    {
+        "name": "mame2003_plus",
+        "extensions": [
+            "zip"
+        ],
+        "makeoptions": {
+            "arguments": [],
+            "buildpath": "./",
+            "makescript": "Makefile"
+        },
+        "options": {},
+        "save": false,
+        "license": "LICENSE.md",
+        "repo": "https://github.com/libretro/mame2003-plus-libretro"
+    },
+    {
+        "name": "quasi88",
+        "extensions": [
+            "d88",
+            "u88",
+            "m3u"
+        ],
+        "makeoptions": {
+            "buildpath": "./",
+            "makescript": "Makefile",
+            "arguments": []
+        },
+        "options": {},
+        "save": "srm",
+        "license": "LICENSE",
+        "repo": "https://github.com/libretro/quasi88-libretro"
+    },
+    {
+        "name": "atari800",
+        "extensions": [
+            "xfd",
+            "atr",
+            "atx",
+            "dcm",
+            "cas",
+            "bin",
+            "rom",
+            "car",
+            "a52",
+            "com",
+            "xex",
+            "zip",
+            "m3u"
+        ],
+        "makeoptions": {
+            "buildpath": "./",
+            "makescript": "Makefile",
+            "arguments": []
+        },
+        "options": {},
+        "save": false,
+        "license": "",
+        "repo": "https://github.com/libretro/libretro-atari800"
+    },
+    {
+        "name": "nekop2",
+        "extensions": [
+            "d98",
+            "zip",
+            "98d",
+            "fdi",
+            "fdd",
+            "2hd",
+            "tfd",
+            "d88",
+            "88d",
+            "hdm",
+            "xdf",
+            "dup",
+            "cmd",
+            "hdi",
+            "thd",
+            "nhd",
+            "hdd"
+        ],
+        "makeoptions": {
+            "buildpath": "./libretro",
+            "makescript": "Makefile.libretro",
+            "arguments": []
+        },
+        "options": {},
+        "save": false,
+        "license": "LICENSE",
+        "repo": "https://github.com/libretro/libretro-meowPC98"
+    },
+    {
+        "name": "bluemsx",
+        "extensions": [
+            "rom", "ri", "mx1", "mx2", "dsk", "col",
+            "sg", "sc", "sf", "cas", "m3u"
+        ],
+        "makeoptions": {
+            "buildpath": "./",
+            "makescript": "Makefile.libretro",
+            "arguments": [],
+            "initialmemory": 67108864
+        },
+        "options": {
+            "supportsMouse": true,
+            "useKeyboard": true
+        },
+        "save": "srm",
+        "license": "license.txt",
+        "repo": "https://github.com/EmulatorJS/blueMSX-libretro"
+    },
+    {
+        "name": "hatarib",
+        "extensions": [
+            "st",
+            "msa",
+            "dim",
+            "stx",
+            "ipf",
+            "ctr",
+            "m3u",
+            "m3u8",
+            "zip",
+            "zst",
+            "gz",
+            "acsi",
+            "ahd",
+            "vhd",
+            "scsi",
+            "shd",
+            "ide",
+            "gem"
+        ],
+        "makeoptions": {
+            "buildpath": "./",
+            "makescript": "makefile.libretro",
+            "arguments": [],
+            "custom": true,
+            "build_command": "sed -i 's/^extern void core_midi_write(/extern bool core_midi_write(/' hatari/src/midi.c; hb() { rm -rf build hatari/build zlib_build *.bc; emmake make -j$(nproc) -f makefile.libretro platform=emscripten MAKE_ACTION=static CORESTATIC_SUFFIX=.bc FPIC_FLAG= WERROR= CFLAGS_EXTRA=\"-DFile_Read=hatari_File_Read -DFile_Close=hatari_File_Close\" CMAKEFLAGS_EXTRA=-DCMAKE_TOOLCHAIN_FILE=$EMSDK/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake || exit 1; }; hb && cp hatarib_libretro_emscripten.bc \"$buildPath/$tempPath/normal/\" && mv hatarib_libretro_emscripten.bc \"$buildPath/$tempPath/legacy/\" && export EMCC_CFLAGS=-pthread && hb && cp hatarib_libretro_emscripten.bc \"$buildPath/$tempPath/threads/\" && mv hatarib_libretro_emscripten.bc \"$buildPath/$tempPath/legacyThreads/\"; unset EMCC_CFLAGS; git checkout -- hatari/src/midi.c"
+        },
+        "options": {},
+        "save": false,
+        "license": "LICENSE",
+        "repo": "https://github.com/bbbradsmith/hatariB"
+    },
+    {
+        "name": "px68k",
+        "extensions": [
+            "dim",
+            "img",
+            "d88",
+            "88d",
+            "hdm",
+            "dup",
+            "2hd",
+            "xdf",
+            "hdf",
+            "cmd",
+            "m3u"
+        ],
+        "makeoptions": {
+            "buildpath": "./",
+            "makescript": "Makefile.libretro",
+            "arguments": ["TARGET=px68k_libretro_emscripten.bc", "STATIC_LINKING=1", "C68K=0"]
+        },
+        "options": {},
+        "save": false,
+        "license": "COPYING",
+        "repo": "https://github.com/libretro/px68k-libretro"
+    },
+    {
+        "name": "applewin",
+        "extensions": [
+            "bin",
+            "do",
+            "dsk",
+            "nib",
+            "po",
+            "gz",
+            "woz",
+            "zip",
+            "2mg",
+            "2img",
+            "iie",
+            "apl",
+            "hdv",
+            "yaml",
+            "m3u"
+        ],
+        "makeoptions": {
+            "builder": "cmake",
+            "cmake_args": [
+                "-DBUILD_LIBRETRO=ON",
+                "-DENABLE_NETWORKING=OFF",
+                "-DCMAKE_BUILD_TYPE=Release"
+            ],
+            "output_archive": "applewin_libretro_emscripten.bc",
+            "emcc_flags": "-fwasm-exceptions",
+            "archives_exclude": [
+                "libzlib2.a"
+            ]
+        },
+        "options": {
+            "requireThreads": true,
+            "useKeyboard": true
+        },
+        "save": false,
+        "license": "LICENSE",
+        "repo": "https://github.com/audetto/AppleWin"
+    },
+    {
+        "name": "beetle_saturn",
+        "extensions": [
+            "cue",
+            "toc",
+            "m3u",
+            "ccd",
+            "chd"
+        ],
+        "makeoptions": {
+            "buildpath": "./",
+            "makescript": "Makefile",
+            "arguments": ["TARGET_NAME=beetle_saturn"]
+        },
+        "options": {
+            "requireThreads": true,
+            "file": "Beetle Saturn/Beetle Saturn.opt",
+            "settings": {
+                "beetle_saturn_sh2_interleave": "8"
+            }
+        },
+        "save": false,
+        "license": "COPYING",
+        "repo": "https://github.com/libretro/beetle-saturn-libretro"
+    }
+]
