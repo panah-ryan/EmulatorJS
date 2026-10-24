@@ -69,6 +69,7 @@ outputPath="$PWD/output"
 buildReport="$outputPath/reports"
 logPath="$outputPath/logs"
 outPath="$buildPath/RetroArch/emulatorjs"
+deployPath="$initialPath/../data/cores"
 tempPath="RetroArch/emulatorjs/core-temp"
 
 # clean with the same platform and arguments as the build, so options that change the
@@ -482,8 +483,25 @@ for row in $(jq -r '.[] | @base64' ../cores.json); do
         reportString="{ \"core\": \"$name\", \"buildStart\": \"$startTime\", \"buildEnd\": \"$endTime\", \"options\": $options }"
         buildReportFile="$buildReport/$name.json"
         echo $reportString > $buildReportFile
+
+        # copy the finished core into data/cores, keeping the old one if the build failed
+        builtCores="$compileStartPath/EmulatorJS/data/cores"
+        if [ -f "$builtCores/$name-thread-wasm.data" ]; then
+            echo "Deploying core $name to $deployPath"
+            mkdir -p "$deployPath/reports"
+            rm -f "$deployPath/$name-"*wasm.data
+            cp "$builtCores/$name-"*wasm.data "$deployPath/"
+            cp "$outputPath/$name.zip" "$deployPath/"
+            cp "$buildReportFile" "$deployPath/reports/"
+        else
+            echo "Core $name failed to build, not deploying"
+        fi
     fi
 done
+
+if [ "$listAllCores" = false ]; then
+    cp "$initialPath/cores.json" "$deployPath/"
+fi
 
 if [ "$listAllCores" = false ]; then
     # delete all compile files
