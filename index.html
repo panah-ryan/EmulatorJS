@@ -313,18 +313,6 @@
                 const biosUrl = biosFileInput.files.length > 0 ? biosFileInput.files[0] : "";
 
                 const core = await (async (ext) => {
-                    if (["fds", "nes", "unif", "unf"].includes(ext))
-                        return "nes"
-
-                    if (["smc", "fig", "sfc", "gd3", "gd7", "dx2", "bsx", "swc"].includes(ext))
-                        return "snes"
-
-                    if (["z64", "n64"].includes(ext))
-                        return "n64"
-
-                    if (["pce"].includes(ext))
-                        return "pce"
-
                     if (["xfd", "atr", "atx", "dcm", "cas", "car", "xex"].includes(ext))
                         return "atari800"
 
@@ -346,70 +334,18 @@
                     if (["do", "po", "nib", "woz", "2mg", "2img", "hdv", "apl", "iie"].includes(ext))
                         return "apple2"
 
-                    if (["ngp", "ngc"].includes(ext))
-                        return "ngp"
-
-                    if (["ws", "wsc"].includes(ext))
-                        return "ws"
-
-                    if (["col", "cv"].includes(ext))
-                        return "coleco"
-
-                    if (["d64"].includes(ext))
-                        return "vice_x64sc"
-                    
-                    if (["md", "sg", "smd", "gen"].includes(ext))
-                        return "segaMD"
-
-                    if (["nds", "gba", "gb", "z64", "n64"].includes(ext))
-                        return ext
-
-                    if (["3ds", "cci", "cia", "cxi", "app"].includes(ext))
-                        return "3ds"
-
                     return await new Promise(resolve => {
                         var coreValues = {
-                            "Nintendo 64": "n64",
-                            "Nintendo Game Boy": "gb",
-                            "Nintendo Game Boy Advance": "gba",
-                            "Nintendo DS": "nds",
-                            "Nintendo Entertainment System": "nes",
-                            "Super Nintendo Entertainment System": "snes",
-                            "PlayStation": "psx",
-                            "Virtual Boy": "vb",
-                            "Sega Mega Drive": "segaMD",
-                            "Sega Master System": "segaMS",
-                            "Sega CD": "segaCD",
-                            "Atari Lynx": "lynx",
-                            "Sega 32X": "sega32x",
-                            "Atari Jaguar": "jaguar",
-                            "Sega Game Gear": "segaGG",
-                            "Atari 7800": "atari7800",
-                            "Atari 2600": "atari2600",
+                            "Arcade (MAME 2003-Plus)": "mame",
                             "Atari 8-bit (400/800/XL/XE)": "atari800",
                             "Atari ST/STE/TT/Falcon": "atarist",
-                            "Arcade": "arcade",
-                            "NEC TurboGrafx-16/SuperGrafx/PC Engine": "pce",
-                            "NEC PC-FX": "pcfx",
                             "NEC PC-8801": "pc88",
                             "NEC PC-9801": "pc98",
                             "MSX": "msx",
-                            "Sharp X68000": "x68000",
-                            "SNK NeoGeo Pocket (Color)": "ngp",
-                            "Bandai WonderSwan (Color)": "ws",
-                            "ColecoVision": "coleco",
-                            "Commodore 64": "vice_x64sc",
-                            "Commodore 128": "vice_x128",
-                            "Commodore VIC20": "vice_xvic",
-                            "Commodore Plus/4": "vice_xplus4",
-                            "Commodore PET": "vice_xpet",
-                            "Amiga": "puae"
+                            "Sharp X68000": "x68000"
                         }
-                        
+
                         if (enableThreads) {
-                            coreValues["DOSBOX-PURE"] = "dosbox_pure";
-                            coreValues["PlayStation Portable"] = "ppsspp";
-                            coreValues["Nintendo 3DS"] = "3ds";
                             coreValues["Apple II"] = "apple2";
                             coreValues["Sega Saturn"] = "segaSaturn";
                         }

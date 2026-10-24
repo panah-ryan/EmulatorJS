@@ -14,7 +14,7 @@ import "./vendor/socket.io.min.js";
 class EmulatorJS {
     getCores() {
         let rv = CONSTS.cores;
-        if (this.isSafari && this.isMobile) {
+        if (this.isSafari && this.isMobile && rv.n64) {
             rv.n64 = rv.n64.reverse();
         }
         return rv;
