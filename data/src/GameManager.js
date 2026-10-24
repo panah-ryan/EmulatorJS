@@ -53,10 +53,11 @@ class EJS_GameManager {
             this.toggleMainLoop(0);
             this.FS.unmount("/data/saves");
             setTimeout(() => {
+                // abort() always throws, this is the expected shutdown
                 try {
-                    this.Module.abort();
+                    this.Module.abort("EmulatorJS exited");
                 } catch(e) {
-                    console.warn(e);
+                    if (this.EJS.debug) console.log(e);
                 };
             }, 1000);
         })
