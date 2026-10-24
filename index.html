@@ -313,6 +313,12 @@
                 const biosUrl = biosFileInput.files.length > 0 ? biosFileInput.files[0] : "";
 
                 const core = await (async (ext) => {
+                    if (["a26"].includes(ext))
+                        return "atari2600"
+
+                    if (["20", "40", "60", "a0", "b0"].includes(ext))
+                        return "vic20"
+
                     if (["xfd", "atr", "atx", "dcm", "cas", "car", "xex"].includes(ext))
                         return "atari800"
 
@@ -337,6 +343,8 @@
                     return await new Promise(resolve => {
                         var coreValues = {
                             "Arcade (MAME 2003-Plus)": "mame",
+                            "Atari 2600": "atari2600",
+                            "Commodore VIC-20": "vic20",
                             "Atari 8-bit (400/800/XL/XE)": "atari800",
                             "Atari ST/STE/TT/Falcon": "atarist",
                             "NEC PC-8801": "pc88",
@@ -347,6 +355,7 @@
 
                         if (enableThreads) {
                             coreValues["Apple II"] = "apple2";
+                            coreValues["DOS"] = "dos";
                             coreValues["Sega Saturn"] = "segaSaturn";
                         }
 

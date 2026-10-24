@@ -15,21 +15,61 @@
         "repo": "https://github.com/libretro/mame2003-plus-libretro"
     },
     {
-        "name": "quasi88",
+        "name": "stella2014",
         "extensions": [
-            "d88",
-            "u88",
+            "a26",
+            "bin",
+            "zip"
+        ],
+        "makeoptions": {
+            "arguments": [],
+            "buildpath": "./",
+            "makescript": "Makefile"
+        },
+        "options": {},
+        "save": false,
+        "license": "",
+        "repo": "https://github.com/libretro/stella2014-libretro"
+    },
+    {
+        "name": "applewin",
+        "extensions": [
+            "bin",
+            "do",
+            "dsk",
+            "nib",
+            "po",
+            "gz",
+            "woz",
+            "zip",
+            "2mg",
+            "2img",
+            "iie",
+            "apl",
+            "hdv",
+            "yaml",
             "m3u"
         ],
         "makeoptions": {
-            "buildpath": "./",
-            "makescript": "Makefile",
-            "arguments": []
+            "builder": "cmake",
+            "cmake_args": [
+                "-DBUILD_LIBRETRO=ON",
+                "-DENABLE_NETWORKING=OFF",
+                "-DCMAKE_BUILD_TYPE=Release"
+            ],
+            "output_archive": "applewin_libretro_emscripten.bc",
+            "emcc_flags": "-fwasm-exceptions",
+            "archives_exclude": [
+                "libzlib2.a"
+            ]
         },
-        "options": {},
-        "save": "srm",
+        "options": {
+            "requireThreads": true,
+            "useKeyboard": true
+        },
+        "save": false,
         "license": "LICENSE",
-        "repo": "https://github.com/libretro/quasi88-libretro"
+        "repo": "https://github.com/audetto/AppleWin"
     },
     {
         "name": "atari800",
@@ -57,6 +97,111 @@
         "save": false,
         "license": "",
         "repo": "https://github.com/libretro/libretro-atari800"
+    },
+    {
+        "name": "vice_xvic",
+        "extensions": [
+            "d64",
+            "d6z",
+            "d71",
+            "d7z",
+            "d80",
+            "d81",
+            "d82",
+            "d8z",
+            "g64",
+            "g6z",
+            "g41",
+            "g4z",
+            "x64",
+            "x6z",
+            "nib",
+            "nbz",
+            "d2m",
+            "d4m",
+            "t64",
+            "tap",
+            "tcrt",
+            "prg",
+            "p00",
+            "crt",
+            "bin",
+            "cmd",
+            "m3u",
+            "vfl",
+            "vsf",
+            "zip",
+            "7z",
+            "gz",
+            "20",
+            "40",
+            "60",
+            "a0",
+            "b0",
+            "rom"
+        ],
+        "makeoptions": {
+            "buildpath": "./",
+            "makescript": "Makefile",
+            "arguments": [
+                "EMUTYPE=xvic"
+            ]
+        },
+        "save": "nvr",
+        "options": {},
+        "license": "COPYING",
+        "repo": "https://github.com/libretro/vice-libretro"
+    },
+    {
+        "name": "quasi88",
+        "extensions": [
+            "d88",
+            "u88",
+            "m3u"
+        ],
+        "makeoptions": {
+            "buildpath": "./",
+            "makescript": "Makefile",
+            "arguments": []
+        },
+        "options": {},
+        "save": "srm",
+        "license": "LICENSE",
+        "repo": "https://github.com/libretro/quasi88-libretro"
+    },
+    {
+        "name": "dosbox_pure",
+        "extensions": [
+            "zip",
+            "dosz",
+            "exe",
+            "com",
+            "bat",
+            "iso",
+            "chd",
+            "cue",
+            "ins",
+            "img",
+            "ima",
+            "vhd",
+            "jrc",
+            "m3u",
+            "m3u8",
+            "conf"
+        ],
+        "makeoptions": {
+            "buildpath": "./",
+            "makescript": "Makefile",
+            "arguments": []
+        },
+        "options": {
+            "requireThreads": true,
+            "supportsMouse": true,
+            "useKeyboard": true
+        },
+        "save": "pure.zip",
+        "license": "LICENSE",
+        "repo": "https://codeberg.org/schelling/dosbox-pure"
     },
     {
         "name": "nekop2",
@@ -167,46 +312,6 @@
         "save": false,
         "license": "COPYING",
         "repo": "https://github.com/libretro/px68k-libretro"
-    },
-    {
-        "name": "applewin",
-        "extensions": [
-            "bin",
-            "do",
-            "dsk",
-            "nib",
-            "po",
-            "gz",
-            "woz",
-            "zip",
-            "2mg",
-            "2img",
-            "iie",
-            "apl",
-            "hdv",
-            "yaml",
-            "m3u"
-        ],
-        "makeoptions": {
-            "builder": "cmake",
-            "cmake_args": [
-                "-DBUILD_LIBRETRO=ON",
-                "-DENABLE_NETWORKING=OFF",
-                "-DCMAKE_BUILD_TYPE=Release"
-            ],
-            "output_archive": "applewin_libretro_emscripten.bc",
-            "emcc_flags": "-fwasm-exceptions",
-            "archives_exclude": [
-                "libzlib2.a"
-            ]
-        },
-        "options": {
-            "requireThreads": true,
-            "useKeyboard": true
-        },
-        "save": false,
-        "license": "LICENSE",
-        "repo": "https://github.com/audetto/AppleWin"
     },
     {
         "name": "beetle_saturn",

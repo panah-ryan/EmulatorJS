@@ -1,0 +1,15 @@
+diff --git a/Makefile b/Makefile
+index 5e10063..6352757 100644
+--- a/Makefile
++++ b/Makefile
+@@ -88,6 +88,10 @@ else ifeq ($(platform),windows) # For MSYS2 only
+   OUTNAME := dosbox_pure_libretro.dll
+   CXX     ?= g++
+   LDFLAGS := -Wl,--gc-sections -fno-ident
++else ifeq ($(platform),emscripten)
++  OUTNAME := dosbox_pure_libretro_emscripten.bc
++  COMMONFLAGS += -pthread
++  STATIC_LINKING = 1
+ else ifeq ($(platform),vita)
+   OUTNAME := dosbox_pure_libretro_vita.a
+   CXX     := arm-vita-eabi-g++
