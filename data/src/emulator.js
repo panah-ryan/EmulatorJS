@@ -349,7 +349,7 @@ class EmulatorJS {
         this.downloadType = {
             "rom": { "name": "ROM", "dontCache": false, "dontExtractIfCore": ["arcade", "fbneo", "fbalpha2012_cps1", "fbalpha2012_cps2", "same_cdi", "mame", "mame2003_plus", "mame2003"] },
             "core": { "name": "Core", "dontCache": false, "cdnFallback": false }, // cores are served locally from data/cores only
-            "bios": { "name": "BIOS", "dontCache": false, "dontExtractIfCore": ["arcade", "fbneo", "fbalpha2012_cps1", "fbalpha2012_cps2", "same_cdi", "mame", "mame2003_plus", "mame2003"] },
+            "bios": { "name": "BIOS", "dontCache": false, "dontExtractIfCore": ["arcade", "fbneo", "fbalpha2012_cps1", "fbalpha2012_cps2", "same_cdi", "mame", "mame2003_plus", "mame2003", "mame_x1", "mame_electron"] },
             "parent": { "name": "Parent", "dontCache": false },
             "patch": { "name": "Patch", "dontCache": false },
             "reports": { "name": "Reports", "dontCache": true },
@@ -552,6 +552,10 @@ class EmulatorJS {
                     this.coreName = core.name;
                     this.repository = core.repo;
                     this.defaultCoreOpts = core.options;
+                    const systemCoreOpts = CONSTS.systemCoreOptions[this.getCore(true)];
+                    if (systemCoreOpts && this.defaultCoreOpts) {
+                        this.defaultCoreOpts.settings = Object.assign({}, this.defaultCoreOpts.settings, systemCoreOpts);
+                    }
                     if (this.config.coreOpts && typeof this.config.coreOpts === "object" && this.defaultCoreOpts) {
                         this.defaultCoreOpts.settings = Object.assign({}, this.defaultCoreOpts.settings, this.config.coreOpts);
                     }
@@ -968,6 +972,12 @@ class EmulatorJS {
         // Special handling for DOS
         if (this.getCore(true) === "dos" && !this.config.disableBatchBootup) {
             this.fileName = this.gameManager.writeBootupBatchFile();
+        }
+
+        // MAME computer systems boot from a generated .cmd unless one was supplied
+        const mameSystem = CONSTS.mameSystems[this.getCore(true)];
+        if (mameSystem && !this.fileName.toLowerCase().endsWith(".cmd")) {
+            this.fileName = this.gameManager.createMameCmdFile(fileNames, mameSystem);
         }
     }
 

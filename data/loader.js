@@ -180,6 +180,7 @@ const config = {
     controlScheme: window.EJS_controlScheme,
     threads: window.EJS_threads,
     disableCue: window.EJS_disableCue,
+    mameDriver: window.EJS_mameDriver,
     startBtnName: window.EJS_startButtonName,
     softLoad: window.EJS_softLoad,
     capture: window.EJS_screenCapture,

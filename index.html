@@ -148,6 +148,10 @@
                     <label for="inputAdvanced"> Upload BIOS file (if required)</label>
                 </div>
                 <div class="advancedOptionsBoxRow">
+                    <input type="text" id="mameDriverInput" placeholder="e.g. electron64" />
+                    <label for="mameDriverInput"> MAME model (MAME-based systems, optional)</label>
+                </div>
+                <div class="advancedOptionsBoxRow">
                     <input type="checkbox" id="debugToggle" />
                     <label for="debugToggle"> Enable Debug Mode</label>
                 </div>
@@ -311,6 +315,7 @@
                 const parts = upload ? input.files[0].name.split(".") : file.split(".");
 
                 const biosUrl = biosFileInput.files.length > 0 ? biosFileInput.files[0] : "";
+                const mameDriver = document.getElementById("mameDriverInput").value.trim();
 
                 const core = await (async (ext) => {
                     if (["a26"].includes(ext))
@@ -318,6 +323,15 @@
 
                     if (["20", "40", "60", "a0", "b0"].includes(ext))
                         return "vic20"
+
+                    if (["2d"].includes(ext) && enableThreads)
+                        return "x1"
+
+                    if (["uef", "ssd", "dsd", "adl"].includes(ext) && enableThreads)
+                        return "electron"
+
+                    if (["a52"].includes(ext))
+                        return "atari5200"
 
                     if (["xfd", "atr", "atx", "dcm", "cas", "car", "xex"].includes(ext))
                         return "atari800"
@@ -334,7 +348,7 @@
                     if (["mx1", "mx2", "ri"].includes(ext))
                         return "msx"
 
-                    if (["d88", "u88"].includes(ext))
+                    if (["u88"].includes(ext))
                         return "pc88"
 
                     if (["do", "po", "nib", "woz", "2mg", "2img", "hdv", "apl", "iie"].includes(ext))
@@ -344,6 +358,7 @@
                         var coreValues = {
                             "Arcade (MAME 2003-Plus)": "mame",
                             "Atari 2600": "atari2600",
+                            "Atari 5200": "atari5200",
                             "Commodore VIC-20": "vic20",
                             "Atari 8-bit (400/800/XL/XE)": "atari800",
                             "Atari ST/STE/TT/Falcon": "atarist",
@@ -356,6 +371,8 @@
                         if (enableThreads) {
                             coreValues["Apple II"] = "apple2";
                             coreValues["DOS"] = "dos";
+                            coreValues["Sharp X1"] = "x1";
+                            coreValues["Acorn Electron"] = "electron";
                             coreValues["Sega Saturn"] = "segaSaturn";
                         }
 
@@ -416,6 +433,9 @@
                 window.EJS_startOnLoaded = true;
                 window.EJS_DEBUG_XX = enableDebug;
                 window.EJS_threads = enableThreads;
+                if (mameDriver) {
+                    window.EJS_mameDriver = mameDriver;
+                }
                 if (browserMode) {
                     window.EJS_browserMode = browserMode;
                 }

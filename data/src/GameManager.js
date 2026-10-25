@@ -206,6 +206,39 @@ IF EXIST AUTORUN.BAT CALL AUTORUN.BAT
         this.FS.writeFile("/" + filename, data);
         return filename;
     }
+    createMameCmdFile(fileNames, system) {
+        // the core only sets a ROM path for content inside a folder, so the .cmd can't sit at the root
+        const driver = this.EJS.config.mameDriver || system.driver;
+        const args = [driver, "-rp", "/"];
+        let name = driver;
+        let autoboot = null;
+        let autobootScript = null;
+        const usedDevices = new Set();
+        for (const media of system.media) {
+            const files = fileNames.filter(f => media.extensions.includes(f.split(".").pop().toLowerCase())).sort().slice(0, media.count);
+            if (files.length === 0 || usedDevices.has(media.device)) continue;
+            usedDevices.add(media.device);
+            if (media.args) args.push(...media.args);
+            if (media.autoboot && !autoboot) autoboot = media.autoboot;
+            if (media.autobootScript && !autobootScript) autobootScript = media.autobootScript;
+            files.forEach((file, i) => {
+                const device = media.count > 1 ? media.device + (i + 1) : media.device;
+                args.push("-" + device, `"/${file}"`);
+                if (name === driver) name = file.split("/").pop().replace(/\.[^.]*$/, "");
+            });
+        }
+        this.mkdir("/mame");
+        // the core's .cmd parser keeps quotes inside a word, so the command is left unquoted
+        if (autoboot) args.push("-autoboot_delay", "2", "-autoboot_command", autoboot);
+        if (autobootScript) {
+            this.FS.writeFile(`/mame/${name}.lua`, autobootScript);
+            args.push("-autoboot_delay", "2", "-autoboot_script", `"/mame/${name}.lua"`);
+        }
+        const filename = `mame/${name}.cmd`;
+        this.FS.writeFile("/" + filename, args.join(" "));
+        if (this.EJS.debug) console.log("MAME command line:", args.join(" "));
+        return filename;
+    }
     initShaders() {
         if (!this.EJS.shaders) return;
         this.mkdir("/shader");
