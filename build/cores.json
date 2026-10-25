@@ -204,6 +204,46 @@
         "repo": "https://codeberg.org/schelling/dosbox-pure"
     },
     {
+        "name": "mame_x1",
+        "extensions": [
+            "zip",
+            "7z",
+            "cmd"
+        ],
+        "makeoptions": {
+            "custom": true,
+            "build_command": "bash \"$initialPath/scripts/build-mame-subtarget.sh\" x1 src/mame/sharp/x1.cpp,src/mame/sharp/x1twin.cpp mame_x1_libretro_emscripten.bc \"$buildPath/$tempPath/threads\" \"$buildPath/$tempPath/legacyThreads\" || exit 1",
+            "emcc_flags": "-fwasm-exceptions"
+        },
+        "options": {
+            "requireThreads": true,
+            "useKeyboard": true
+        },
+        "save": false,
+        "license": "COPYING",
+        "repo": "https://github.com/libretro/mame"
+    },
+    {
+        "name": "mame_electron",
+        "extensions": [
+            "zip",
+            "7z",
+            "cmd"
+        ],
+        "makeoptions": {
+            "custom": true,
+            "build_command": "bash \"$initialPath/scripts/build-mame-subtarget.sh\" electron src/mame/acorn/electron.cpp mame_electron_libretro_emscripten.bc \"$buildPath/$tempPath/threads\" \"$buildPath/$tempPath/legacyThreads\" || exit 1",
+            "emcc_flags": "-fwasm-exceptions"
+        },
+        "options": {
+            "requireThreads": true,
+            "useKeyboard": true
+        },
+        "save": false,
+        "license": "COPYING",
+        "repo": "https://github.com/libretro/mame"
+    },
+    {
         "name": "nekop2",
         "extensions": [
             "d98",
