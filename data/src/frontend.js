@@ -1978,6 +1978,16 @@ class EJS_Frontend {
                 { id: 7, label: this.localization("RIGHT") },
                 { id: 12, label: this.localization("MENU") },
             ];
+        } else if ("msx" === this.ejs.getControlScheme()) {
+            buttons = [
+                { id: 8, label: this.localization("TRIGGER 1") },
+                { id: 0, label: this.localization("TRIGGER 2") },
+                { id: 4, label: this.localization("UP") },
+                { id: 5, label: this.localization("DOWN") },
+                { id: 6, label: this.localization("LEFT") },
+                { id: 7, label: this.localization("RIGHT") },
+                { id: 2, label: this.localization("MSX KEYBOARD") },
+            ];
         } else if ("atari800" === this.ejs.getControlScheme()) {
             buttons = [
                 { id: 0, label: this.localization("FIRE 1") },
@@ -2789,6 +2799,14 @@ class EJS_Frontend {
                 { "type": "button", "text": "3", "id": "button_3", "location": "right", "right": 5, "top": 0, "bold": true, "input_value": 9 },
                 { "type": "dpad", "id": "dpad", "location": "left", "left": "50%", "right": "50%", "joystickInput": false, "inputValues": [4, 5, 6, 7] },
                 { "type": "button", "text": "Menu", "id": "menu", "location": "center", "left": 30, "fontSize": 15, "block": true, "input_value": 12 }
+            ];
+            info.push(...speedControlButtons);
+        } else if ("msx" === this.ejs.getControlScheme()) {
+            info = [
+                { "type": "button", "text": "2", "id": "button_2", "location": "right", "right": 75, "top": 70, "bold": true, "input_value": 0 },
+                { "type": "button", "text": "1", "id": "button_1", "location": "right", "right": 5, "top": 70, "bold": true, "input_value": 8 },
+                { "type": "dpad", "id": "dpad", "location": "left", "left": "50%", "right": "50%", "joystickInput": false, "inputValues": [4, 5, 6, 7] },
+                { "type": "button", "text": "Keys", "id": "keys", "location": "center", "left": 30, "fontSize": 15, "block": true, "input_value": 2 }
             ];
             info.push(...speedControlButtons);
         } else if ("atari800" === this.ejs.getControlScheme()) {
