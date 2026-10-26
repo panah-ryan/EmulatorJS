@@ -1740,6 +1740,7 @@ class EJS_Frontend {
         } else if ("atari2600" === this.ejs.getControlScheme()) {
             buttons = [
                 { id: 0, label: this.localization("FIRE") },
+                { id: 1, label: this.localization("PADDLE FIRE") },
                 { id: 2, label: this.localization("SELECT") },
                 { id: 3, label: this.localization("RESET") },
                 { id: 4, label: this.localization("UP") },
@@ -2479,6 +2480,7 @@ class EJS_Frontend {
         } else if ("atari2600" === this.ejs.getControlScheme()) {
             info = [
                 { "type": "button", "text": "", "id": "button_1", "location": "right", "right": 10, "top": 70, "bold": true, "input_value": 0 },
+                { "type": "button", "text": "Paddle", "id": "paddle_fire", "location": "right", "right": 10, "top": 0, "fontSize": 15, "block": true, "input_value": 1 },
                 { "type": "dpad", "id": "dpad", "location": "left", "left": "50%", "right": "50%", "joystickInput": false, "inputValues": [4, 5, 6, 7] },
                 { "type": "button", "text": "Reset", "id": "reset", "location": "center", "left": 60, "fontSize": 15, "block": true, "input_value": 3 },
                 { "type": "button", "text": "Select", "id": "select", "location": "center", "left": -5, "fontSize": 15, "block": true, "input_value": 2 }
