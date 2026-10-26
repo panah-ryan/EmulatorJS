@@ -1874,6 +1874,34 @@ class EJS_Frontend {
                 { id: 10, label: this.localization("SWAP DISK 1 (HOLD)") },
                 { id: 11, label: this.localization("SWAP DISK 2 (HOLD)") },
             ];
+        } else if ("dos" === this.ejs.getControlScheme()) {
+            // Labels show the generic keyboard mapping; DOSBox Pure replaces it for games it recognises
+            buttons = [
+                { id: 0, label: this.localization("B / LEFT CTRL") },
+                { id: 8, label: this.localization("A / LEFT ALT") },
+                { id: 9, label: this.localization("X / SPACE") },
+                { id: 1, label: this.localization("Y / LEFT SHIFT") },
+                { id: 2, label: this.localization("SELECT / ESC") },
+                { id: 3, label: this.localization("START / ENTER") },
+                { id: 4, label: this.localization("UP") },
+                { id: 5, label: this.localization("DOWN") },
+                { id: 6, label: this.localization("LEFT") },
+                { id: 7, label: this.localization("RIGHT") },
+                { id: 10, label: this.localization("L / 1") },
+                { id: 11, label: this.localization("R / 2") },
+                { id: 12, label: this.localization("L2 / 3") },
+                { id: 13, label: this.localization("R2 / 4") },
+                { id: 14, label: this.localization("L3 / MENU") },
+                { id: 15, label: this.localization("R3 / F1") },
+                { id: 19, label: this.localization("L STICK UP") },
+                { id: 18, label: this.localization("L STICK DOWN") },
+                { id: 17, label: this.localization("L STICK LEFT") },
+                { id: 16, label: this.localization("L STICK RIGHT") },
+                { id: 23, label: this.localization("R STICK UP / PAGE UP") },
+                { id: 22, label: this.localization("R STICK DOWN / PAGE DOWN") },
+                { id: 21, label: this.localization("R STICK LEFT / HOME") },
+                { id: 20, label: this.localization("R STICK RIGHT / END") },
+            ];
         } else if ("atari800" === this.ejs.getControlScheme()) {
             buttons = [
                 { id: 0, label: this.localization("FIRE 1") },
@@ -2624,6 +2652,18 @@ class EJS_Frontend {
                 { "type": "button", "text": "Shift", "id": "shift", "location": "center", "left": -35, "fontSize": 15, "block": true, "input_value": 9 },
                 { "type": "button", "text": "Space", "id": "space", "location": "center", "left": 30, "fontSize": 15, "block": true, "input_value": 1 },
                 { "type": "button", "text": "Return", "id": "return", "location": "center", "left": 95, "fontSize": 15, "block": true, "input_value": 3 }
+            ];
+            info.push(...speedControlButtons);
+        } else if ("dos" === this.ejs.getControlScheme()) {
+            info = [
+                { "type": "button", "text": "X", "id": "x", "location": "right", "left": 40, "bold": true, "input_value": 9 },
+                { "type": "button", "text": "Y", "id": "y", "location": "right", "top": 40, "bold": true, "input_value": 1 },
+                { "type": "button", "text": "A", "id": "a", "location": "right", "left": 81, "top": 40, "bold": true, "input_value": 8 },
+                { "type": "button", "text": "B", "id": "b", "location": "right", "left": 40, "top": 80, "bold": true, "input_value": 0 },
+                { "type": "dpad", "id": "dpad", "location": "left", "left": "50%", "right": "50%", "joystickInput": false, "inputValues": [4, 5, 6, 7] },
+                { "type": "button", "text": "Esc", "id": "esc", "location": "center", "left": -35, "fontSize": 15, "block": true, "input_value": 2 },
+                { "type": "button", "text": "Menu", "id": "menu", "location": "center", "left": 30, "fontSize": 15, "block": true, "input_value": 14 },
+                { "type": "button", "text": "Enter", "id": "enter", "location": "center", "left": 95, "fontSize": 15, "block": true, "input_value": 3 }
             ];
             info.push(...speedControlButtons);
         } else if ("atari800" === this.ejs.getControlScheme()) {
