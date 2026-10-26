@@ -499,7 +499,7 @@ class EmulatorJS {
     }
     downloadGameCore() {
         this.frontend.setLoadingText("Download Game Core");
-        if (!this.config.threads && this.requiresThreads(this.getCore())) {
+        if (!this.config.threads && (this.requiresThreads(this.getCore()) || this.requiresThreads(this.getCore(true)))) {
             this.startGameError(["Error for site owner", "Check console"]);
             console.warn("This core requires threads, but EJS_threads is not set!");
             return;

@@ -12,6 +12,7 @@ export const cores = {
     "c128": ["vice_x128"],
     "plus4": ["vice_xplus4"],
     "amiga": ["puae"],
+    "amigacd32": ["puae"],
     "cpc": ["cap32"],
     "mac": ["snow"],
     "zxspectrum": ["fuse"],
@@ -38,7 +39,8 @@ export const cores = {
     "segaSaturn": ["beetle_saturn"]
 };
 
-export const requiresThreads = ["applewin", "beetle_saturn", "dosbox_pure", "mame_x1", "mame_electron", "mame_sg1000"];
+// cores, or systems sharing a core, that only run with threads
+export const requiresThreads = ["applewin", "beetle_saturn", "dosbox_pure", "mame_x1", "mame_electron", "mame_sg1000", "amigacd32"];
 
 export const requiresWebGL2 = [];
 
@@ -53,7 +55,8 @@ export const trackpadSystems = ["amiga", "atarist", "x68000", "fmtowns"];
 
 // core options forced for systems that share a core with another system
 export const systemCoreOptions = {
-    "atari5200": { "atari800_system": "5200" }
+    "atari5200": { "atari800_system": "5200" },
+    "amigacd32": { "puae_model": "CD32" }
 };
 
 // hold SHIFT and tap BREAK on an Electron, which boots the disk in the Plus 3

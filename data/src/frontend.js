@@ -2191,6 +2191,20 @@ class EJS_Frontend {
                 { id: 16, label: this.localization("MOUSE RIGHT (MOVE)") },
                 { id: 2, label: this.localization("VIRTUAL KEYBOARD") },
             ];
+        } else if ("amigacd32" === this.ejs.getControlScheme()) {
+            buttons = [
+                { id: 0, label: this.localization("RED") },
+                { id: 8, label: this.localization("BLUE") },
+                { id: 1, label: this.localization("GREEN") },
+                { id: 9, label: this.localization("YELLOW") },
+                { id: 4, label: this.localization("UP") },
+                { id: 5, label: this.localization("DOWN") },
+                { id: 6, label: this.localization("LEFT") },
+                { id: 7, label: this.localization("RIGHT") },
+                { id: 10, label: this.localization("REWIND") },
+                { id: 11, label: this.localization("FORWARD") },
+                { id: 3, label: this.localization("PLAY/PAUSE") },
+            ];
         } else if ("x68000" === this.ejs.getControlScheme()) {
             buttons = [
                 { id: 0, label: this.localization("A") },
@@ -3085,6 +3099,18 @@ class EJS_Frontend {
                 { "type": "dpad", "id": "dpad", "location": "left", "left": "50%", "right": "50%", "joystickInput": false, "inputValues": [4, 5, 6, 7] },
                 { "type": "button", "text": "Keys", "id": "keys", "location": "center", "left": -5, "fontSize": 15, "block": true, "input_value": 2 },
                 { "type": "button", "text": "Space", "id": "space", "location": "center", "left": 60, "fontSize": 15, "block": true, "input_value": 9 }
+            ];
+            info.push(...speedControlButtons);
+        } else if ("amigacd32" === this.ejs.getControlScheme()) {
+            info = [
+                { "type": "button", "text": "Y", "id": "yellow", "location": "right", "left": 40, "bold": true, "input_value": 9 },
+                { "type": "button", "text": "G", "id": "green", "location": "right", "top": 40, "bold": true, "input_value": 1 },
+                { "type": "button", "text": "B", "id": "blue", "location": "right", "left": 81, "top": 40, "bold": true, "input_value": 8 },
+                { "type": "button", "text": "R", "id": "red", "location": "right", "left": 40, "top": 80, "bold": true, "input_value": 0 },
+                { "type": "dpad", "id": "dpad", "location": "left", "left": "50%", "top": "50%", "joystickInput": false, "inputValues": [4, 5, 6, 7] },
+                { "type": "button", "text": "Play", "id": "play", "location": "center", "left": 30, "fontSize": 15, "block": true, "input_value": 3 },
+                { "type": "button", "text": "Rew", "id": "rewind", "location": "left", "left": 3, "top": -100, "fontSize": 15, "block": true, "input_value": 10 },
+                { "type": "button", "text": "Fwd", "id": "forward", "location": "right", "right": 3, "top": -100, "fontSize": 15, "block": true, "input_value": 11 }
             ];
             info.push(...speedControlButtons);
         } else if ("x68000" === this.ejs.getControlScheme()) {
