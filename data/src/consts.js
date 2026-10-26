@@ -48,7 +48,7 @@ export const keyboardSystems = ["vic20", "c64", "c128", "plus4", "amiga", "cpc",
 export const mouseSystems = ["mac"];
 
 // systems where the game screen acts as a trackpad, for cores that read relative mouse movement
-export const trackpadSystems = ["amiga", "atarist"];
+export const trackpadSystems = ["amiga", "atarist", "x68000"];
 
 // core options forced for systems that share a core with another system
 export const systemCoreOptions = {
