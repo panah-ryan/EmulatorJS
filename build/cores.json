@@ -767,6 +767,22 @@
         "repo": "https://github.com/drhelius/Geartowns"
     },
     {
+        "name": "sameboy",
+        "extensions": [
+            "gb",
+            "gbc"
+        ],
+        "makeoptions": {
+            "buildpath": "./libretro",
+            "makescript": "Makefile",
+            "arguments": []
+        },
+        "options": {},
+        "save": "srm",
+        "license": "LICENSE",
+        "repo": "https://github.com/LIJI32/SameBoy"
+    },
+    {
         "name": "beetle_saturn",
         "extensions": [
             "cue",

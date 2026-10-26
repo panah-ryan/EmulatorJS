@@ -1,0 +1,38 @@
+diff --git a/libretro/Makefile b/libretro/Makefile
+index 679eb5c..835ce3b 100644
+--- a/libretro/Makefile
++++ b/libretro/Makefile
+@@ -53,6 +53,7 @@ ifeq ($(platform), win)
+ endif
+ 
+ CORE_DIR     = ..
++BOOTROMS_DIR ?= $(abspath $(CORE_DIR))/build/bin/BootROMs
+ 
+ TARGET_NAME  = sameboy
+ LIBM         = -lm
+@@ -217,7 +218,8 @@ else ifneq (,$(findstring qnx,$(platform)))
+ else ifeq ($(platform), emscripten)
+    TARGET := $(TARGET_NAME)_libretro_emscripten.bc
+    fpic := -fPIC
+-   SHARED := -shared -Wl,--version-script=$(CORE_DIR)/libretro/link.T -Wl,--no-undefined
++   AR = emar
++   STATIC_LINKING = 1
+ else ifeq ($(platform), vita)
+    TARGET := $(TARGET_NAME)_libretro_vita.a
+    CC = arm-vita-eabi-gcc
+@@ -385,8 +387,13 @@ endif
+ 	echo "};" >> $@
+ 	echo "const unsigned $(notdir $(@:%.c=%))_length = sizeof($(notdir $(@:%.c=%)));" >> $@
+ 
+-$(abspath $(CORE_DIR))/build/bin/BootROMs/%_boot.bin:
+-	$(MAKE) -C $(CORE_DIR) $@
++$(abspath $(CORE_DIR))/build/bin/BootROMs/%_boot.bin: bootroms ;
++
++# Build all boot ROMs in one sub-make so parallel jobs don't race on shared tools
++bootroms:
++	$(MAKE) -C $(CORE_DIR) bootroms
++
++.PHONY: bootroms
+ 
+ $(TARGET): $(OBJECTS)
+ 	-@$(MKDIR) -p $(dir $@)
