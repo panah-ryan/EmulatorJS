@@ -3107,7 +3107,147 @@ class EJS_Frontend {
             this.elements.menuToggle = menuButton;
         }
 
+        if (this.ejs.hasKeyboard(this.ejs.getCore(true))) {
+            this.setVirtualKeyboard(Object.values(elems), info.some(btn => !String(btn.id).startsWith("speed_")));
+        }
+
         this.virtualGamepad.style.display = "none";
+    }
+    setVirtualKeyboard(gamepadElems, hasController) {
+        const letters = (chars) => chars.split("").map(c => [c.toUpperCase(), "Key" + c.toUpperCase(), c, c.toUpperCase()]);
+        // [label, code, key, shifted key, width]
+        const rows = [
+            [["Esc", "Escape"], ...[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => ["F" + n, "F" + n])],
+            [["`", "Backquote", "`", "~"], ["1", "Digit1", "1", "!"], ["2", "Digit2", "2", "@"], ["3", "Digit3", "3", "#"], ["4", "Digit4", "4", "$"], ["5", "Digit5", "5", "%"], ["6", "Digit6", "6", "^"], ["7", "Digit7", "7", "&"], ["8", "Digit8", "8", "*"], ["9", "Digit9", "9", "("], ["0", "Digit0", "0", ")"], ["-", "Minus", "-", "_"], ["=", "Equal", "=", "+"], ["⌫", "Backspace", "Backspace", null, 1.5]],
+            [["Tab", "Tab", "Tab", null, 1.5], ...letters("qwertyuiop"), ["[", "BracketLeft", "[", "{"], ["]", "BracketRight", "]", "}"], ["\\", "Backslash", "\\", "|"]],
+            [["Caps", "CapsLock", "CapsLock", null, 1.75], ...letters("asdfghjkl"), [";", "Semicolon", ";", ":"], ["'", "Quote", "'", "\""], ["Enter", "Enter", "Enter", null, 1.75]],
+            [["Shift", "ShiftLeft", "Shift", null, 2.25], ...letters("zxcvbnm"), [",", "Comma", ",", "<"], [".", "Period", ".", ">"], ["/", "Slash", "/", "?"], ["↑", "ArrowUp"]],
+            [["Ctrl", "ControlLeft", "Control", null, 1.5], ["Alt", "AltLeft", "Alt", null, 1.5], ["Space", "Space", " ", null, 6], ["←", "ArrowLeft"], ["↓", "ArrowDown"], ["→", "ArrowRight"]]
+        ];
+        const modifiers = { ShiftLeft: "shiftKey", ControlLeft: "ctrlKey", AltLeft: "altKey" };
+        // Hold each key down long enough for the emulated machine to scan it
+        const minHoldMs = 100;
+        const latched = new Map();
+        const pressed = new Map();
+        const pendingRelease = new Map();
+
+        const send = (type, code, key) => {
+            const event = { code, key, bubbles: false, cancelable: true };
+            for (const [modCode, flag] of Object.entries(modifiers)) {
+                event[flag] = latched.has(modCode);
+            }
+            this.elements.parent.dispatchEvent(new KeyboardEvent(type, event));
+        };
+        const releaseModifiers = () => {
+            for (const [code, elem] of latched) {
+                latched.delete(code);
+                send("keyup", code, elem.dataset.key);
+                elem.classList.remove("ejs_virtualKeyboard_key_latched");
+            }
+        };
+        const releaseKey = (elem) => {
+            const { key } = pressed.get(elem);
+            pressed.delete(elem);
+            pendingRelease.delete(elem);
+            send("keyup", elem.dataset.code, key);
+            releaseModifiers();
+        };
+        const releaseAll = () => {
+            for (const [elem, timer] of pendingRelease) {
+                clearTimeout(timer);
+                pendingRelease.delete(elem);
+            }
+            for (const elem of [...pressed.keys()]) {
+                releaseKey(elem);
+                elem.classList.remove("ejs_virtualKeyboard_key_down");
+            }
+            releaseModifiers();
+        };
+
+        const keyboard = this.ejs.createElement("div");
+        keyboard.classList.add("ejs_virtualKeyboard");
+        keyboard.style.display = "none";
+        for (const row of rows) {
+            const rowElem = this.ejs.createElement("div");
+            rowElem.classList.add("ejs_virtualKeyboard_row");
+            for (const [label, code, key = code, shifted = null, width = 1] of row) {
+                const elem = this.ejs.createElement("div");
+                elem.classList.add("ejs_virtualKeyboard_key");
+                elem.innerText = label;
+                elem.style.flexGrow = width;
+                elem.dataset.code = code;
+                elem.dataset.key = key;
+                this.ejs.addEventListener(elem, "pointerdown", (e) => {
+                    e.preventDefault();
+                    if (modifiers[code]) {
+                        if (latched.has(code)) {
+                            latched.delete(code);
+                            send("keyup", code, key);
+                            elem.classList.remove("ejs_virtualKeyboard_key_latched");
+                        } else {
+                            latched.set(code, elem);
+                            send("keydown", code, key);
+                            elem.classList.add("ejs_virtualKeyboard_key_latched");
+                        }
+                        return;
+                    }
+                    if (pendingRelease.has(elem)) {
+                        clearTimeout(pendingRelease.get(elem));
+                        releaseKey(elem);
+                    }
+                    if (pressed.has(elem)) return;
+                    elem.setPointerCapture(e.pointerId);
+                    const sentKey = (latched.has("ShiftLeft") && shifted) ? shifted : key;
+                    pressed.set(elem, { key: sentKey, time: performance.now(), pointerId: e.pointerId });
+                    send("keydown", code, sentKey);
+                    elem.classList.add("ejs_virtualKeyboard_key_down");
+                });
+                this.ejs.addEventListener(elem, "pointerup pointercancel", (e) => {
+                    const press = pressed.get(elem);
+                    if (!press || press.pointerId !== e.pointerId || pendingRelease.has(elem)) return;
+                    elem.classList.remove("ejs_virtualKeyboard_key_down");
+                    const remaining = minHoldMs - (performance.now() - press.time);
+                    if (remaining > 0) {
+                        pendingRelease.set(elem, setTimeout(() => releaseKey(elem), remaining));
+                    } else {
+                        releaseKey(elem);
+                    }
+                });
+                rowElem.appendChild(elem);
+            }
+            keyboard.appendChild(rowElem);
+        }
+        this.virtualGamepad.appendChild(keyboard);
+
+        const toggle = this.ejs.createElement("div");
+        toggle.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><path d="M64 64C28.7 64 0 92.7 0 128V384c0 35.3 28.7 64 64 64H512c35.3 0 64-28.7 64-64V128c0-35.3-28.7-64-64-64H64zm16 64h32c8.8 0 16 7.2 16 16v32c0 8.8-7.2 16-16 16H80c-8.8 0-16-7.2-16-16V144c0-8.8 7.2-16 16-16zM64 240c0-8.8 7.2-16 16-16h32c8.8 0 16 7.2 16 16v32c0 8.8-7.2 16-16 16H80c-8.8 0-16-7.2-16-16V240zm16 80h32c8.8 0 16 7.2 16 16v32c0 8.8-7.2 16-16 16H80c-8.8 0-16-7.2-16-16V336c0-8.8 7.2-16 16-16zm80-176c0-8.8 7.2-16 16-16h32c8.8 0 16 7.2 16 16v32c0 8.8-7.2 16-16 16H176c-8.8 0-16-7.2-16-16V144zm16 80h32c8.8 0 16 7.2 16 16v32c0 8.8-7.2 16-16 16H176c-8.8 0-16-7.2-16-16V240c0-8.8 7.2-16 16-16zM160 336c0-8.8 7.2-16 16-16H400c8.8 0 16 7.2 16 16v32c0 8.8-7.2 16-16 16H176c-8.8 0-16-7.2-16-16V336zM272 128h32c8.8 0 16 7.2 16 16v32c0 8.8-7.2 16-16 16H272c-8.8 0-16-7.2-16-16V144c0-8.8 7.2-16 16-16zM256 240c0-8.8 7.2-16 16-16h32c8.8 0 16 7.2 16 16v32c0 8.8-7.2 16-16 16H272c-8.8 0-16-7.2-16-16V240zM368 128h32c8.8 0 16 7.2 16 16v32c0 8.8-7.2 16-16 16H368c-8.8 0-16-7.2-16-16V144c0-8.8 7.2-16 16-16zM352 240c0-8.8 7.2-16 16-16h32c8.8 0 16 7.2 16 16v32c0 8.8-7.2 16-16 16H368c-8.8 0-16-7.2-16-16V240zM464 128h32c8.8 0 16 7.2 16 16v32c0 8.8-7.2 16-16 16H464c-8.8 0-16-7.2-16-16V144c0-8.8 7.2-16 16-16zM448 240c0-8.8 7.2-16 16-16h32c8.8 0 16 7.2 16 16v32c0 8.8-7.2 16-16 16H464c-8.8 0-16-7.2-16-16V240zm16 80h32c8.8 0 16 7.2 16 16v32c0 8.8-7.2 16-16 16H464c-8.8 0-16-7.2-16-16V336c0-8.8 7.2-16 16-16z"/></svg>';
+        toggle.classList.add("ejs_virtualKeyboard_toggle");
+        toggle.title = this.localization("Keyboard");
+        toggle.style.display = "none";
+        this.elements.parent.appendChild(toggle);
+
+        // Show the toggle whenever the virtual gamepad is shown
+        new MutationObserver(() => {
+            toggle.style.display = this.virtualGamepad.style.display;
+            toggle.style.opacity = this.virtualGamepad.style.opacity;
+        }).observe(this.virtualGamepad, { attributes: true, attributeFilter: ["style"] });
+
+        const showKeyboard = (show) => {
+            releaseAll();
+            keyboard.style.display = show ? "" : "none";
+            gamepadElems.forEach(elem => elem.style.display = show ? "none" : "");
+            toggle.classList.toggle("ejs_virtualKeyboard_toggle_active", show);
+            // Keys only reach the core while keyboard input is on
+            this.ejs.gameManager.setKeyboardEnabled(show || this.ejs.getSettingValue("keyboardInput") === "enabled");
+            this.ejs.gameManager.setAltKeyEnabled(show || this.ejs.getSettingValue("altKeyboardInput") === "enabled");
+        };
+        this.ejs.addEventListener(toggle, "click", (e) => {
+            e.preventDefault();
+            showKeyboard(keyboard.style.display === "none");
+        });
+        if (!hasController) {
+            this.ejs.on("start", () => showKeyboard(true));
+        }
     }
     handleResize() {
         if (this.virtualGamepad) {

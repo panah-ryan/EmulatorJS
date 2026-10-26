@@ -1768,6 +1768,78 @@
     fill: currentColor;
 }
 
+.ejs_virtualKeyboard_toggle {
+    display: inline-block;
+    width: 28px;
+    height: 24px;
+    color: #fff;
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    opacity: .5;
+    z-index: 1001;
+    cursor: pointer;
+}
+
+.ejs_virtualKeyboard_toggle svg {
+    fill: currentColor;
+}
+
+.ejs_virtualKeyboard_toggle_active {
+    opacity: 1;
+}
+
+.ejs_virtualKeyboard {
+    position: absolute;
+    bottom: -45px;
+    left: 0;
+    right: 0;
+    padding: 4px;
+    background: rgba(0, 0, 0, 0.5);
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.ejs_virtualKeyboard_row {
+    display: flex;
+    gap: 3px;
+    margin-bottom: 3px;
+}
+
+.ejs_virtualKeyboard_key {
+    flex: 1 1 0;
+    min-width: 0;
+    height: 34px;
+    line-height: 34px;
+    text-align: center;
+    color: #fff;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: rgba(255, 255, 255, 0.15);
+    overflow: hidden;
+    white-space: nowrap;
+    -webkit-touch-callout: none;
+}
+
+.ejs_virtualKeyboard_key_down {
+    background-color: #000000ad;
+}
+
+.ejs_virtualKeyboard_key_latched {
+    background-color: rgba(255, 255, 255, 0.6);
+    color: #000;
+}
+
+@media (max-height: 450px) {
+    .ejs_virtualKeyboard_key {
+        height: 26px;
+        line-height: 26px;
+        font-size: 11px;
+    }
+}
+
 .ejs-vgamepad-active {
     z-index: 1000;
     position: absolute;

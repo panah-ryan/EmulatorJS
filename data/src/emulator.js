@@ -25,6 +25,9 @@ class EmulatorJS {
     requiresWebGL2(core) {
         return CONSTS.requiresWebGL2.includes(core);
     }
+    hasKeyboard(system) {
+        return CONSTS.keyboardSystems.includes(system);
+    }
     getCore(generic) {
         const cores = this.getCores();
         const core = this.config.system;
