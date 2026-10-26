@@ -44,6 +44,9 @@ export const requiresWebGL2 = [];
 // systems that get the on-screen keyboard on touch devices
 export const keyboardSystems = ["vic20", "c64", "c128", "plus4", "amiga", "cpc", "mac", "zxspectrum", "dos", "x1", "electron", "sg1000", "pc88", "atari800", "pc98", "fmtowns", "msx", "atarist", "x68000", "apple2"];
 
+// systems where a touch on the game screen acts as the mouse
+export const mouseSystems = ["mac"];
+
 // core options forced for systems that share a core with another system
 export const systemCoreOptions = {
     "atari5200": { "atari800_system": "5200" }

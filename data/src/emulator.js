@@ -28,6 +28,9 @@ class EmulatorJS {
     hasKeyboard(system) {
         return CONSTS.keyboardSystems.includes(system);
     }
+    usesTouchMouse(system) {
+        return CONSTS.mouseSystems.includes(system);
+    }
     getCore(generic) {
         const cores = this.getCores();
         const core = this.config.system;

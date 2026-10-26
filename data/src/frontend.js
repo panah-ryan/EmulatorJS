@@ -69,7 +69,47 @@ class EJS_Frontend {
     setTouchActive() {
         if (!this.virtualGamepad) return;
         this.virtualGamepad.classList.add("ejs-vgamepad-active");
-        this.canvas.classList.add("ejs-canvas-no-pointer");
+        if (this.ejs.usesTouchMouse(this.ejs.getCore(true))) {
+            this.setTouchMouse();
+        } else {
+            this.canvas.classList.add("ejs-canvas-no-pointer");
+        }
+    }
+    setTouchMouse() {
+        // Hold each click long enough for the core to see it
+        const minHoldMs = 100;
+        let touchId = null;
+        let downTime = 0;
+        const send = (type, touch) => {
+            this.canvas.dispatchEvent(new MouseEvent(type, {
+                clientX: touch.clientX,
+                clientY: touch.clientY,
+                button: 0,
+                buttons: type === "mouseup" ? 0 : 1,
+                bubbles: true,
+                cancelable: true
+            }));
+        };
+        const findTouch = (e) => [...e.changedTouches].find(touch => touch.identifier === touchId);
+        this.ejs.addEventListener(this.canvas, "touchstart", (e) => {
+            if (touchId !== null) return;
+            const touch = e.changedTouches[0];
+            touchId = touch.identifier;
+            downTime = performance.now();
+            send("mousemove", touch);
+            send("mousedown", touch);
+        });
+        this.ejs.addEventListener(this.canvas, "touchmove", (e) => {
+            const touch = findTouch(e);
+            if (touch) send("mousemove", touch);
+        });
+        this.ejs.addEventListener(this.canvas, "touchend touchcancel", (e) => {
+            const touch = findTouch(e);
+            if (!touch) return;
+            touchId = null;
+            const position = { clientX: touch.clientX, clientY: touch.clientY };
+            setTimeout(() => send("mouseup", position), Math.max(0, minHoldMs - (performance.now() - downTime)));
+        });
     }
     setLoadingText(text, suffix) {
         this.textElem.innerText = (text ? this.localizeAll(text) : "") + (suffix || "");
@@ -3392,7 +3432,8 @@ class EJS_Frontend {
             e.preventDefault();
             showKeyboard(keyboard.style.display === "none");
         });
-        if (!hasController) {
+        // Mouse systems start with the screen clear so it can be touched
+        if (!hasController && !this.ejs.usesTouchMouse(this.ejs.getCore(true))) {
             this.ejs.on("start", () => showKeyboard(true));
         }
     }
