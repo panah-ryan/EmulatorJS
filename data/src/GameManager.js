@@ -51,7 +51,8 @@ class EJS_GameManager {
                 this.saveSaveFiles();
             }
             this.toggleMainLoop(0);
-            this.FS.unmount("/data/saves");
+            // Unmount only once the saves above are persisted, or the sync finds an empty folder and wipes them
+            this.FS.syncfs(false, () => this.FS.unmount("/data/saves"));
             setTimeout(() => {
                 // abort() always throws, this is the expected shutdown
                 try {
