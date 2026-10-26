@@ -1846,6 +1846,44 @@ class EJS_Frontend {
                 { id: 17, label: this.localization("STICK LEFT") },
                 { id: 16, label: this.localization("STICK RIGHT") },
             ];
+        } else if ("atari800" === this.ejs.getControlScheme()) {
+            buttons = [
+                { id: 0, label: this.localization("FIRE 1") },
+                { id: 8, label: this.localization("FIRE 2") },
+                { id: 1, label: this.localization("SPACE / FIRE 3") },
+                { id: 9, label: this.localization("RETURN") },
+                { id: 4, label: this.localization("UP") },
+                { id: 5, label: this.localization("DOWN") },
+                { id: 6, label: this.localization("LEFT") },
+                { id: 7, label: this.localization("RIGHT") },
+                { id: 3, label: this.localization("START") },
+                { id: 2, label: this.localization("SELECT") },
+                { id: 10, label: this.localization("OPTION") },
+                { id: 12, label: this.localization("ESC") },
+                { id: 13, label: this.localization("HELP") },
+            ];
+        } else if ("atari5200" === this.ejs.getControlScheme()) {
+            buttons = [
+                { id: 0, label: this.localization("FIRE 1") },
+                { id: 8, label: this.localization("FIRE 2") },
+                { id: 4, label: this.localization("UP") },
+                { id: 5, label: this.localization("DOWN") },
+                { id: 6, label: this.localization("LEFT") },
+                { id: 7, label: this.localization("RIGHT") },
+                { id: 19, label: this.localization("STICK UP") },
+                { id: 18, label: this.localization("STICK DOWN") },
+                { id: 17, label: this.localization("STICK LEFT") },
+                { id: 16, label: this.localization("STICK RIGHT") },
+                { id: 3, label: this.localization("START") },
+                { id: 2, label: this.localization("PAUSE") },
+                { id: 9, label: this.localization("*") },
+                { id: 1, label: this.localization("#") },
+                { id: 10, label: this.localization("0") },
+                { id: 11, label: this.localization("1") },
+                { id: 12, label: this.localization("2") },
+                { id: 13, label: this.localization("3") },
+                { id: 14, label: this.localization("7") },
+            ];
         } else if ("apple2" === this.ejs.getControlScheme()) {
             buttons = [
                 { id: 8, label: this.localization("BUTTON 0") },
@@ -2537,6 +2575,27 @@ class EJS_Frontend {
                 { "type": "dpad", "id": "dpad", "location": "left", "left": "50%", "right": "50%", "joystickInput": false, "inputValues": [4, 5, 6, 7] },
                 { "type": "button", "text": "Select", "id": "select", "location": "center", "left": -5, "fontSize": 15, "block": true, "input_value": 2 },
                 { "type": "button", "text": "Run", "id": "run", "location": "center", "left": 60, "fontSize": 15, "block": true, "input_value": 3 }
+            ];
+            info.push(...speedControlButtons);
+        } else if ("atari800" === this.ejs.getControlScheme()) {
+            info = [
+                { "type": "button", "text": "1", "id": "button_1", "location": "right", "right": 75, "top": 70, "bold": true, "input_value": 0 },
+                { "type": "button", "text": "2", "id": "button_2", "location": "right", "right": 5, "top": 70, "bold": true, "input_value": 8 },
+                { "type": "dpad", "id": "dpad", "location": "left", "left": "50%", "right": "50%", "joystickInput": false, "inputValues": [4, 5, 6, 7] },
+                { "type": "button", "text": "Option", "id": "option", "location": "center", "left": -35, "fontSize": 15, "block": true, "input_value": 10 },
+                { "type": "button", "text": "Select", "id": "select", "location": "center", "left": 30, "fontSize": 15, "block": true, "input_value": 2 },
+                { "type": "button", "text": "Start", "id": "start", "location": "center", "left": 95, "fontSize": 15, "block": true, "input_value": 3 }
+            ];
+            info.push(...speedControlButtons);
+        } else if ("atari5200" === this.ejs.getControlScheme()) {
+            info = [
+                { "type": "button", "text": "1", "id": "button_1", "location": "right", "right": 75, "top": 70, "bold": true, "input_value": 0 },
+                { "type": "button", "text": "2", "id": "button_2", "location": "right", "right": 5, "top": 70, "bold": true, "input_value": 8 },
+                { "type": "button", "text": "*", "id": "star_key", "location": "right", "right": 75, "top": 0, "fontSize": 15, "block": true, "input_value": 9 },
+                { "type": "button", "text": "#", "id": "hash_key", "location": "right", "right": 5, "top": 0, "fontSize": 15, "block": true, "input_value": 1 },
+                { "type": "dpad", "id": "dpad", "location": "left", "left": "50%", "right": "50%", "joystickInput": false, "inputValues": [4, 5, 6, 7] },
+                { "type": "button", "text": "Pause", "id": "pause", "location": "center", "left": -5, "fontSize": 15, "block": true, "input_value": 2 },
+                { "type": "button", "text": "Start", "id": "start", "location": "center", "left": 60, "fontSize": 15, "block": true, "input_value": 3 }
             ];
             info.push(...speedControlButtons);
         } else if ("apple2" === this.ejs.getControlScheme()) {
