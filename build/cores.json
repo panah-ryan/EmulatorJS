@@ -488,14 +488,69 @@
         "repo": "https://github.com/libretro/libretro-cap32"
     },
     {
+        "name": "snow",
+        "extensions": [
+            "dsk",
+            "img",
+            "image",
+            "dc42",
+            "moof",
+            "woz",
+            "a2r",
+            "raw",
+            "hda",
+            "hdv",
+            "sit"
+        ],
+        "makeoptions": {
+            "buildpath": "libretro",
+            "makescript": "Makefile",
+            "arguments": []
+        },
+        "options": {
+            "supportsMouse": true,
+            "useKeyboard": true
+        },
+        "save": "srm",
+        "license": "LICENSE",
+        "repo": "https://github.com/twvd/snow"
+    },
+    {
+        "name": "genesis_plus_gx",
+        "extensions": [
+            "m3u",
+            "mdx",
+            "md",
+            "smd",
+            "gen",
+            "bin",
+            "cue",
+            "iso",
+            "chd",
+            "bms",
+            "sms",
+            "gg",
+            "sg",
+            "68k",
+            "sgd"
+        ],
+        "makeoptions": {
+            "arguments": [],
+            "buildpath": "./",
+            "makescript": "Makefile.libretro"
+        },
+        "options": {},
+        "save": "srm",
+        "license": "LICENSE.txt",
+        "repo": "https://github.com/libretro/Genesis-Plus-GX"
+    },
+    {
         "name": "hatarib",
         "extensions": [
             "st",
             "msa",
             "dim",
             "stx",
-            "ipf",
-            "ctr",
             "m3u",
             "m3u8",
             "zip",
@@ -570,33 +625,5 @@
         "save": false,
         "license": "COPYING",
         "repo": "https://github.com/libretro/beetle-saturn-libretro"
-    },
-    {
-        "name": "snow",
-        "extensions": [
-            "dsk",
-            "img",
-            "image",
-            "dc42",
-            "moof",
-            "woz",
-            "a2r",
-            "raw",
-            "hda",
-            "hdv",
-            "sit"
-        ],
-        "makeoptions": {
-            "buildpath": "libretro",
-            "makescript": "Makefile",
-            "arguments": []
-        },
-        "options": {
-            "supportsMouse": true,
-            "useKeyboard": true
-        },
-        "save": "srm",
-        "license": "LICENSE",
-        "repo": "https://github.com/twvd/snow"
     }
 ]

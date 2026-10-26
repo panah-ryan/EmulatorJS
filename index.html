@@ -345,6 +345,9 @@
                     if (["sg", "sc"].includes(ext) && enableThreads)
                         return "sg1000"
 
+                    if (["sms"].includes(ext))
+                        return "segaMS"
+
                     if (["a52"].includes(ext))
                         return "atari5200"
 
@@ -381,6 +384,7 @@
                             "Amstrad CPC": "cpc",
                             "Apple Macintosh": "mac",
                             "ZX Spectrum": "zxspectrum",
+                            "Sega Master System": "segaMS",
                             "Atari 8-bit (400/800/XL/XE)": "atari800",
                             "Atari ST/STE/TT/Falcon": "atarist",
                             "NEC PC-8801": "pc88",
