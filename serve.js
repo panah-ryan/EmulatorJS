@@ -1,12 +1,26 @@
 // Local static server that sends the COOP/COEP headers required for SharedArrayBuffer (threads).
-// Usage: node serve.js [port]   (open http://localhost:<port> — localhost counts as a secure context)
+// Usage: node serve.js [port] [--cert cert.pem --key key.pem]
+// Over plain http only localhost is a secure context; pass a certificate (e.g. from mkcert) to serve
+// https so other devices on the network get SharedArrayBuffer too.
 import http from "node:http";
+import https from "node:https";
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { parseArgs } from "node:util";
 
 const root = path.dirname(fileURLToPath(import.meta.url));
-const port = parseInt(process.argv[2] || process.env.PORT || "8081");
+const { values: args, positionals } = parseArgs({
+    options: { cert: { type: "string" }, key: { type: "string" } },
+    allowPositionals: true,
+});
+const port = parseInt(positionals[0] || process.env.PORT || "8081");
+if (!args.cert !== !args.key) {
+    console.error("--cert and --key must be given together");
+    process.exit(1);
+}
+const secure = Boolean(args.cert);
 
 const types = {
     ".html": "text/html; charset=utf-8",
@@ -22,7 +36,7 @@ const types = {
     ".ico": "image/x-icon",
 };
 
-http.createServer((req, res) => {
+const handler = (req, res) => {
     const headers = {
         "Cross-Origin-Opener-Policy": "same-origin",
         "Cross-Origin-Embedder-Policy": "require-corp",
@@ -56,6 +70,21 @@ http.createServer((req, res) => {
         if (req.method === "HEAD") return res.end();
         fs.createReadStream(file).pipe(res);
     });
-}).listen(port, () => {
-    console.log(`EmulatorJS serving ${root} at http://localhost:${port} (COOP/COEP enabled)`);
+};
+
+const server = secure
+    ? https.createServer({ cert: fs.readFileSync(args.cert), key: fs.readFileSync(args.key) }, handler)
+    : http.createServer(handler);
+
+server.listen(port, () => {
+    const scheme = secure ? "https" : "http";
+    console.log(`EmulatorJS serving ${root} (COOP/COEP enabled)`);
+    console.log(`  ${scheme}://localhost:${port}`);
+    if (secure) {
+        for (const addrs of Object.values(os.networkInterfaces())) {
+            for (const a of addrs) {
+                if (a.family === "IPv4" && !a.internal) console.log(`  ${scheme}://${a.address}:${port}`);
+            }
+        }
+    }
 });
