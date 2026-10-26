@@ -677,6 +677,27 @@
         "repo": "https://github.com/libretro/prosystem-libretro"
     },
     {
+        "name": "mednafen_pce_fast",
+        "extensions": [
+            "pce",
+            "cue",
+            "ccd",
+            "iso",
+            "img",
+            "bin",
+            "chd"
+        ],
+        "makeoptions": {
+            "buildpath": "./",
+            "makescript": "Makefile",
+            "arguments": []
+        },
+        "options": {},
+        "save": "srm",
+        "license": "COPYING",
+        "repo": "https://github.com/libretro/beetle-pce-fast-libretro"
+    },
+    {
         "name": "px68k",
         "extensions": [
             "dim",
