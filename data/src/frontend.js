@@ -1915,6 +1915,9 @@ class EJS_Frontend {
                 { id: 17, label: this.localization("STICK LEFT") },
                 { id: 16, label: this.localization("STICK RIGHT") },
             ];
+        } else if ("electron" === this.ejs.getControlScheme()) {
+            // Keyboard only: no joystick interface is fitted
+            buttons = [];
         } else if ("atari800" === this.ejs.getControlScheme()) {
             buttons = [
                 { id: 0, label: this.localization("FIRE 1") },
@@ -2686,6 +2689,8 @@ class EJS_Frontend {
                 { "type": "dpad", "id": "dpad", "location": "left", "left": "50%", "right": "50%", "joystickInput": false, "inputValues": [4, 5, 6, 7] }
             ];
             info.push(...speedControlButtons);
+        } else if ("electron" === this.ejs.getControlScheme()) {
+            info = [...speedControlButtons];
         } else if ("atari800" === this.ejs.getControlScheme()) {
             info = [
                 { "type": "button", "text": "1", "id": "button_1", "location": "right", "right": 75, "top": 70, "bold": true, "input_value": 0 },
