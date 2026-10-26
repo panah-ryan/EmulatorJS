@@ -1,0 +1,156 @@
+diff --git a/cmake/DetectArchitecture.cmake b/cmake/DetectArchitecture.cmake
+index 7de0a41..29fc116 100644
+--- a/cmake/DetectArchitecture.cmake
++++ b/cmake/DetectArchitecture.cmake
+@@ -37,4 +37,6 @@ detect_arch_symbol("__amd64" x86_64) # Clang/GCC
+ detect_arch_symbol("__x86_64__" x86_64) # Clang/GCC
+ detect_arch_symbol("__x86_64" x86_64) # Clang/GCC
+ detect_arch_symbol("_M_AMD64" x86_64) # MSVC
+-detect_arch_symbol("_M_X64" x86_64) # MSVC
+\ No newline at end of file
++detect_arch_symbol("_M_X64" x86_64) # MSVC
++# wasm32 (emscripten)
++detect_arch_symbol("__wasm32__" wasm32)
+diff --git a/libs/ymir-core/include/ymir/hw/sh2/sh2.hpp b/libs/ymir-core/include/ymir/hw/sh2/sh2.hpp
+index 64cbc8f..7d387f5 100644
+--- a/libs/ymir-core/include/ymir/hw/sh2/sh2.hpp
++++ b/libs/ymir-core/include/ymir/hw/sh2/sh2.hpp
+@@ -996,19 +996,19 @@ private:
+     std::array<bool, 2> m_dmacTraced; // whether each DMA channel has had a transfer traced
+ 
+     static constexpr size_t kBitsPerByte = 8ull; // asserted in ymir.cpp
+-    static constexpr size_t kAddressSpaceSize = 1ull << 32ull;
++    static constexpr uint64 kAddressSpaceSize = 1ull << 32ull;
+     static constexpr size_t kInstructionSize = sizeof(uint16); // breakpoints must be instruction-aligned
+-    static constexpr size_t kBreakpointMapSize = kAddressSpaceSize / kInstructionSize / kBitsPerByte;
+-    static constexpr size_t kWatchpointMapSize = kAddressSpaceSize; // only 2 bits per byte are used
++    static constexpr uint64 kBreakpointMapSize = kAddressSpaceSize / kInstructionSize / kBitsPerByte;
++    static constexpr uint64 kWatchpointMapSize = kAddressSpaceSize; // only 2 bits per byte are used
+ 
+     template <size_t sizeBits, size_t chunkSizeBits>
+     struct ChunkedMemory {
+         static_assert(chunkSizeBits <= sizeBits, "chunk size must not exceed memory chunk size");
+ 
+-        static constexpr size_t kSize = static_cast<size_t>(1) << sizeBits;
++        static constexpr uint64 kSize = static_cast<uint64>(1) << sizeBits;
+         static constexpr size_t kChunkSize = static_cast<size_t>(1) << chunkSizeBits;
+         static constexpr size_t kChunkMask = kChunkSize - 1;
+-        static constexpr size_t kNumChunks = kSize / kChunkSize;
++        static constexpr size_t kNumChunks = static_cast<size_t>(kSize / kChunkSize);
+ 
+         using Chunk = std::array<uint8, kChunkSize>;
+ 
+diff --git a/libs/ymir-core/include/ymir/media/binary_reader/binary_reader_composite.hpp b/libs/ymir-core/include/ymir/media/binary_reader/binary_reader_composite.hpp
+index 7c4d7e1..5bf45a3 100644
+--- a/libs/ymir-core/include/ymir/media/binary_reader/binary_reader_composite.hpp
++++ b/libs/ymir-core/include/ymir/media/binary_reader/binary_reader_composite.hpp
+@@ -30,8 +30,8 @@ public:
+ 
+         // Limit size to the smallest of the requested size, the output buffer size and the amount of bytes available in
+         // the combined binary starting from offset
+-        size = std::min(size, m_size - offset);
+-        size = std::min(size, output.size());
++        size = std::min<uintmax_t>(size, m_size - offset);
++        size = std::min<uintmax_t>(size, output.size());
+ 
+         // Find the specific reader
+         auto it = m_readers.lower_bound(offset);
+diff --git a/libs/ymir-core/include/ymir/media/binary_reader/binary_reader_file.hpp b/libs/ymir-core/include/ymir/media/binary_reader/binary_reader_file.hpp
+index 5f72f0a..6b5ca34 100644
+--- a/libs/ymir-core/include/ymir/media/binary_reader/binary_reader_file.hpp
++++ b/libs/ymir-core/include/ymir/media/binary_reader/binary_reader_file.hpp
+@@ -50,8 +50,8 @@ public:
+         }
+         // Limit size to the smallest of the requested size, the output buffer size and the amount of bytes available in
+         // the file starting from offset
+-        size = std::min(size, m_size - offset);
+-        size = std::min(size, output.size());
++        size = std::min<uintmax_t>(size, m_size - offset);
++        size = std::min<uintmax_t>(size, output.size());
+         m_in.seekg(offset, std::ios::beg);
+         m_in.read(reinterpret_cast<char *>(output.data()), size);
+         return m_in.gcount();
+diff --git a/libs/ymir-core/include/ymir/media/binary_reader/binary_reader_mem.hpp b/libs/ymir-core/include/ymir/media/binary_reader/binary_reader_mem.hpp
+index c09bd77..633c216 100644
+--- a/libs/ymir-core/include/ymir/media/binary_reader/binary_reader_mem.hpp
++++ b/libs/ymir-core/include/ymir/media/binary_reader/binary_reader_mem.hpp
+@@ -70,8 +70,8 @@ public:
+         }
+         // Limit size to the smallest of the requested size, the output buffer size and the amount of bytes available in
+         // the file starting from offset
+-        size = std::min(size, m_data.size() - offset);
+-        size = std::min(size, output.size());
++        size = std::min<uintmax_t>(size, m_data.size() - offset);
++        size = std::min<uintmax_t>(size, output.size());
+         std::copy_n(m_data.cbegin() + offset, size, output.begin());
+         return size;
+     }
+diff --git a/libs/ymir-core/include/ymir/media/binary_reader/binary_reader_mmap.hpp b/libs/ymir-core/include/ymir/media/binary_reader/binary_reader_mmap.hpp
+index 9e7c177..938ae04 100644
+--- a/libs/ymir-core/include/ymir/media/binary_reader/binary_reader_mmap.hpp
++++ b/libs/ymir-core/include/ymir/media/binary_reader/binary_reader_mmap.hpp
+@@ -43,8 +43,8 @@ public:
+ 
+         // Limit size to the smallest of the requested size, the output buffer size and the amount of bytes available in
+         // the file starting from offset
+-        size = std::min(size, m_in.size() - offset);
+-        size = std::min(size, output.size());
++        size = std::min<uintmax_t>(size, m_in.size() - offset);
++        size = std::min<uintmax_t>(size, output.size());
+         std::copy_n(m_in.begin() + offset, size, output.begin());
+         return size;
+     }
+diff --git a/libs/ymir-core/include/ymir/media/binary_reader/binary_reader_subview.hpp b/libs/ymir-core/include/ymir/media/binary_reader/binary_reader_subview.hpp
+index 7540cec..5fae309 100644
+--- a/libs/ymir-core/include/ymir/media/binary_reader/binary_reader_subview.hpp
++++ b/libs/ymir-core/include/ymir/media/binary_reader/binary_reader_subview.hpp
+@@ -23,7 +23,7 @@ public:
+                               uintmax_t pregap = 0, uintmax_t postgap = 0)
+         : m_fileContent(binaryReader)
+         , m_offset(std::min(offset, binaryReader->Size()))
+-        , m_fileSize(std::min(size, binaryReader->Size() - m_offset))
++        , m_fileSize(std::min<uintmax_t>(size, binaryReader->Size() - m_offset))
+         , m_size(m_fileSize + pregap + postgap)
+         , m_pregap(pregap)
+         , m_postgap(postgap) {}
+@@ -39,8 +39,8 @@ public:
+ 
+         // Limit size to the smallest of the requested size, the output buffer size and the amount of bytes available in
+         // the file starting from offset
+-        size = std::min(size, m_size - offset);
+-        size = std::min(size, output.size());
++        size = std::min<uintmax_t>(size, m_size - offset);
++        size = std::min<uintmax_t>(size, output.size());
+ 
+         uintmax_t count = 0;
+         if (offset < m_pregap) {
+@@ -50,12 +50,12 @@ public:
+             size -= pregapCount;
+             count += pregapCount;
+         }
+-        const uintmax_t fileSize = std::min(size, m_fileSize);
++        const uintmax_t fileSize = std::min<uintmax_t>(size, m_fileSize);
+         count += m_fileContent->Read(offset + m_offset - m_pregap, fileSize, output.subspan(count));
+         size -= fileSize;
+         if (size > 0 && m_postgap > 0) {
+             // Zero-fill postgap area
+-            size = std::min(size, m_postgap);
++            size = std::min<uintmax_t>(size, m_postgap);
+             auto postgapArea = output.subspan(count);
+             std::fill(postgapArea.begin(), postgapArea.end(), 0);
+             count += postgapArea.size();
+diff --git a/libs/ymir-core/include/ymir/media/binary_reader/binary_reader_zero.hpp b/libs/ymir-core/include/ymir/media/binary_reader/binary_reader_zero.hpp
+index 8ac6e14..07b0e92 100644
+--- a/libs/ymir-core/include/ymir/media/binary_reader/binary_reader_zero.hpp
++++ b/libs/ymir-core/include/ymir/media/binary_reader/binary_reader_zero.hpp
+@@ -24,8 +24,8 @@ public:
+         }
+ 
+         // Limit size to the smallest of the requested size and the output buffer size
+-        size = std::min(size, m_size - offset);
+-        size = std::min(size, output.size());
++        size = std::min<uintmax_t>(size, m_size - offset);
++        size = std::min<uintmax_t>(size, output.size());
+ 
+         // Fill output with zeros
+         std::fill_n(output.begin(), size, 0);

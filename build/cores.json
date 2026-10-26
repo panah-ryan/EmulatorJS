@@ -902,28 +902,31 @@
         "repo": "https://github.com/libretro/beetle-pcfx-libretro"
     },
     {
-        "name": "beetle_saturn",
+        "name": "emir",
         "extensions": [
             "cue",
-            "toc",
-            "m3u",
+            "chd",
+            "mds",
             "ccd",
-            "chd"
+            "iso",
+            "m3u"
         ],
         "makeoptions": {
-            "buildpath": "./",
-            "makescript": "Makefile",
-            "arguments": ["TARGET_NAME=beetle_saturn"]
+            "builder": "cmake",
+            "cmake_args": [
+                "-DYmir_ENABLE_LIBRETRO=ON",
+                "-DYmir_ENABLE_GPU_API=OFF",
+                "-DYmir_DEV_BUILD=OFF",
+                "-DYmir_ENABLE_UPDATE_CHECKS=OFF",
+                "-DCMAKE_BUILD_TYPE=Release"
+            ],
+            "output_archive": "emir_libretro_emscripten.bc"
         },
         "options": {
-            "requireThreads": true,
-            "file": "Beetle Saturn/Beetle Saturn.opt",
-            "settings": {
-                "beetle_saturn_sh2_interleave": "8"
-            }
+            "requireThreads": true
         },
-        "save": false,
-        "license": "COPYING",
-        "repo": "https://github.com/libretro/beetle-saturn-libretro"
+        "save": "srm",
+        "license": "LICENSE",
+        "repo": "https://git.libretro.com/libretro/emir"
     }
 ]
