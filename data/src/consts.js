@@ -25,6 +25,7 @@ export const cores = {
     "atari7800": ["prosystem"],
     "lynx": ["mednafen_lynx"],
     "pc98": ["nekop2"],
+    "fmtowns": ["geartowns"],
     "msx": ["bluemsx"],
     "atarist": ["hatarib"],
     "x68000": ["px68k"],
