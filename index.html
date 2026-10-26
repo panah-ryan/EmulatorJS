@@ -333,6 +333,9 @@
                     if (["cdt", "cpr"].includes(ext))
                         return "cpc"
 
+                    if (["adf", "adz", "dms", "hdz"].includes(ext))
+                        return "amiga"
+
                     if (["tzx", "z80", "rzx", "scl", "trd", "dck", "sna", "szx"].includes(ext))
                         return "zxspectrum"
 
@@ -382,6 +385,7 @@
                             "Commodore 64": "c64",
                             "Commodore 128": "c128",
                             "Commodore 16 / Plus/4": "plus4",
+                            "Commodore Amiga": "amiga",
                             "Amstrad CPC": "cpc",
                             "Apple Macintosh": "mac",
                             "ZX Spectrum": "zxspectrum",
