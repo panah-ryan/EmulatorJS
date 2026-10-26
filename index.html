@@ -351,6 +351,9 @@
                     if (["sms"].includes(ext))
                         return "segaMS"
 
+                    if (["md", "smd", "gen", "mdx"].includes(ext))
+                        return "segaMD"
+
                     if (["pce"].includes(ext))
                         return "pce"
 
@@ -397,6 +400,7 @@
                             "Apple Macintosh": "mac",
                             "ZX Spectrum": "zxspectrum",
                             "Sega Master System": "segaMS",
+                            "Sega Mega Drive / Genesis": "segaMD",
                             "PC Engine / TurboGrafx-16": "pce",
                             "Atari 8-bit (400/800/XL/XE)": "atari800",
                             "Atari ST/STE/TT/Falcon": "atarist",

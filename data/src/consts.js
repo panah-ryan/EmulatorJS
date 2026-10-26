@@ -17,6 +17,7 @@ export const cores = {
     "electron": ["mame_electron"],
     "sg1000": ["mame_sg1000"],
     "segaMS": ["genesis_plus_gx"],
+    "segaMD": ["genesis_plus_gx"],
     "pce": ["mednafen_pce_fast"],
     "pc88": ["quasi88"],
     "atari800": ["atari800"],
