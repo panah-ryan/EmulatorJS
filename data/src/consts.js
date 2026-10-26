@@ -6,6 +6,8 @@ export const cores = {
     "atari2600": ["stella2014"],
     "vic20": ["vice_xvic"],
     "c64": ["vice_x64sc"],
+    "plus4": ["vice_xplus4"],
+    "cpc": ["cap32"],
     "zxspectrum": ["fuse"],
     "dos": ["dosbox_pure"],
     "x1": ["mame_x1"],

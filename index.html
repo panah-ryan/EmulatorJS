@@ -327,6 +327,9 @@
                     if (["20", "40", "60", "a0", "b0"].includes(ext))
                         return "vic20"
 
+                    if (["cdt", "cpr"].includes(ext))
+                        return "cpc"
+
                     if (["tzx", "z80", "rzx", "scl", "trd", "dck", "sna", "szx"].includes(ext))
                         return "zxspectrum"
 
@@ -371,6 +374,8 @@
                             "Atari 5200": "atari5200",
                             "Commodore VIC-20": "vic20",
                             "Commodore 64": "c64",
+                            "Commodore 16 / Plus/4": "plus4",
+                            "Amstrad CPC": "cpc",
                             "ZX Spectrum": "zxspectrum",
                             "Atari 8-bit (400/800/XL/XE)": "atari800",
                             "Atari ST/STE/TT/Falcon": "atarist",

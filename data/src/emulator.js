@@ -884,7 +884,7 @@ class EmulatorJS {
      * Determine CUE file handling settings based on core type and configuration
      */
     determineCueSettings() {
-        const coresThatNeedCueHandling = ["pcsx_rearmed", "genesis_plus_gx", "picodrive", "mednafen_pce", "smsplus", "vice_x64", "vice_x64sc", "vice_x128", "vice_xvic", "vice_xpet", "puae"];
+        const coresThatNeedCueHandling = ["pcsx_rearmed", "genesis_plus_gx", "picodrive", "mednafen_pce", "smsplus", "vice_x64", "vice_x64sc", "vice_x128", "vice_xvic", "vice_xplus4", "vice_xpet", "puae"];
         let disableCue = false;
 
         if (coresThatNeedCueHandling.includes(this.getCore()) && this.config.disableCue === undefined) {
