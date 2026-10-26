@@ -36,7 +36,7 @@ class GamepadHandler {
         let gamepads = Array.from(this.getGamepads());
         if (!gamepads) return;
         if (!Array.isArray(gamepads) && gamepads.length) {
-            let gp = [];
+            const gp = [];
             for (let i=0; i<gamepads.length; i++) {
                 gp.push(gamepads[i]);
             }

@@ -44,7 +44,7 @@ class EJS_Download {
         }
 
         try {
-            let res = await fetch(url);
+            const res = await fetch(url);
             let data;
             
             if (responseType === "arraybuffer" || !responseType) {
@@ -162,8 +162,8 @@ class EJS_Download {
                 }
 
                 if (onProgress) onProgress("downloading", 0, 0, 0);
-                let controller = new AbortController();
-                let timer = setTimeout(() => controller.abort(), timeout);
+                const controller = new AbortController();
+                const timer = setTimeout(() => controller.abort(), timeout);
                 let resp, data, filename = url.split("/").pop() || "downloaded.bin";
                 let cacheExpiry = null;
                 try {
@@ -206,7 +206,7 @@ class EJS_Download {
                         }
                         const reader = resp.body.getReader();
                         let received = 0;
-                        let chunks = [];
+                        const chunks = [];
                         while (true) {
                             const { done, value } = await reader.read();
                             if (done) break;
@@ -378,7 +378,7 @@ class EJS_Cache {
      * @returns {string} The generated cache key.
      */
     generateCacheKey(dataArray) {
-        let hash = simpleHash(dataArray);
+        const hash = simpleHash(dataArray);
         const compressionCacheKey = "Obj-" + hash + "-" + dataArray.length;
         return compressionCacheKey;
     }
@@ -743,7 +743,7 @@ class EJS_Cache {
         allItems.sort((a, b) => a.lastAccessed - b.lastAccessed);
 
         let currentSize = 0;
-        let totalItems = allItems.length;
+        const totalItems = allItems.length;
         const itemsToRemove = [];
 
         // Calculate current total size

@@ -13,7 +13,7 @@ import "./vendor/socket.io.min.js";
 
 class EmulatorJS {
     getCores() {
-        let rv = CONSTS.cores;
+        const rv = CONSTS.cores;
         if (this.isSafari && this.isMobile && rv.n64) {
             rv.n64 = rv.n64.reverse();
         }
@@ -59,7 +59,7 @@ class EmulatorJS {
     }
     addEventListener(element, listener, callback) {
         const listeners = listener.split(" ");
-        let rv = [];
+        const rv = [];
         for (let i = 0; i < listeners.length; i++) {
             element.addEventListener(listeners[i], callback);
             const data = { cb: callback, elem: element, listener: listeners[i] };
@@ -210,7 +210,7 @@ class EmulatorJS {
         fetch("https://cdn.emulatorjs.org/stable/data/version.json").then(response => {
             if (response.ok) {
                 response.text().then(body => {
-                    let version = JSON.parse(body);
+                    const version = JSON.parse(body);
                     if (this.versionAsInt(this.ejs_version) < this.versionAsInt(version.version)) {
                         console.log(`Using EmulatorJS version ${this.ejs_version} but the newest version is ${version.current_version}\nopen https://github.com/EmulatorJS/EmulatorJS to update`);
                     }
@@ -225,7 +225,7 @@ class EmulatorJS {
         if (ver.endsWith("-pre")) {
             ver = ver.substring(0, ver.length - 4);
         }
-        let rv = ver.split(".");
+        const rv = ver.split(".");
         if (rv[rv.length - 1].length === 1) {
             rv[rv.length - 1] = "0" + rv[rv.length - 1];
         }
@@ -338,7 +338,7 @@ class EmulatorJS {
         this.enableMouseLock = false;
         this.supportsWebgl2 = !!document.createElement("canvas").getContext("webgl2") && (this.config.forceLegacyCores !== true);
         this.webgl2Enabled = (() => {
-            let setting = this.preGetSetting("webgl2Enabled");
+            const setting = this.preGetSetting("webgl2Enabled");
             if (setting === "disabled" || !this.supportsWebgl2) {
                 return false;
             } else if (setting === "enabled") {
@@ -516,7 +516,7 @@ class EmulatorJS {
         const gotCore = (data) => {
             this.defaultCoreOpts = {};
             
-            let decompressedData = {};
+            const decompressedData = {};
             
             // Check if data is already a cache item with extracted files
             if (data && data.files && Array.isArray(data.files)) {
@@ -546,7 +546,7 @@ class EmulatorJS {
         this.processCore = (decompressedData) => {
             if (this.debug) console.log("[EJS Core] Decompressed files:", Object.keys(decompressedData));
             let js, thread, wasm;
-            for (let k in decompressedData) {
+            for (const k in decompressedData) {
                 if (k.endsWith(".wasm")) {
                     wasm = decompressedData[k];
                 } else if (k.endsWith(".worker.js")) {
@@ -556,7 +556,7 @@ class EmulatorJS {
                 } else if (k === "build.json") {
                     this.checkCoreCompatibility(JSON.parse(new TextDecoder().decode(decompressedData[k])));
                 } else if (k === "core.json") {
-                    let core = JSON.parse(new TextDecoder().decode(decompressedData[k]));
+                    const core = JSON.parse(new TextDecoder().decode(decompressedData[k]));
                     this.extensions = core.extensions;
                     this.coreName = core.name;
                     this.repository = core.repo;
@@ -643,8 +643,8 @@ class EmulatorJS {
                 }
             }
 
-            let legacy = (this.supportsWebgl2 && this.webgl2Enabled ? "" : "-legacy");
-            let filename = this.getCore() + (threads ? "-thread" : "") + legacy + "-wasm.data";
+            const legacy = (this.supportsWebgl2 && this.webgl2Enabled ? "" : "-legacy");
+            const filename = this.getCore() + (threads ? "-thread" : "") + legacy + "-wasm.data";
 
             // Download the core
             console.log("[EJS Core] Downloading core:", filename);
@@ -666,7 +666,7 @@ class EmulatorJS {
         });
     }
     initGameCore(js, wasm, thread) {
-        let script = this.createElement("script");
+        const script = this.createElement("script");
         script.src = URL.createObjectURL(new Blob([js], { type: "application/javascript" }));
         script.addEventListener("load", () => {
             this.initModule(wasm, thread);
@@ -685,7 +685,7 @@ class EmulatorJS {
             if (name) return name;
         }
         if (!this.fileName) return "game";
-        let parts = this.fileName.split(".");
+        const parts = this.fileName.split(".");
         parts.splice(parts.length - 1, 1);
         return parts.join(".");
     }
@@ -758,14 +758,14 @@ class EmulatorJS {
                 const inData = new Uint8Array(arrayBuffer);
 
                 // check cache
-                let key = this.storageCache.generateCacheKey(inData);
-                let cachedItem = await this.storageCache.get(key);
+                const key = this.storageCache.generateCacheKey(inData);
+                const cachedItem = await this.storageCache.get(key);
                 if (cachedItem) {
                     if (this.debug) console.log("[EJS " + type.name.toUpperCase() + "] Using cached content for " + url.name);
                     returnData = cachedItem;
                 } else {
                     // Not in cache - decompress
-                    let files = [];
+                    const files = [];
                     if (dontExtract === false) {
                         const decompressedData = await this.compression.decompress(inData, (m, appendMsg) => {
                             this.frontend.setLoadingText(appendMsg ? "Decompress Game Core" : null, m);
@@ -796,7 +796,7 @@ class EmulatorJS {
                     }
 
                     // construct EJS_CacheItem
-                    let data = new EJS_CacheItem(
+                    const data = new EJS_CacheItem(
                         key,
                         files,
                         Date.now(),
@@ -1133,7 +1133,7 @@ class EmulatorJS {
     }
     checkStarted() {
         (async () => {
-            let sleep = (ms) => new Promise(r => setTimeout(r, ms));
+            const sleep = (ms) => new Promise(r => setTimeout(r, ms));
             let state = "suspended";
             let popup;
             while (state === "suspended") {
@@ -1322,7 +1322,7 @@ class EmulatorJS {
             volume: "volumeSlider"
         };
 
-        let mergedButtonOptions = this.defaultButtonOptions;
+        const mergedButtonOptions = this.defaultButtonOptions;
 
         // merge buttonUserOpts with mergedButtonOptions
         if (buttonUserOpts) {
@@ -1903,7 +1903,7 @@ class EmulatorJS {
         }
         let rv = "";
         for (const k in settings) {
-            let value = isNaN(settings[k]) ? `"${settings[k]}"` : settings[k];
+            const value = isNaN(settings[k]) ? `"${settings[k]}"` : settings[k];
             rv += `${k} = ${value}\n`;
         }
         return rv;
@@ -2214,7 +2214,7 @@ class EmulatorJS {
             const audioContext = alContext.audioCtx;
 
             const gainNodes = [];
-            for (let sourceIdx in alContext.sources) {
+            for (const sourceIdx in alContext.sources) {
                 gainNodes.push(alContext.sources[sourceIdx].gain);
             }
 
@@ -2334,7 +2334,7 @@ class EmulatorJS {
             }
         }
 
-        var recentHash = null;
+        let recentHash = null;
         if (this.gameManager) { withGameSaveHash(this.gameManager.getSaveFile(false), (hash, _) => { recentHash = hash }) }
 
         this.on("saveSaveFiles", saveFile => {

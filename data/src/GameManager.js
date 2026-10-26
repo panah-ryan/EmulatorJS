@@ -109,7 +109,7 @@ class EJS_GameManager {
                                 false          // dontExtract
                             );
                             
-                            let path = key;
+                            const path = key;
                             if (key.trim().endsWith("/")) {
                                 // Extract to directory
                                 for (let i = 0; i < cacheItem.data.files.length; i++) {
@@ -294,12 +294,12 @@ IF EXIST AUTORUN.BAT CALL AUTORUN.BAT
     }
     quickSave(slot) {
         if (!slot) slot = 1;
-        let name = slot + "-quick.state";
+        const name = slot + "-quick.state";
         try {
             this.FS.unlink(name);
         } catch(e) {}
         try {
-            let data = this.getState();
+            const data = this.getState();
             this.FS.writeFile("/" + name, data);
         } catch(e) {
             return false;
@@ -309,7 +309,7 @@ IF EXIST AUTORUN.BAT CALL AUTORUN.BAT
     quickLoad(slot) {
         if (!slot) slot = 1;
         (async () => {
-            let name = slot + "-quick.state";
+            const name = slot + "-quick.state";
             this.clearEJSResetTimer();
             this.functions.loadState(name, 0);
         })();

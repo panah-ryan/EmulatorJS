@@ -99,7 +99,7 @@ class EJS_COMPRESSION {
                     return;
                 }
                 const path = URL.createObjectURL(new Blob([res2.data], { type: "application/wasm" }));
-                let script = `
+                const script = `
                     let dataToPass = [];
                     Module = {
                         monitorRunDependencies: function(left) {

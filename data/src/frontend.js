@@ -313,7 +313,7 @@ class EJS_Frontend {
     }
     setColor(color) {
         if (typeof color !== "string") color = "";
-        let getColor = function(color) {
+        const getColor = function(color) {
             color = color.toLowerCase();
             if (color && /^#([0-9a-fA-f]{3}|[0-9a-fA-f]{6})$/.test(color)) {
                 if (color.length === 4) {
@@ -323,7 +323,7 @@ class EJS_Frontend {
                     }
                     color = rv;
                 }
-                let rv = [];
+                const rv = [];
                 for (let i = 1; i < 7; i += 2) {
                     rv.push(parseInt("0x" + color.slice(i, i + 2), 16));
                 }
@@ -797,7 +797,7 @@ class EJS_Frontend {
                 if (current) {
                     current.style.display = "none";
                 }
-                let activeLi = li.parentElement.querySelector(".ejs_active_list_element");
+                const activeLi = li.parentElement.querySelector(".ejs_active_list_element");
                 if (activeLi) {
                     activeLi.classList.remove("ejs_active_list_element");
                 }
@@ -875,7 +875,7 @@ class EJS_Frontend {
         padding.style["padding-top"] = "10px";
         popup.appendChild(padding);
 
-        for (let k in buttons) {
+        for (const k in buttons) {
             const button = this.ejs.createElement("a");
             if (buttons[k] instanceof Function) {
                 button.addEventListener("click", (e) => {
@@ -1622,7 +1622,7 @@ class EJS_Frontend {
             remove.style.cursor = "pointer";
 
             // Calculate total size of all files in this cache item
-            let totalSize = item.fileSize;
+            const totalSize = item.fileSize;
 
             // Use filename if available, otherwise fall back to key
             const displayName = item.filename || item.key;
@@ -1671,7 +1671,7 @@ class EJS_Frontend {
     }
 
     createControlSettingMenu() {
-        let buttonListeners = [];
+        const buttonListeners = [];
         this.checkGamepadInputs = () => buttonListeners.forEach(elem => elem());
         this.gamepadLabels = [];
         this.gamepadSelection = [];
@@ -2289,7 +2289,7 @@ class EJS_Frontend {
             { id: 29, label: this.localization("SLOW MOTION") },
             { id: 28, label: this.localization("REWIND") }
         );
-        let nums = [];
+        const nums = [];
         for (let i = 0; i < buttons.length; i++) {
             nums.push(buttons[i].id);
         }
@@ -2312,8 +2312,8 @@ class EJS_Frontend {
         //    delete buttons[26];
         //}
         let selectedPlayer;
-        let players = [];
-        let playerDivs = [];
+        const players = [];
+        const playerDivs = [];
 
         const playerSelect = this.ejs.createElement("ul");
         playerSelect.classList.add("ejs_control_player_bar");
@@ -3125,7 +3125,7 @@ class EJS_Frontend {
                 }
                 elems[info[i].location].appendChild(button);
                 const value = info[i].input_new_cores || info[i].input_value;
-                let downValue = info[i].joystickInput === true ? 0x7fff : 1;
+                const downValue = info[i].joystickInput === true ? 0x7fff : 1;
                 this.ejs.addEventListener(button, "touchstart touchend touchcancel", (e) => {
                     e.preventDefault();
                     const isAnalog = this.ejs.analogAxes.includes(value);
@@ -3175,8 +3175,8 @@ class EJS_Frontend {
                 let up = 0,
                     down = 0,
                     left = 0,
-                    right = 0,
-                    angle = Math.atan(x / y) / (Math.PI / 180);
+                    right = 0;
+                const angle = Math.atan(x / y) / (Math.PI / 180);
 
                 if (y <= -10) {
                     up = 1;
@@ -3587,7 +3587,7 @@ class EJS_Frontend {
         this.handleSettingsResize();
     }
     getElementSize(element) {
-        let elem = element.cloneNode(true);
+        const elem = element.cloneNode(true);
         elem.style.position = "absolute";
         elem.style.opacity = 0;
         elem.removeAttribute("hidden");
@@ -3617,7 +3617,7 @@ class EJS_Frontend {
                 needChange = true;
             }
             let height = this.elements.parent.getBoundingClientRect().height;
-            let w2 = this.diskParent.parentElement.getBoundingClientRect().width;
+            const w2 = this.diskParent.parentElement.getBoundingClientRect().width;
             let disksX = this.diskParent.getBoundingClientRect().x;
             if (w2 > window.innerWidth) disksX += (w2 - window.innerWidth);
             const onTheRight = disksX > (w2 - 15) / 2;
@@ -3637,12 +3637,12 @@ class EJS_Frontend {
 
         home.classList.add("ejs_setting_menu");
         nested.appendChild(home);
-        let funcs = [];
+        const funcs = [];
         this.changeDiskOption = (title, newValue) => {
             this.disks[title] = newValue;
             funcs.forEach(e => e(title));
         }
-        let allOpts = {};
+        const allOpts = {};
 
         // TODO - Why is this duplicated?
         const addToMenu = (title, id, options, defaultOption) => {
@@ -3679,7 +3679,7 @@ class EJS_Frontend {
             const optionsMenu = this.ejs.createElement("div");
             optionsMenu.classList.add("ejs_setting_menu");
 
-            let buttons = [];
+            const buttons = [];
             let opts = options;
             if (Array.isArray(options)) {
                 opts = {};
@@ -3890,7 +3890,7 @@ class EJS_Frontend {
                 needChange = true;
             }
             let height = this.elements.parent.getBoundingClientRect().height;
-            let w2 = this.settingParent.parentElement.getBoundingClientRect().width;
+            const w2 = this.settingParent.parentElement.getBoundingClientRect().width;
             let settingsX = this.settingParent.getBoundingClientRect().x;
             if (w2 > window.innerWidth) settingsX += (w2 - window.innerWidth);
             const onTheRight = settingsX > (w2 - 15) / 2;
@@ -3909,8 +3909,8 @@ class EJS_Frontend {
         }
         nested.appendChild(home);
 
-        let funcs = [];
-        let settings = {};
+        const funcs = [];
+        const settings = {};
         this.changeSettingOption = (title, newValue, startup) => {
             this.ejs.allSettings[title] = newValue;
             if (startup !== true) {
@@ -3919,7 +3919,7 @@ class EJS_Frontend {
             settings[title] = newValue;
             funcs.forEach(e => e(title));
         }
-        let allOpts = {};
+        const allOpts = {};
 
         const addToMenu = (title, id, options, defaultOption, parentElement, useParentParent, info) => {
             if (Array.isArray(this.ejs.config.hideSettings) && this.ejs.config.hideSettings.includes(id)) {
@@ -3978,7 +3978,7 @@ class EJS_Frontend {
             pageTitle.classList.add("ejs_menu_text_a");
             button.appendChild(pageTitle);
 
-            let buttons = [];
+            const buttons = [];
             let opts = options;
             if (Array.isArray(options)) {
                 opts = {};
@@ -4065,7 +4065,7 @@ class EJS_Frontend {
                 "bicubic": this.localization("Bicubic"),
                 "mix-frames": this.localization("Mix frames"),
             };
-            let shaderMenu = {
+            const shaderMenu = {
                 "disabled": this.localization("Disabled"),
             };
             for (const shaderName in this.ejs.shaders) {
@@ -4109,7 +4109,7 @@ class EJS_Frontend {
             "retroarch": "retroarch"
         }, this.ejs.capture.photo.source, screenCaptureOptions, true);
 
-        let screenshotFormats = {
+        const screenshotFormats = {
             "png": "png",
             "jpeg": "jpeg",
             "webp": "webp"
@@ -4123,7 +4123,7 @@ class EJS_Frontend {
         addToMenu(this.localization("Screenshot Format"), "screenshotFormat", screenshotFormats, this.ejs.capture.photo.format, screenCaptureOptions, true);
 
         const screenshotUpscale = this.ejs.capture.photo.upscale.toString();
-        let screenshotUpscales = {
+        const screenshotUpscales = {
             "0": "native",
             "1": "1x",
             "2": "2x",
@@ -4135,7 +4135,7 @@ class EJS_Frontend {
         addToMenu(this.localization("Screenshot Upscale"), "screenshotUpscale", screenshotUpscales, screenshotUpscale, screenCaptureOptions, true);
 
         const screenRecordFPS = this.ejs.capture.video.fps.toString();
-        let screenRecordFPSs = {
+        const screenRecordFPSs = {
             "30": "30",
             "60": "60"
         }
@@ -4144,7 +4144,7 @@ class EJS_Frontend {
         }
         addToMenu(this.localization("Screen Recording FPS"), "screenRecordFPS", screenRecordFPSs, screenRecordFPS, screenCaptureOptions, true);
 
-        let screenRecordFormats = {
+        const screenRecordFormats = {
             "mp4": "mp4",
             "webm": "webm"
         }
@@ -4159,7 +4159,7 @@ class EJS_Frontend {
         addToMenu(this.localization("Screen Recording Format"), "screenRecordFormat", screenRecordFormats, this.ejs.capture.video.format, screenCaptureOptions, true);
 
         const screenRecordUpscale = this.ejs.capture.video.upscale.toString();
-        let screenRecordUpscales = {
+        const screenRecordUpscales = {
             "1": "1x",
             "2": "2x",
             "3": "3x",
@@ -4171,7 +4171,7 @@ class EJS_Frontend {
         addToMenu(this.localization("Screen Recording Upscale"), "screenRecordUpscale", screenRecordUpscales, screenRecordUpscale, screenCaptureOptions, true);
 
         const screenRecordVideoBitrate = this.ejs.capture.video.videoBitrate.toString();
-        let screenRecordVideoBitrates = {
+        const screenRecordVideoBitrates = {
             "1048576": "1 Mbit/sec",
             "2097152": "2 Mbit/sec",
             "2621440": "2.5 Mbit/sec",
@@ -4184,7 +4184,7 @@ class EJS_Frontend {
         addToMenu(this.localization("Screen Recording Video Bitrate"), "screenRecordVideoBitrate", screenRecordVideoBitrates, screenRecordVideoBitrate, screenCaptureOptions, true);
 
         const screenRecordAudioBitrate = this.ejs.capture.video.audioBitrate.toString();
-        let screenRecordAudioBitrates = {
+        const screenRecordAudioBitrates = {
             "65536": "64 Kbit/sec",
             "131072": "128 Kbit/sec",
             "196608": "192 Kbit/sec",
@@ -4361,13 +4361,13 @@ class EJS_Frontend {
         } else if (coreOpts) {
             const coreOptions = createSettingParent(true, "Core Options", home);
             coreOpts.split("\n").forEach((line, index) => {
-                let option = line.split("; ");
-                let name = option[0];
-                let options = option[1].split("|"),
+                const option = line.split("; ");
+                const name = option[0];
+                const options = option[1].split("|"),
                     optionName = name.split("|")[0].replace(/_/g, " ").replace(/.+\-(.+)/, "$1");
                 options.slice(1, -1);
                 if (options.length === 1) return;
-                let availableOptions = {};
+                const availableOptions = {};
                 for (let i = 0; i < options.length; i++) {
                     availableOptions[options[i]] = this.localization(options[i], this.ejs.config.settingsLanguage);
                 }
