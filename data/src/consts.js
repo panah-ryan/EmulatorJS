@@ -2,6 +2,7 @@ export const version = "4.3.0-pre";
 
 export const cores = {
     "mame": ["mame2003_plus"],
+    "neogeo": ["fbneo"],
     "nes": ["nestopia"],
     "snes": ["snes9x"],
     "gb": ["sameboy"],
