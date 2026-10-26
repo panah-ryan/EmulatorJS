@@ -91,7 +91,9 @@ class EJS_Frontend {
             }));
         };
         const findTouch = (e) => [...e.changedTouches].find(touch => touch.identifier === touchId);
+        // preventDefault stops the browser adding its own mouse events after a tap
         this.ejs.addEventListener(this.canvas, "touchstart", (e) => {
+            e.preventDefault();
             if (touchId !== null) return;
             const touch = e.changedTouches[0];
             touchId = touch.identifier;
@@ -100,10 +102,12 @@ class EJS_Frontend {
             send("mousedown", touch);
         });
         this.ejs.addEventListener(this.canvas, "touchmove", (e) => {
+            e.preventDefault();
             const touch = findTouch(e);
             if (touch) send("mousemove", touch);
         });
         this.ejs.addEventListener(this.canvas, "touchend touchcancel", (e) => {
+            e.preventDefault();
             const touch = findTouch(e);
             if (!touch) return;
             touchId = null;
