@@ -819,6 +819,24 @@
         "repo": "https://github.com/libretro/FBNeo"
     },
     {
+        "name": "opera",
+        "extensions": [
+            "iso",
+            "bin",
+            "chd",
+            "cue"
+        ],
+        "makeoptions": {
+            "buildpath": "./",
+            "makescript": "Makefile",
+            "arguments": []
+        },
+        "options": {},
+        "save": "srm",
+        "license": "",
+        "repo": "https://github.com/libretro/opera-libretro"
+    },
+    {
         "name": "beetle_saturn",
         "extensions": [
             "cue",

@@ -1,0 +1,18 @@
+diff --git a/Makefile.common b/Makefile.common
+index 565b96f..b55a54f 100644
+--- a/Makefile.common
++++ b/Makefile.common
+@@ -137,7 +137,12 @@ SOURCES_C += \
+         $(LIBRETRO_COMM_DIR)/formats/7z/r7z_lzma.c \
+         $(LIBRETRO_COMM_DIR)/formats/flac/rflac.c
+ 
+-ifeq ($(STATIC_LINKING), 1)
++ifeq ($(platform), emscripten)
++# RetroArch's older copy lacks encoding_crc16_ccitt, so build this one with encoding_crc32 renamed
++SOURCES_C += \
++        $(LIBRETRO_COMM_DIR)/encodings/encoding_crc32.c
++$(LIBRETRO_COMM_DIR)/encodings/encoding_crc32.o: CFLAGS += -Dencoding_crc32=opera_encoding_crc32
++else ifeq ($(STATIC_LINKING), 1)
+ SOURCES_C += \
+         $(LIBRETRO_COMM_DIR)/encodings/encoding_crc32.c \
+         $(LIBRETRO_COMM_DIR)/features/features_cpu.c
