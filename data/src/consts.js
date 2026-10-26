@@ -20,6 +20,7 @@ export const cores = {
     "pc88": ["quasi88"],
     "atari800": ["atari800"],
     "atari5200": ["atari800"],
+    "atari7800": ["prosystem"],
     "pc98": ["nekop2"],
     "msx": ["bluemsx"],
     "atarist": ["hatarib"],

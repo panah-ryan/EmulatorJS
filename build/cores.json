@@ -661,6 +661,22 @@
         "repo": "https://github.com/libretro/libretro-uae"
     },
     {
+        "name": "prosystem",
+        "extensions": [
+            "a78",
+            "bin"
+        ],
+        "makeoptions": {
+            "arguments": [],
+            "buildpath": "./",
+            "makescript": "Makefile"
+        },
+        "options": {},
+        "save": false,
+        "license": "License.txt",
+        "repo": "https://github.com/libretro/prosystem-libretro"
+    },
+    {
         "name": "px68k",
         "extensions": [
             "dim",
