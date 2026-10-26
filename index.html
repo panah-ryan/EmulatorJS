@@ -363,6 +363,9 @@
                     if (["j64", "jag"].includes(ext))
                         return "jaguar"
 
+                    if (["32x"].includes(ext))
+                        return "sega32x"
+
                     if (["md", "smd", "gen", "mdx"].includes(ext))
                         return "segaMD"
 
@@ -423,6 +426,7 @@
                             "Sega Game Gear": "segaGG",
                             "Sega Mega Drive / Genesis": "segaMD",
                             "Sega CD / Mega-CD": "segaCD",
+                            "Sega 32X": "sega32x",
                             "PC Engine / TurboGrafx-16": "pce",
                             "3DO": "3do",
                             "Atari 8-bit (400/800/XL/XE)": "atari800",

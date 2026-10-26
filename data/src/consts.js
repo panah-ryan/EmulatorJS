@@ -24,6 +24,7 @@ export const cores = {
     "segaGG": ["genesis_plus_gx"],
     "segaMD": ["genesis_plus_gx"],
     "segaCD": ["genesis_plus_gx"],
+    "sega32x": ["picodrive"],
     "pce": ["mednafen_pce_fast"],
     "3do": ["opera"],
     "pc88": ["quasi88"],
@@ -55,10 +56,12 @@ export const mouseSystems = ["mac"];
 // systems where the game screen acts as a trackpad, for cores that read relative mouse movement
 export const trackpadSystems = ["amiga", "atarist", "x68000", "fmtowns"];
 
-// core options forced for systems that share a core with another system
+// core options forced for a system, such as one that shares its core with another system
 export const systemCoreOptions = {
     "atari5200": { "atari800_system": "5200" },
-    "amigacd32": { "puae_model": "CD32" }
+    "amigacd32": { "puae_model": "CD32" },
+    // picodrive defaults to a 3 button pad
+    "sega32x": { "picodrive_input1": "6 button pad", "picodrive_input2": "6 button pad" }
 };
 
 // hold SHIFT and tap BREAK on an Electron, which boots the disk in the Plus 3
