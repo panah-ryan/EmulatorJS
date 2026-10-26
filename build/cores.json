@@ -723,6 +723,24 @@
         "repo": "https://github.com/libretro/px68k-libretro"
     },
     {
+        "name": "mednafen_lynx",
+        "extensions": [
+            "lnx",
+            "o"
+        ],
+        "makeoptions": {
+            "buildpath": "./",
+            "makescript": "Makefile",
+            "arguments": [
+                "NEED_CRC32=0"
+            ]
+        },
+        "options": {},
+        "save": false,
+        "license": "COPYING",
+        "repo": "https://github.com/libretro/beetle-lynx-libretro"
+    },
+    {
         "name": "beetle_saturn",
         "extensions": [
             "cue",
