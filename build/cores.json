@@ -803,6 +803,22 @@
         "repo": "https://github.com/libretro/snes9x"
     },
     {
+        "name": "fbneo",
+        "extensions": [
+            "zip",
+            "7z"
+        ],
+        "makeoptions": {
+            "buildpath": "./src/burner/libretro",
+            "makescript": "Makefile",
+            "arguments": ["SUBSET=neogeo", "TARGET_NAME=fbneo", "REGEN_HEADERS=1"]
+        },
+        "options": {},
+        "save": false,
+        "license": "LICENSE.md",
+        "repo": "https://github.com/libretro/FBNeo"
+    },
+    {
         "name": "beetle_saturn",
         "extensions": [
             "cue",
