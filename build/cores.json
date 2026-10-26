@@ -884,6 +884,24 @@
         "repo": "https://github.com/libretro/picodrive"
     },
     {
+        "name": "mednafen_pcfx",
+        "extensions": [
+            "cue",
+            "ccd",
+            "toc",
+            "chd"
+        ],
+        "makeoptions": {
+            "buildpath": "./",
+            "makescript": "Makefile",
+            "arguments": []
+        },
+        "options": {},
+        "save": "srm",
+        "license": "COPYING",
+        "repo": "https://github.com/libretro/beetle-pcfx-libretro"
+    },
+    {
         "name": "beetle_saturn",
         "extensions": [
             "cue",

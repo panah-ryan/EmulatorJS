@@ -1,0 +1,14 @@
+diff --git a/Makefile.common b/Makefile.common
+index 3374560..bad686c 100644
+--- a/Makefile.common
++++ b/Makefile.common
+@@ -118,6 +118,9 @@ ZLIB_SOURCES_C = \
+     ifeq ($(SYSTEM_ZLIB), 1)
+        INCFLAGS += $(shell pkg-config --cflags zlib)
+        LIBS += $(shell pkg-config --libs zlib)
++    else ifeq ($(platform), emscripten)
++       # RetroArch links emscripten's zlib port, so only the headers are needed
++       INCFLAGS += $(ZLIB_INCFLAGS)
+     else
+        INCFLAGS += $(ZLIB_INCFLAGS)
+        SOURCES_C += $(ZLIB_SOURCES_C)
