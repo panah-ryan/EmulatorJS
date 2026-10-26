@@ -21,6 +21,7 @@ export const cores = {
     "segaMS": ["genesis_plus_gx"],
     "segaGG": ["genesis_plus_gx"],
     "segaMD": ["genesis_plus_gx"],
+    "segaCD": ["genesis_plus_gx"],
     "pce": ["mednafen_pce_fast"],
     "pc88": ["quasi88"],
     "atari800": ["atari800"],
