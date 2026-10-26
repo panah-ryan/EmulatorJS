@@ -1,0 +1,34 @@
+diff --git a/platform/libretro/libretro.c b/platform/libretro/libretro.c
+index 207350d..f21666c 100644
+--- a/platform/libretro/libretro.c
++++ b/platform/libretro/libretro.c
+@@ -416,6 +416,29 @@ void plat_munmap(void *ptr, size_t size)
+    free(ptr);
+ }
+ 
++#elif defined(__EMSCRIPTEN__)
++/* emscripten's mmap rejects address hints, so use zeroed heap memory like anonymous mmap */
++void *plat_mmap(unsigned long addr, size_t size, int need_exec, int is_fixed)
++{
++   (void)addr;
++   (void)need_exec;
++   (void)is_fixed;
++   return calloc(1, size);
++}
++
++void *plat_mremap(void *ptr, size_t oldsize, size_t newsize)
++{
++   void *ret = realloc(ptr, newsize);
++   if (ret && newsize > oldsize)
++      memset((char *)ret + oldsize, 0, newsize - oldsize);
++   return ret;
++}
++
++void plat_munmap(void *ptr, size_t size)
++{
++   (void)size;
++   free(ptr);
++}
+ #else
+ void *plat_mmap(unsigned long addr, size_t size, int need_exec, int is_fixed)
+ {

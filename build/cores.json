@@ -860,6 +860,30 @@
         "repo": "https://github.com/libretro/virtualjaguar-libretro"
     },
     {
+        "name": "picodrive",
+        "extensions": [
+            "bin",
+            "gen",
+            "smd",
+            "md",
+            "32x",
+            "cue",
+            "iso",
+            "sms",
+            "68k",
+            "chd"
+        ],
+        "makeoptions": {
+            "buildpath": "./",
+            "makescript": "Makefile.libretro",
+            "arguments": []
+        },
+        "options": {},
+        "save": "srm",
+        "license": "COPYING",
+        "repo": "https://github.com/libretro/picodrive"
+    },
+    {
         "name": "beetle_saturn",
         "extensions": [
             "cue",
