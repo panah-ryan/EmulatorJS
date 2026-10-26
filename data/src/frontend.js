@@ -1655,23 +1655,6 @@ class EJS_Frontend {
                 { id: 11, label: this.localization("R") },
                 { id: 14, label: this.localization("Microphone") },
             ];
-        } else if ("vb" === this.ejs.getControlScheme()) {
-            buttons = [
-                { id: 8, label: this.localization("A") },
-                { id: 0, label: this.localization("B") },
-                { id: 10, label: this.localization("L") },
-                { id: 11, label: this.localization("R") },
-                { id: 2, label: this.localization("SELECT") },
-                { id: 3, label: this.localization("START") },
-                { id: 4, label: this.localization("LEFT D-PAD UP") },
-                { id: 5, label: this.localization("LEFT D-PAD DOWN") },
-                { id: 6, label: this.localization("LEFT D-PAD LEFT") },
-                { id: 7, label: this.localization("LEFT D-PAD RIGHT") },
-                { id: 19, label: this.localization("RIGHT D-PAD UP") },
-                { id: 18, label: this.localization("RIGHT D-PAD DOWN") },
-                { id: 17, label: this.localization("RIGHT D-PAD LEFT") },
-                { id: 16, label: this.localization("RIGHT D-PAD RIGHT") },
-            ];
         } else if (["segaMD", "segaCD", "sega32x"].includes(this.ejs.getControlScheme())) {
             buttons = [
                 { id: 1, label: this.localization("A") },
@@ -1827,30 +1810,6 @@ class EJS_Frontend {
                 { id: 10, label: this.localization("Y LEFT") },
                 { id: 11, label: this.localization("Y RIGHT") },
             ];
-        } else if ("coleco" === this.ejs.getControlScheme()) {
-            buttons = [
-                { id: 8, label: this.localization("LEFT BUTTON") },
-                { id: 0, label: this.localization("RIGHT BUTTON") },
-                { id: 1, label: this.localization("1") },
-                { id: 9, label: this.localization("2") },
-                { id: 10, label: this.localization("3") },
-                { id: 11, label: this.localization("4") },
-                { id: 12, label: this.localization("5") },
-                { id: 13, label: this.localization("6") },
-                { id: 14, label: this.localization("7") },
-                { id: 15, label: this.localization("8") },
-                { id: 18, label: this.localization("9") },
-                { id: 16, label: this.localization("0") },
-                { id: 2, label: this.localization("*") },
-                { id: 3, label: this.localization("#") },
-                { id: 4, label: this.localization("UP") },
-                { id: 5, label: this.localization("DOWN") },
-                { id: 6, label: this.localization("LEFT") },
-                { id: 7, label: this.localization("RIGHT") },
-                { id: 17, label: this.localization("ALT 0") },
-                { id: 19, label: this.localization("ALT 9") },
-            ];
-            this.ejs.analogAxes.splice(0, 4) // 16 to 19 are not analog for gearcoleco
         } else if ("pcfx" === this.ejs.getControlScheme()) {
             buttons = [
                 { id: 8, label: this.localization("I") },
@@ -2529,18 +2488,6 @@ class EJS_Frontend {
                 { "type": "button", "text": "Pause", "id": "pause", "location": "center", "left": -5, "fontSize": 15, "block": true, "input_value": 2 }
             ];
             info.push(...speedControlButtons);
-        } else if ("vb" === this.ejs.getControlScheme()) {
-            info = [
-                { "type": "button", "text": "B", "id": "b", "location": "right", "right": 75, "top": 150, "bold": true, "input_value": 0 },
-                { "type": "button", "text": "A", "id": "a", "location": "right", "right": 5, "top": 150, "bold": true, "input_value": 8 },
-                { "type": "dpad", "id": "left_dpad", "location": "left", "left": "50%", "right": "50%", "joystickInput": false, "inputValues": [4, 5, 6, 7] },
-                { "type": "dpad", "id": "right_dpad", "location": "right", "left": "50%", "right": "50%", "joystickInput": false, "inputValues": [19, 18, 17, 16] },
-                { "type": "button", "text": "L", "id": "l", "location": "left", "left": 3, "top": -90, "bold": true, "block": true, "input_value": 10 },
-                { "type": "button", "text": "R", "id": "r", "location": "right", "right": 3, "top": -90, "bold": true, "block": true, "input_value": 11 },
-                { "type": "button", "text": "Start", "id": "start", "location": "center", "left": 60, "fontSize": 15, "block": true, "input_value": 3 },
-                { "type": "button", "text": "Select", "id": "select", "location": "center", "left": -5, "fontSize": 15, "block": true, "input_value": 2 }
-            ];
-            info.push(...speedControlButtons);
         } else if ("3do" === this.ejs.getControlScheme()) {
             info = [
                 { "type": "button", "text": "A", "id": "a", "location": "right", "right": 145, "top": 70, "bold": true, "input_value": 1 },
@@ -2577,27 +2524,6 @@ class EJS_Frontend {
                 { "type": "dpad", "id": "x_dpad", "location": "left", "left": "50%", "right": "50%", "joystickInput": false, "inputValues": [4, 5, 6, 7] },
                 { "type": "dpad", "id": "y_dpad", "location": "right", "left": "50%", "right": "50%", "joystickInput": false, "inputValues": [13, 12, 10, 11] },
                 { "type": "button", "text": "Start", "id": "start", "location": "center", "left": 30, "fontSize": 15, "block": true, "input_value": 3 },
-            ];
-            info.push(...speedControlButtons);
-        } else if ("coleco" === this.ejs.getControlScheme()) {
-            info = [
-                { "type": "button", "text": "L", "id": "l", "location": "right", "left": 10, "top": 40, "bold": true, "input_value": 0 },
-                { "type": "button", "text": "R", "id": "r", "location": "right", "left": 81, "top": 40, "bold": true, "input_value": 8 },
-                { "type": "dpad", "id": "dpad", "location": "left", "left": "50%", "right": "50%", "joystickInput": false, "inputValues": [4, 5, 6, 7] },
-
-                { "type": "button", "text": "1", "id": "one_key", "block": true, "fontSize": 15, "location": "left", "left": 0, "top": 145, "input_value": 1 },
-                { "type": "button", "text": "2", "id": "two_key", "block": true, "fontSize": 15, "location": "left", "left": 60, "top": 145, "input_value": 9 },
-                { "type": "button", "text": "3", "id": "three_key", "block": true, "fontSize": 15, "location": "left", "left": 120, "top": 145, "input_value": 10 },
-                { "type": "button", "text": "4", "id": "four_key", "block": true, "fontSize": 15, "location": "left", "left": 0, "top": 185, "input_value": 11 },
-                { "type": "button", "text": "5", "id": "five_key", "block": true, "fontSize": 15, "location": "left", "left": 60, "top": 185, "input_value": 12 },
-                { "type": "button", "text": "6", "id": "six_key", "block": true, "fontSize": 15, "location": "left", "left": 120, "top": 185, "input_value": 13 },
-
-                { "type": "button", "text": "7", "id": "seven_key", "block": true, "fontSize": 15, "location": "right", "right": 120, "top": 145, "input_value": 14 },
-                { "type": "button", "text": "8", "id": "eight_key", "block": true, "fontSize": 15, "location": "right", "right": 60, "top": 145, "input_value": 15 },
-                { "type": "button", "text": "9", "id": "nine_key", "block": true, "fontSize": 15, "location": "right", "right": "0px", "top": 145, "input_value": 18 },
-                { "type": "button", "text": "*", "id": "star_key", "block": true, "fontSize": 15, "location": "right", "right": 120, "top": 185, "input_value": 3 },
-                { "type": "button", "text": "0", "id": "zero_key", "block": true, "fontSize": 15, "location": "right", "right": 60, "top": 185, "input_value": 16 },
-                { "type": "button", "text": "#", "id": "hash_key", "block": true, "fontSize": 15, "location": "right", "right": "0px", "top": 185, "input_value": 2 }
             ];
             info.push(...speedControlButtons);
         } else if ("pcfx" === this.ejs.getControlScheme()) {
