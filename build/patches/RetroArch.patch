@@ -61,6 +61,19 @@ index d97bfea..311940f 100644
        RWA.contextRunning = false;
     },
  
+diff --git a/emulatorjs/build-emulatorjs.sh b/emulatorjs/build-emulatorjs.sh
+index 3c05ecf..5129c98 100755
+--- a/emulatorjs/build-emulatorjs.sh
++++ b/emulatorjs/build-emulatorjs.sh
+@@ -67,7 +67,7 @@ largeHeap=("mupen64plus_next" "picodrive" "pcsx_rearmed" "genesis_plus_gx" "gene
+ needsGles3=("ppsspp" "azahar")
+ needsThreads=("ppsspp" "azahar")
+ largeThreads=("ppsspp" "azahar")
+-noCHD=("mame2003" "mame2003_plus" "pcsx_rearmed" "genesis_plus_gx" "genesis_plus_gx_wide" "azahar")
++noCHD=("mame2003" "mame2003_plus" "pcsx_rearmed" "genesis_plus_gx" "genesis_plus_gx_wide" "azahar" "geartowns")
+ no7Zip=("bsnes")
+ needsAsync=("mupen64plus_next" "dosbox_pure" "ppsspp" "azahar" "bsnes" "bluemsx" "scummvm")
+ 
 diff --git a/libretro-common/compat/compat_strcasestr.c b/libretro-common/compat/compat_strcasestr.c
 index c5db669..34ecef6 100644
 --- a/libretro-common/compat/compat_strcasestr.c

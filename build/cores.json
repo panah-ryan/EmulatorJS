@@ -741,6 +741,32 @@
         "repo": "https://github.com/libretro/beetle-lynx-libretro"
     },
     {
+        "name": "geartowns",
+        "extensions": [
+            "cue",
+            "chd",
+            "iso",
+            "zip",
+            "d77",
+            "d88",
+            "hdm",
+            "xdf",
+            "img",
+            "mfm",
+            "bin",
+            "m3u"
+        ],
+        "makeoptions": {
+            "buildpath": "./platforms/libretro",
+            "makescript": "Makefile",
+            "arguments": []
+        },
+        "options": {},
+        "save": "srm",
+        "license": "LICENSE",
+        "repo": "https://github.com/drhelius/Geartowns"
+    },
+    {
         "name": "beetle_saturn",
         "extensions": [
             "cue",
