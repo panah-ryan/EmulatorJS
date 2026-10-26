@@ -1926,6 +1926,9 @@ class EJS_Frontend {
         } else if ("electron" === this.ejs.getControlScheme()) {
             // Keyboard only: no joystick interface is fitted
             buttons = [];
+        } else if ("mac" === this.ejs.getControlScheme()) {
+            // Keyboard and mouse only: Snow doesn't read the gamepad
+            buttons = [];
         } else if ("zxspectrum" === this.ejs.getControlScheme()) {
             buttons = [
                 { id: 8, label: this.localization("FIRE") },
@@ -2775,7 +2778,7 @@ class EJS_Frontend {
                 { "type": "dpad", "id": "dpad", "location": "left", "left": "50%", "right": "50%", "joystickInput": false, "inputValues": [4, 5, 6, 7] }
             ];
             info.push(...speedControlButtons);
-        } else if ("electron" === this.ejs.getControlScheme()) {
+        } else if (["electron", "mac"].includes(this.ejs.getControlScheme())) {
             info = [...speedControlButtons];
         } else if ("zxspectrum" === this.ejs.getControlScheme()) {
             info = [
