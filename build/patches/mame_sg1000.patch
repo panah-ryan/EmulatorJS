@@ -1,0 +1,115 @@
+diff --git a/scripts/genie.lua b/scripts/genie.lua
+index b2f8da65..962e3c87 100644
+--- a/scripts/genie.lua
++++ b/scripts/genie.lua
+@@ -1167,17 +1167,23 @@ configuration { "asmjs" }
+ 	buildoptions {
+ 		"-std=gnu89",
+ 		"-Wno-implicit-function-declaration",
+-		"-s USE_SDL_TTF=3",
+-		"-Wno-experimental",  -- sdl3 experimental for emcc
+ 	}
+ 	buildoptions_cpp {
+ 		"-std=c++20",
+-		"-s EXCEPTION_CATCHING_ALLOWED=\"['_ZN15running_machine17start_all_devicesEv','_ZN8chd_file11open_commonEb','_ZN8chd_file13read_metadataEjjRNSt3__212basic_stringIcNS0_11char_traitsIcEENS0_9allocatorIcEEEE','_ZN8chd_file13read_metadataEjjRNSt3__26vectorIhNS0_9allocatorIhEEEE','_ZNK19netlist_mame_device19base_validity_checkER16validity_checker']\"",
+ 	}
+ 	defines {
+ 		"ASIO_HAS_PTHREADS",
+ 		"SOUND_DISABLE_THREADING",
+ 	}
++-- the libretro core is linked by the frontend, so it takes none of the standalone SDL/exception setup
++if _OPTIONS["osd"] ~= "retro" then
++	buildoptions {
++		"-s USE_SDL_TTF=3",
++		"-Wno-experimental",  -- sdl3 experimental for emcc
++	}
++	buildoptions_cpp {
++		"-s EXCEPTION_CATCHING_ALLOWED=\"['_ZN15running_machine17start_all_devicesEv','_ZN8chd_file11open_commonEb','_ZN8chd_file13read_metadataEjjRNSt3__212basic_stringIcNS0_11char_traitsIcEENS0_9allocatorIcEEEE','_ZN8chd_file13read_metadataEjjRNSt3__26vectorIhNS0_9allocatorIhEEEE','_ZNK19netlist_mame_device19base_validity_checkER16validity_checker']\"",
++	}
+ 	linkoptions {
+ 		"-Wl,--start-group",
+ 		"-s USE_SDL=3",
+@@ -1198,6 +1204,7 @@ configuration { "asmjs" }
+ 		"--embed-file " .. _MAKE.esc(MAME_DIR) .. "artwork/lut-default.png@artwork/lut-default.png",
+ 		"--embed-file " .. _MAKE.esc(MAME_DIR) .. "artwork/slot-mask.png@artwork/slot-mask.png",
+ 	}
++end
+ 	if _OPTIONS["OPTIMIZE"]~=nil then
+ 		if _OPTIONS["OPTIMIZE"]=="3" then
+ 			-- emcc's link-time -O3 is very slow, max out at -O2 for now
+diff --git a/src/emu/machine.cpp b/src/emu/machine.cpp
+index 8468b6d9..f1b3374a 100644
+--- a/src/emu/machine.cpp
++++ b/src/emu/machine.cpp
+@@ -400,7 +400,7 @@ int running_machine::run(bool quiet)
+ 
+ 		export_http_api();
+ 
+-#if defined(__EMSCRIPTEN__)
++#if defined(__EMSCRIPTEN__) && !defined(__LIBRETRO__)
+ 		// break out to our async javascript loop and halt
+ 		emscripten_set_running_machine(this);
+ #endif
+diff --git a/src/frontend/mame/ui/systemlist.cpp b/src/frontend/mame/ui/systemlist.cpp
+index d7450aac..78a5988f 100644
+--- a/src/frontend/mame/ui/systemlist.cpp
++++ b/src/frontend/mame/ui/systemlist.cpp
+@@ -34,15 +34,17 @@ void system_list::cache_data(ui_options const &options)
+ 	if (!m_started)
+ 	{
+ 		m_started = true;
++		auto work = [this, datpath = std::string(options.history_path()), titles = std::string(options.system_names())]
++				{
++					do_cache_data(datpath, titles);
++				};
+ #if defined(__EMSCRIPTEN__)
+-		std::invoke(
++		// runs inline, and do_cache_data takes the lock itself
++		lock.unlock();
++		work();
+ #else
+-		m_thread = std::make_unique<std::thread>(
++		m_thread = std::make_unique<std::thread>(std::move(work));
+ #endif
+-				[this, datpath = std::string(options.history_path()), titles = std::string(options.system_names())]
+-				{
+-					do_cache_data(datpath, titles);
+-				});
+ 	}
+ }
+ 
+diff --git a/src/osd/modules/lib/osdlib_retro.cpp b/src/osd/modules/lib/osdlib_retro.cpp
+index 7c208e5a..9218ea92 100644
+--- a/src/osd/modules/lib/osdlib_retro.cpp
++++ b/src/osd/modules/lib/osdlib_retro.cpp
+@@ -324,7 +324,7 @@ bool invalidate_instruction_cache(void const *start, std::size_t size) noexcept
+ #if defined(_WIN32)
+ 	return FlushInstructionCache(GetCurrentProcess(), start, size) != 0;
+ #else
+-#if !defined(SDLMAME_EMSCRIPTEN) && !(defined(TARGET_OS_IPHONE) && TARGET_OS_IPHONE)
++#if !defined(SDLMAME_EMSCRIPTEN) && !defined(__EMSCRIPTEN__) && !(defined(TARGET_OS_IPHONE) && TARGET_OS_IPHONE)
+ 	char const *const begin(reinterpret_cast<char const *>(start));
+ 	char const *const end(begin + size);
+ 	__builtin___clear_cache(const_cast<char *>(begin), const_cast<char *>(end));
+diff --git a/src/osd/osdsync.cpp b/src/osd/osdsync.cpp
+index b943ca82..fdcc13e0 100644
+--- a/src/osd/osdsync.cpp
++++ b/src/osd/osdsync.cpp
+@@ -97,7 +97,7 @@ int osd_get_num_processors(bool heavy_mt)
+ 		return 1;
+ #endif 
+ 
+-#if defined(SDLMAME_EMSCRIPTEN)
++#if defined(SDLMAME_EMSCRIPTEN) || defined(__EMSCRIPTEN__)
+ 	// multithreading is not supported at this time
+ 	return 1;
+ #else
+@@ -285,7 +285,7 @@ osd_work_queue *osd_work_queue_alloc(int flags)
+ 	if (osdworkqueuemaxthreads != nullptr && sscanf(osdworkqueuemaxthreads, "%d", &osdthreadnum) == 1 && threadnum > osdthreadnum)
+ 		threadnum = osdthreadnum;
+ 
+-#if defined(SDLMAME_EMSCRIPTEN)
++#if defined(SDLMAME_EMSCRIPTEN) || defined(__EMSCRIPTEN__)
+ 	// threads are not supported at all
+ 	threadnum = 0;
+ #endif

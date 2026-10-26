@@ -1,0 +1,85 @@
+diff --git a/libretro/libretro.cpp b/libretro/libretro.cpp
+index b6e9923..aa40abf 100644
+--- a/libretro/libretro.cpp
++++ b/libretro/libretro.cpp
+@@ -2434,6 +2434,9 @@ size_t retro_get_memory_size(unsigned id)
+    switch(id)
+    {
+       case RETRO_MEMORY_SAVE_RAM:
++         /* the frontend asks for this whenever it saves, so write FDS disk changes too */
++         if (fds && machine && machine->Is(Nes::Api::Machine::DISK))
++            fds->SaveDisks();
+          return sram_size;
+ 
+       case RETRO_MEMORY_SYSTEM_RAM:
+diff --git a/source/core/NstFds.hpp b/source/core/NstFds.hpp
+index aad049e..a3cdeb0 100644
+--- a/source/core/NstFds.hpp
++++ b/source/core/NstFds.hpp
+@@ -479,6 +479,12 @@ namespace Nes
+ 
+ 		public:
+ 
++			void SaveDisks() const
++			{
++				if (!disks.writeProtected)
++					disks.sides.Save();
++			}
++
+ 			bool IsAnyDiskInserted() const
+ 			{
+ 				return disks.current != Disks::EJECTED;
+diff --git a/source/core/NstFile.cpp b/source/core/NstFile.cpp
+index 1c47def..ec0d032 100644
+--- a/source/core/NstFile.cpp
++++ b/source/core/NstFile.cpp
+@@ -526,6 +526,9 @@ namespace Nes
+ 
+ 				Saver saver( type, saveBlock, saveBlockCount, context.data );
+ 				Api::User::fileIoCallback( saver );
++
++				// only save again once the content changes
++				context.checksum = checksum;
+ 			}
+ 		}
+ 	}
+diff --git a/source/core/api/NstApiFds.cpp b/source/core/api/NstApiFds.cpp
+index 30b5b57..2da3eb9 100644
+--- a/source/core/api/NstApiFds.cpp
++++ b/source/core/api/NstApiFds.cpp
+@@ -98,6 +98,17 @@ namespace Nes
+ 			return RESULT_ERR_NOT_READY;
+ 		}
+ 
++		Result Fds::SaveDisks() throw()
++		{
++			if (emulator.Is(Machine::DISK))
++			{
++				static_cast<const Core::Fds*>(emulator.image)->SaveDisks();
++				return RESULT_OK;
++			}
++
++			return RESULT_ERR_NOT_READY;
++		}
++
+ 		Result Fds::SetBIOS(std::istream* const stdStream) throw()
+ 		{
+ 			if (emulator.Is(Machine::GAME,Machine::ON))
+diff --git a/source/core/api/NstApiFds.hpp b/source/core/api/NstApiFds.hpp
+index 4a518ca..7de5abb 100644
+--- a/source/core/api/NstApiFds.hpp
++++ b/source/core/api/NstApiFds.hpp
+@@ -87,6 +87,13 @@ namespace Nes
+ 			*/
+ 			Result EjectDisk() throw();
+ 
++			/**
++			* Saves disk changes now instead of waiting for the game to unload.
++			*
++			* @return result code
++			*/
++			Result SaveDisks() throw();
++
+ 			/**
+ 			* Sets BIOS.
+ 			*

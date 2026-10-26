@@ -218,6 +218,7 @@ IF EXIST AUTORUN.BAT CALL AUTORUN.BAT
             const files = fileNames.filter(f => media.extensions.includes(f.split(".").pop().toLowerCase())).sort().slice(0, media.count);
             if (files.length === 0 || usedDevices.has(media.device)) continue;
             usedDevices.add(media.device);
+            if (media.driver && !this.EJS.config.mameDriver) args[0] = media.driver;
             if (media.args) args.push(...media.args);
             if (media.autoboot && !autoboot) autoboot = media.autoboot;
             if (media.autobootScript && !autobootScript) autobootScript = media.autobootScript;

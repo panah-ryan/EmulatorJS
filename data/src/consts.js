@@ -2,11 +2,15 @@ export const version = "4.3.0-pre";
 
 export const cores = {
     "mame": ["mame2003_plus"],
+    "nes": ["nestopia"],
     "atari2600": ["stella2014"],
     "vic20": ["vice_xvic"],
+    "c64": ["vice_x64sc"],
+    "zxspectrum": ["fuse"],
     "dos": ["dosbox_pure"],
     "x1": ["mame_x1"],
     "electron": ["mame_electron"],
+    "sg1000": ["mame_sg1000"],
     "pc88": ["quasi88"],
     "atari800": ["atari800"],
     "atari5200": ["atari800"],
@@ -18,7 +22,7 @@ export const cores = {
     "segaSaturn": ["beetle_saturn"]
 };
 
-export const requiresThreads = ["applewin", "beetle_saturn", "dosbox_pure", "mame_x1", "mame_electron"];
+export const requiresThreads = ["applewin", "beetle_saturn", "dosbox_pure", "mame_x1", "mame_electron", "mame_sg1000"];
 
 export const requiresWebGL2 = [];
 
@@ -61,6 +65,14 @@ export const mameSystems = {
             { "device": "flop", "count": 1, "extensions": ["adf", "adl"], "args": ["-exp:plus3:exp", "\"\""], "autobootScript": electronShiftBreak },
             // DFS disks need the Plus 3's DFS ROM instead
             { "device": "flop", "count": 1, "extensions": ["ssd", "dsd"], "args": ["-exp", "plus3,bios=dfs200", "-exp:plus3:exp", "\"\""], "autobootScript": electronShiftBreak }
+        ]
+    },
+    "sg1000": {
+        "driver": "sg1000",
+        "media": [
+            { "device": "cart", "count": 1, "extensions": ["sg", "bin"] },
+            // SC-3000 cartridges need its keyboard
+            { "device": "cart", "count": 1, "extensions": ["sc"], "driver": "sc3000" }
         ]
     }
 };

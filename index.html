@@ -318,11 +318,17 @@
                 const mameDriver = document.getElementById("mameDriverInput").value.trim();
 
                 const core = await (async (ext) => {
+                    if (["nes", "fds", "unf", "unif", "nsf"].includes(ext))
+                        return "nes"
+
                     if (["a26"].includes(ext))
                         return "atari2600"
 
                     if (["20", "40", "60", "a0", "b0"].includes(ext))
                         return "vic20"
+
+                    if (["tzx", "z80", "rzx", "scl", "trd", "dck", "sna", "szx"].includes(ext))
+                        return "zxspectrum"
 
                     if (["2d"].includes(ext) && enableThreads)
                         return "x1"
@@ -330,19 +336,22 @@
                     if (["uef", "ssd", "dsd", "adl"].includes(ext) && enableThreads)
                         return "electron"
 
+                    if (["sg", "sc"].includes(ext) && enableThreads)
+                        return "sg1000"
+
                     if (["a52"].includes(ext))
                         return "atari5200"
 
-                    if (["xfd", "atr", "atx", "dcm", "cas", "car", "xex"].includes(ext))
+                    if (["xfd", "atr", "atx", "dcm", "xex"].includes(ext))
                         return "atari800"
 
-                    if (["d98", "98d", "fdi", "hdm", "hdi", "nhd", "thd"].includes(ext))
+                    if (["d98", "98d", "fdi", "hdi", "nhd", "thd"].includes(ext))
                         return "pc98"
 
                     if (["st", "msa", "stx"].includes(ext))
                         return "atarist"
 
-                    if (["xdf", "2hd", "dup", "hdf"].includes(ext))
+                    if (["hdf"].includes(ext))
                         return "x68000"
 
                     if (["mx1", "mx2", "ri"].includes(ext))
@@ -351,15 +360,18 @@
                     if (["u88"].includes(ext))
                         return "pc88"
 
-                    if (["do", "po", "nib", "woz", "2mg", "2img", "hdv", "apl", "iie"].includes(ext))
+                    if (["do", "po", "woz", "2mg", "2img", "hdv", "apl", "iie"].includes(ext))
                         return "apple2"
 
                     return await new Promise(resolve => {
                         var coreValues = {
                             "Arcade (MAME 2003-Plus)": "mame",
+                            "NES / Famicom": "nes",
                             "Atari 2600": "atari2600",
                             "Atari 5200": "atari5200",
                             "Commodore VIC-20": "vic20",
+                            "Commodore 64": "c64",
+                            "ZX Spectrum": "zxspectrum",
                             "Atari 8-bit (400/800/XL/XE)": "atari800",
                             "Atari ST/STE/TT/Falcon": "atarist",
                             "NEC PC-8801": "pc88",
@@ -373,6 +385,7 @@
                             coreValues["DOS"] = "dos";
                             coreValues["Sharp X1"] = "x1";
                             coreValues["Acorn Electron"] = "electron";
+                            coreValues["Sega SG-1000"] = "sg1000";
                             coreValues["Sega Saturn"] = "segaSaturn";
                         }
 

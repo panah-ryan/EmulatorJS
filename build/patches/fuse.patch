@@ -1,0 +1,12 @@
+diff --git a/Makefile.libretro b/Makefile.libretro
+index f5afa42..4308f4a 100644
+--- a/Makefile.libretro
++++ b/Makefile.libretro
+@@ -405,6 +405,7 @@ else ifeq ($(platform), libnx)
+ # emscripten
+ else ifeq ($(platform), emscripten)
+ 	TARGET := $(TARGET_NAME)_libretro_emscripten.bc
++	STATIC_LINKING = 1
+ 
+ # CTR (3DS)
+ else ifeq ($(platform), ctr)
