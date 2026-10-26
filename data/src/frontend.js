@@ -3507,7 +3507,7 @@ class EJS_Frontend {
         addToMenu(this.localization("FPS"), "fps", {
             "show": this.localization("show"),
             "hide": this.localization("hide")
-        }, "hide", graphicsOptions, true);
+        }, this.ejs.debug ? "show" : "hide", graphicsOptions, true);
 
         addToMenu(this.localization("VSync"), "vsync", {
             "enabled": this.localization("Enabled"),
