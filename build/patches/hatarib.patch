@@ -1,0 +1,44 @@
+diff --git a/hatari/src/midi.c b/hatari/src/midi.c
+index d5c8e71..65f80f4 100644
+--- a/hatari/src/midi.c
++++ b/hatari/src/midi.c
+@@ -65,7 +65,7 @@ static bool Midi_Host_WriteByte(uint8_t byte);
+ 
+ #ifdef __LIBRETRO__
+ extern bool core_midi_read(uint8_t* data);
+-extern void core_midi_write(uint8_t data);
++extern bool core_midi_write(uint8_t data);
+ #endif
+ 
+ #ifndef HAVE_PORTMIDI
+diff --git a/makefile.libretro b/makefile.libretro
+index 43a1164..2603cd5 100644
+--- a/makefile.libretro
++++ b/makefile.libretro
+@@ -110,9 +110,16 @@ else ifeq ($(platform),libnx)                   # libnx-static
+ 		FPIC_FLAG=-fPIE
+ 	MAKE_ACTION := static
+ 	ZLIB_MAKE_ACTION := manual
++else ifeq ($(platform),emscripten)              # emscripten-static
++	CMAKEFLAGS_EXTRA := -DCMAKE_TOOLCHAIN_FILE=$(EMSDK)/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake
++	# RetroArch has its own File_Read and File_Close
++	CFLAGS_EXTRA := -DFile_Read=hatari_File_Read -DFile_Close=hatari_File_Close
++	MAKE_EXTRA := FPIC_FLAG="" WERROR=""
++	MAKE_ACTION := static
++	CORESTATIC_SUFFIX := .bc
+ endif
+ 
+-.PHONY: default libretro
++.PHONY: default libretro clean
+ 
+ default: libretro
+ 
+@@ -131,3 +138,8 @@ MAKE_ARGS = $(MAKE_ACTION) \
+ libretro:
+ 	$(MAKE) -f makefile.zlib $(ZLIB_ARGS)
+ 	$(MAKE) -f makefile $(MAKE_ARGS)
++
++clean:
++	$(MAKE) -f makefile.zlib clean
++	$(MAKE) -f makefile clean
++	rm -f $(CORESTATIC)$(CORESTATIC_SUFFIX)

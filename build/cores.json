@@ -617,9 +617,7 @@
         "makeoptions": {
             "buildpath": "./",
             "makescript": "makefile.libretro",
-            "arguments": [],
-            "custom": true,
-            "build_command": "sed -i 's/^extern void core_midi_write(/extern bool core_midi_write(/' hatari/src/midi.c; hb() { rm -rf build hatari/build zlib_build *.bc; emmake make -j$(nproc) -f makefile.libretro platform=emscripten MAKE_ACTION=static CORESTATIC_SUFFIX=.bc FPIC_FLAG= WERROR= CFLAGS_EXTRA=\"-DFile_Read=hatari_File_Read -DFile_Close=hatari_File_Close\" CMAKEFLAGS_EXTRA=-DCMAKE_TOOLCHAIN_FILE=$EMSDK/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake || exit 1; }; hb && cp hatarib_libretro_emscripten.bc \"$buildPath/$tempPath/normal/\" && mv hatarib_libretro_emscripten.bc \"$buildPath/$tempPath/legacy/\" && export EMCC_CFLAGS=-pthread && hb && cp hatarib_libretro_emscripten.bc \"$buildPath/$tempPath/threads/\" && mv hatarib_libretro_emscripten.bc \"$buildPath/$tempPath/legacyThreads/\"; unset EMCC_CFLAGS; git checkout -- hatari/src/midi.c"
+            "arguments": []
         },
         "options": {},
         "save": false,
