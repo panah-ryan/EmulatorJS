@@ -1838,12 +1838,12 @@ class EJS_Frontend {
             ];
         } else if ("segaSaturn" === this.ejs.getControlScheme()) {
             buttons = [
-                { id: 1, label: this.localization("A") },
-                { id: 0, label: this.localization("B") },
-                { id: 8, label: this.localization("C") },
-                { id: 9, label: this.localization("X") },
-                { id: 10, label: this.localization("Y") },
-                { id: 11, label: this.localization("Z") },
+                { id: 0, label: this.localization("A") },
+                { id: 8, label: this.localization("B") },
+                { id: 11, label: this.localization("C") },
+                { id: 1, label: this.localization("X") },
+                { id: 9, label: this.localization("Y") },
+                { id: 10, label: this.localization("Z") },
                 { id: 12, label: this.localization("L") },
                 { id: 13, label: this.localization("R") },
                 { id: 3, label: this.localization("START") },
@@ -2883,12 +2883,12 @@ class EJS_Frontend {
             info.push(...speedControlButtons);
         } else if ("segaSaturn" === this.ejs.getControlScheme()) {
             info = [
-                { "type": "button", "text": "A", "id": "a", "location": "right", "right": 145, "top": 70, "bold": true, "input_value": 1 },
-                { "type": "button", "text": "B", "id": "b", "location": "right", "right": 75, "top": 70, "bold": true, "input_value": 0 },
-                { "type": "button", "text": "C", "id": "c", "location": "right", "right": 5, "top": 70, "bold": true, "input_value": 8 },
-                { "type": "button", "text": "X", "id": "x", "location": "right", "right": 145, "top": 0, "bold": true, "input_value": 9 },
-                { "type": "button", "text": "Y", "id": "y", "location": "right", "right": 75, "top": 0, "bold": true, "input_value": 10 },
-                { "type": "button", "text": "Z", "id": "z", "location": "right", "right": 5, "top": 0, "bold": true, "input_value": 11 },
+                { "type": "button", "text": "A", "id": "a", "location": "right", "right": 145, "top": 70, "bold": true, "input_value": 0 },
+                { "type": "button", "text": "B", "id": "b", "location": "right", "right": 75, "top": 70, "bold": true, "input_value": 8 },
+                { "type": "button", "text": "C", "id": "c", "location": "right", "right": 5, "top": 70, "bold": true, "input_value": 11 },
+                { "type": "button", "text": "X", "id": "x", "location": "right", "right": 145, "top": 0, "bold": true, "input_value": 1 },
+                { "type": "button", "text": "Y", "id": "y", "location": "right", "right": 75, "top": 0, "bold": true, "input_value": 9 },
+                { "type": "button", "text": "Z", "id": "z", "location": "right", "right": 5, "top": 0, "bold": true, "input_value": 10 },
                 { "type": "dpad", "id": "dpad", "location": "left", "left": "50%", "right": "50%", "joystickInput": false, "inputValues": [4, 5, 6, 7] },
                 { "type": "button", "text": "L", "id": "l", "location": "left", "left": 3, "top": -90, "bold": true, "block": true, "input_value": 12 },
                 { "type": "button", "text": "R", "id": "r", "location": "right", "right": 3, "top": -90, "bold": true, "block": true, "input_value": 13 },

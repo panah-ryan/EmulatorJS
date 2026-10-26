@@ -40,11 +40,11 @@ export const cores = {
     "atarist": ["hatarib"],
     "x68000": ["px68k"],
     "apple2": ["applewin"],
-    "segaSaturn": ["beetle_saturn"]
+    "segaSaturn": ["emir"]
 };
 
 // cores, or systems sharing a core, that only run with threads
-export const requiresThreads = ["applewin", "beetle_saturn", "dosbox_pure", "mame_x1", "mame_electron", "mame_sg1000", "amigacd32"];
+export const requiresThreads = ["applewin", "emir", "dosbox_pure", "mame_x1", "mame_electron", "mame_sg1000", "amigacd32"];
 
 export const requiresWebGL2 = [];
 
