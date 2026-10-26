@@ -1585,7 +1585,15 @@ class EJS_Frontend {
                 { id: 7, label: this.localization("RIGHT") },
             ];
             if (this.ejs.getCore() === "nestopia") {
-                buttons.push({ id: 10, label: this.localization("SWAP DISKS") });
+                buttons.push(
+                    { id: 9, label: this.localization("TURBO A") },
+                    { id: 1, label: this.localization("TURBO B") },
+                    { id: 10, label: this.localization("FDS DISK SIDE") },
+                    { id: 11, label: this.localization("FDS SWAP DISK") },
+                    { id: 12, label: this.localization("VS COIN 1") },
+                    { id: 13, label: this.localization("VS COIN 2") },
+                    { id: 14, label: this.localization("MICROPHONE") },
+                );
             } else {
                 buttons.push({ id: 10, label: this.localization("SWAP DISKS") });
                 buttons.push({ id: 11, label: this.localization("EJECT/INSERT DISK") });
