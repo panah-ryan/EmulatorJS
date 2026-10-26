@@ -31,6 +31,9 @@ class EmulatorJS {
     usesTouchMouse(system) {
         return CONSTS.mouseSystems.includes(system);
     }
+    usesTouchTrackpad(system) {
+        return CONSTS.trackpadSystems.includes(system);
+    }
     getCore(generic) {
         const cores = this.getCores();
         const core = this.config.system;

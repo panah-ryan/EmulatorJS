@@ -69,8 +69,11 @@ class EJS_Frontend {
     setTouchActive() {
         if (!this.virtualGamepad) return;
         this.virtualGamepad.classList.add("ejs-vgamepad-active");
-        if (this.ejs.usesTouchMouse(this.ejs.getCore(true))) {
+        const system = this.ejs.getCore(true);
+        if (this.ejs.usesTouchMouse(system)) {
             this.setTouchMouse();
+        } else if (this.ejs.usesTouchTrackpad(system)) {
+            this.setTouchTrackpad();
         } else {
             this.canvas.classList.add("ejs-canvas-no-pointer");
         }
@@ -113,6 +116,97 @@ class EJS_Frontend {
             touchId = null;
             const position = { clientX: touch.clientX, clientY: touch.clientY };
             setTimeout(() => send("mouseup", position), Math.max(0, minHoldMs - (performance.now() - downTime)));
+        });
+    }
+    setTouchTrackpad() {
+        // Hold each click long enough for the core to see it
+        const minHoldMs = 100;
+        const tapMaxMs = 250;
+        const tapMaxMove = 10;
+        const doubleTapMs = 300;
+        const touches = new Map();
+        let primaryId = null;
+        let startTime = 0;
+        let maxTouches = 0;
+        let moved = 0;
+        let dragging = false;
+        let dragStart = 0;
+        let lastTapEnd = 0;
+        let tapRelease = null;
+
+        const sendButton = (type, button) => {
+            this.canvas.dispatchEvent(new MouseEvent(type, { button, bubbles: true, cancelable: true }));
+        };
+        const sendMove = (dx, dy) => {
+            const event = new MouseEvent("mousemove", { bubbles: true, cancelable: true });
+            // Set as properties: not every browser takes movementX in the constructor
+            Object.defineProperty(event, "movementX", { value: dx });
+            Object.defineProperty(event, "movementY", { value: dy });
+            this.canvas.dispatchEvent(event);
+        };
+        const release = (button, pressedAt) => setTimeout(() => {
+            tapRelease = null;
+            sendButton("mouseup", button);
+        }, Math.max(0, minHoldMs - (performance.now() - pressedAt)));
+
+        this.ejs.addEventListener(this.canvas, "touchstart", (e) => {
+            e.preventDefault();
+            for (const touch of e.changedTouches) {
+                touches.set(touch.identifier, { x: touch.clientX, y: touch.clientY });
+            }
+            if (primaryId === null) {
+                primaryId = e.changedTouches[0].identifier;
+                startTime = performance.now();
+                moved = 0;
+                maxTouches = 0;
+                // A touch soon after a tap holds the left button for dragging
+                if (startTime - lastTapEnd < doubleTapMs) {
+                    dragging = true;
+                    dragStart = startTime;
+                    if (tapRelease) {
+                        // The tap's button is still down, so keep holding it
+                        clearTimeout(tapRelease);
+                        tapRelease = null;
+                    } else {
+                        sendButton("mousedown", 0);
+                    }
+                }
+            }
+            maxTouches = Math.max(maxTouches, touches.size);
+        });
+        this.ejs.addEventListener(this.canvas, "touchmove", (e) => {
+            e.preventDefault();
+            for (const touch of e.changedTouches) {
+                const last = touches.get(touch.identifier);
+                if (!last) continue;
+                const dx = touch.clientX - last.x;
+                const dy = touch.clientY - last.y;
+                touches.set(touch.identifier, { x: touch.clientX, y: touch.clientY });
+                if (touch.identifier !== primaryId) continue;
+                moved += Math.abs(dx) + Math.abs(dy);
+                sendMove(dx, dy);
+            }
+        });
+        this.ejs.addEventListener(this.canvas, "touchend touchcancel", (e) => {
+            e.preventDefault();
+            for (const touch of e.changedTouches) {
+                touches.delete(touch.identifier);
+            }
+            if (touches.size > 0) return;
+            const now = performance.now();
+            primaryId = null;
+            if (dragging) {
+                dragging = false;
+                lastTapEnd = 0;
+                release(0, dragStart);
+            } else if (moved < tapMaxMove && now - startTime < tapMaxMs) {
+                // One-finger tap is a left click, two-finger tap a right click
+                const button = maxTouches >= 2 ? 2 : 0;
+                sendButton("mousedown", button);
+                const timer = release(button, now);
+                if (button === 0) tapRelease = timer;
+                lastTapEnd = button === 0 ? now : 0;
+            }
         });
     }
     setLoadingText(text, suffix) {

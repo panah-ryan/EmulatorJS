@@ -47,6 +47,9 @@ export const keyboardSystems = ["vic20", "c64", "c128", "plus4", "amiga", "cpc",
 // systems where a touch on the game screen acts as the mouse
 export const mouseSystems = ["mac"];
 
+// systems where the game screen acts as a trackpad, for cores that read relative mouse movement
+export const trackpadSystems = ["atarist"];
+
 // core options forced for systems that share a core with another system
 export const systemCoreOptions = {
     "atari5200": { "atari800_system": "5200" }
