@@ -3,6 +3,7 @@ export const version = "4.3.0-pre";
 export const cores = {
     "mame": ["mame2003_plus"],
     "nes": ["nestopia"],
+    "snes": ["snes9x"],
     "gb": ["sameboy"],
     "atari2600": ["stella2014"],
     "vic20": ["vice_xvic"],
