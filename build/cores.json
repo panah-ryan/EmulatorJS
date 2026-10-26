@@ -570,5 +570,33 @@
         "save": false,
         "license": "COPYING",
         "repo": "https://github.com/libretro/beetle-saturn-libretro"
+    },
+    {
+        "name": "snow",
+        "extensions": [
+            "dsk",
+            "img",
+            "image",
+            "dc42",
+            "moof",
+            "woz",
+            "a2r",
+            "raw",
+            "hda",
+            "hdv",
+            "sit"
+        ],
+        "makeoptions": {
+            "buildpath": "libretro",
+            "makescript": "Makefile",
+            "arguments": []
+        },
+        "options": {
+            "supportsMouse": true,
+            "useKeyboard": true
+        },
+        "save": "srm",
+        "license": "LICENSE",
+        "repo": "https://github.com/twvd/snow"
     }
 ]

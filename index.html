@@ -327,6 +327,9 @@
                     if (["20", "40", "60", "a0", "b0"].includes(ext))
                         return "vic20"
 
+                    if (["moof", "dc42", "hda", "sit"].includes(ext))
+                        return "mac"
+
                     if (["cdt", "cpr"].includes(ext))
                         return "cpc"
 
@@ -376,6 +379,7 @@
                             "Commodore 64": "c64",
                             "Commodore 16 / Plus/4": "plus4",
                             "Amstrad CPC": "cpc",
+                            "Apple Macintosh": "mac",
                             "ZX Spectrum": "zxspectrum",
                             "Atari 8-bit (400/800/XL/XE)": "atari800",
                             "Atari ST/STE/TT/Falcon": "atarist",

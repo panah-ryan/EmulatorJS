@@ -19,6 +19,14 @@ This guide assumes you're using a Debian or Ubuntu type system.
 
 * Run the enclosed ``build_env.sh`` script to configure the build environment. You may need to use sudo to run this script to install system components.
 
+## Rust
+Cores written in Rust (currently ``snow``) also need a Rust toolchain. ``build_env.sh`` installs it with rustup. To set it up by hand:
+
+* Install rustup from https://rustup.rs
+* Run ``rustup toolchain install 1.95.0 --profile minimal --component rust-src --target wasm32-unknown-emscripten``
+
+The version has to match the ``rust-toolchain.toml`` in the core's repo. ``rust-src`` is needed because the core rebuilds Rust's standard library for the web. ``cargo`` must be on your ``PATH`` (or in ``~/.cargo/bin``) when running ``build.sh``. If anything is missing, the build stops and the core's compile log shows the command to run.
+
 # Compiling
 Execute the command ``source ./.emsdk/emsdk_env.sh && bash build.sh`` in the repo root to begin compiling.
 

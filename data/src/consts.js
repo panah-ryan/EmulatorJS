@@ -8,6 +8,7 @@ export const cores = {
     "c64": ["vice_x64sc"],
     "plus4": ["vice_xplus4"],
     "cpc": ["cap32"],
+    "mac": ["snow"],
     "zxspectrum": ["fuse"],
     "dos": ["dosbox_pure"],
     "x1": ["mame_x1"],
