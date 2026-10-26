@@ -1901,13 +1901,14 @@ class EJS_Frontend {
             buttons = [
                 { id: 8, label: this.localization("A") },
                 { id: 0, label: this.localization("B") },
-                { id: 10, label: this.localization("OPTION 1") },
-                { id: 11, label: this.localization("OPTION 2") },
-                { id: 3, label: this.localization("START") },
+                { id: 11, label: this.localization("OPTION 1") },
+                { id: 10, label: this.localization("OPTION 2") },
+                { id: 3, label: this.localization("PAUSE") },
                 { id: 4, label: this.localization("UP") },
                 { id: 5, label: this.localization("DOWN") },
                 { id: 6, label: this.localization("LEFT") },
                 { id: 7, label: this.localization("RIGHT") },
+                { id: 2, label: this.localization("ROTATE SCREEN") },
             ];
         } else if ("jaguar" === this.ejs.getControlScheme()) {
             buttons = [
@@ -2868,9 +2869,9 @@ class EJS_Frontend {
                 { "type": "button", "text": "B", "id": "button_1", "location": "right", "right": 75, "top": 70, "bold": true, "input_value": 0 },
                 { "type": "button", "text": "A", "id": "button_2", "location": "right", "right": 5, "top": 70, "bold": true, "input_value": 8 },
                 { "type": "dpad", "id": "dpad", "location": "left", "left": "50%", "right": "50%", "joystickInput": false, "inputValues": [4, 5, 6, 7] },
-                { "type": "button", "text": "Opt 1", "id": "option_1", "location": "center", "left": -35, "fontSize": 15, "block": true, "input_value": 10 },
-                { "type": "button", "text": "Opt 2", "id": "option_2", "location": "center", "left": 95, "fontSize": 15, "block": true, "input_value": 11 },
-                { "type": "button", "text": "Start", "id": "start", "location": "center", "left": 30, "fontSize": 15, "block": true, "input_value": 3 }
+                { "type": "button", "text": "Opt 1", "id": "option_1", "location": "center", "left": -35, "fontSize": 15, "block": true, "input_value": 11 },
+                { "type": "button", "text": "Opt 2", "id": "option_2", "location": "center", "left": 95, "fontSize": 15, "block": true, "input_value": 10 },
+                { "type": "button", "text": "Pause", "id": "pause", "location": "center", "left": 30, "fontSize": 15, "block": true, "input_value": 3 }
             ];
             info.push(...speedControlButtons);
         } else if ("jaguar" === this.ejs.getControlScheme()) {
