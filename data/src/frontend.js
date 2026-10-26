@@ -1846,6 +1846,19 @@ class EJS_Frontend {
                 { id: 17, label: this.localization("STICK LEFT") },
                 { id: 16, label: this.localization("STICK RIGHT") },
             ];
+        } else if (["vic20", "c64", "c128", "plus4"].includes(this.ejs.getControlScheme())) {
+            buttons = [
+                { id: 0, label: this.localization("FIRE") },
+                { id: 8, label: this.localization("FIRE 2") },
+                { id: 4, label: this.localization("UP") },
+                { id: 5, label: this.localization("DOWN") },
+                { id: 6, label: this.localization("LEFT") },
+                { id: 7, label: this.localization("RIGHT") },
+                { id: 9, label: this.localization("SPACE") },
+                { id: 12, label: this.localization("RUN/STOP") },
+                { id: 13, label: this.localization("RETURN") },
+                { id: 2, label: this.localization("VIRTUAL KEYBOARD") },
+            ];
         } else if ("atari800" === this.ejs.getControlScheme()) {
             buttons = [
                 { id: 0, label: this.localization("FIRE 1") },
@@ -2575,6 +2588,17 @@ class EJS_Frontend {
                 { "type": "dpad", "id": "dpad", "location": "left", "left": "50%", "right": "50%", "joystickInput": false, "inputValues": [4, 5, 6, 7] },
                 { "type": "button", "text": "Select", "id": "select", "location": "center", "left": -5, "fontSize": 15, "block": true, "input_value": 2 },
                 { "type": "button", "text": "Run", "id": "run", "location": "center", "left": 60, "fontSize": 15, "block": true, "input_value": 3 }
+            ];
+            info.push(...speedControlButtons);
+        } else if (["vic20", "c64", "c128", "plus4"].includes(this.ejs.getControlScheme())) {
+            info = [
+                { "type": "button", "text": "1", "id": "button_1", "location": "right", "right": 75, "top": 70, "bold": true, "input_value": 0 },
+                { "type": "button", "text": "2", "id": "button_2", "location": "right", "right": 5, "top": 70, "bold": true, "input_value": 8 },
+                { "type": "button", "text": "Space", "id": "space", "location": "right", "right": 40, "top": 0, "fontSize": 15, "block": true, "input_value": 9 },
+                { "type": "dpad", "id": "dpad", "location": "left", "left": "50%", "right": "50%", "joystickInput": false, "inputValues": [4, 5, 6, 7] },
+                { "type": "button", "text": "Run/Stop", "id": "run_stop", "location": "center", "left": -35, "fontSize": 15, "block": true, "input_value": 12 },
+                { "type": "button", "text": "Keyboard", "id": "keyboard", "location": "center", "left": 30, "fontSize": 15, "block": true, "input_value": 2 },
+                { "type": "button", "text": "Return", "id": "return", "location": "center", "left": 95, "fontSize": 15, "block": true, "input_value": 13 }
             ];
             info.push(...speedControlButtons);
         } else if ("atari800" === this.ejs.getControlScheme()) {
