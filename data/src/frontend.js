@@ -1921,6 +1921,13 @@ class EJS_Frontend {
                 { id: 5, label: this.localization("DOWN") },
                 { id: 6, label: this.localization("LEFT") },
                 { id: 7, label: this.localization("RIGHT") },
+                { id: 9, label: this.localization("KEYPAD 0") },
+                { id: 10, label: this.localization("KEYPAD 1") },
+                { id: 11, label: this.localization("KEYPAD 2") },
+                { id: 12, label: this.localization("KEYPAD 3") },
+                { id: 13, label: this.localization("KEYPAD 4") },
+                { id: 14, label: this.localization("KEYPAD 5") },
+                { id: 15, label: this.localization("KEYPAD 6") },
             ];
         } else if ("pce" === this.ejs.getControlScheme()) {
             buttons = [

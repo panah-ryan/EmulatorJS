@@ -30,6 +30,7 @@ export const cores = {
     "atari800": ["atari800"],
     "atari5200": ["atari800"],
     "atari7800": ["prosystem"],
+    "jaguar": ["virtualjaguar"],
     "lynx": ["mednafen_lynx"],
     "pc98": ["nekop2"],
     "fmtowns": ["geartowns"],
