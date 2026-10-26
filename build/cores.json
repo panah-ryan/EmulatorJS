@@ -837,6 +837,29 @@
         "repo": "https://github.com/libretro/opera-libretro"
     },
     {
+        "name": "virtualjaguar",
+        "extensions": [
+            "j64",
+            "jag",
+            "rom",
+            "abs",
+            "cof",
+            "bin",
+            "prg",
+            "cue",
+            "cdi"
+        ],
+        "makeoptions": {
+            "buildpath": "./",
+            "makescript": "Makefile",
+            "arguments": []
+        },
+        "options": {},
+        "save": "srm",
+        "license": "LICENSE",
+        "repo": "https://github.com/libretro/virtualjaguar-libretro"
+    },
+    {
         "name": "beetle_saturn",
         "extensions": [
             "cue",

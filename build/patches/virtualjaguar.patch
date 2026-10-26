@@ -1,0 +1,14 @@
+diff --git a/Makefile b/Makefile
+index 114b24b..f613e5f 100644
+--- a/Makefile
++++ b/Makefile
+@@ -630,6 +630,9 @@ else ifeq ($(platform), emscripten)
+ 	AR = emar
+ 	STATIC_LINKING = 1
+ 	FLAGS += -DHAVE_EMSCRIPTEN
++	# emscripten maps the SSE2 blitter intrinsics onto WebAssembly SIMD
++	BLITTER_SIMD ?= sse2
++	FLAGS += -msimd128
+ 
+ # Windows MSVC 2017 all architectures
+ else ifneq (,$(findstring windows_msvc2017,$(platform)))
