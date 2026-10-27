@@ -1,0 +1,127 @@
+Adds the libretro crate to the workspace, a "libretro" Cargo profile that aborts
+on panic, and the Makefile that builds the static library for Emscripten with
+a rebuilt std.
+
+diff --git a/Cargo.toml b/Cargo.toml
+index 77feb9b..d1ee271 100644
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -1,7 +1,7 @@
+ [workspace]
+ default-members = ["frontend_egui"]
+ resolver = '2'
+-members = ["core", "floppy", "frontend_egui", "nat", "testrunner"]
++members = ["core", "floppy", "frontend_egui", "libretro", "nat", "testrunner"]
+ 
+ [workspace.lints.clippy]
+ nursery = { level = "deny", priority = -1 }
+@@ -25,6 +25,11 @@ large_stack_frames = "deny"
+ needless_pass_by_value = "deny"
+ semicolon_if_nothing_returned = "deny"
+ 
++# Used by the libretro core, which links into hosts built without unwinding
++[profile.libretro]
++inherits = "release"
++panic = "abort"
++
+ [profile.test]
+ opt-level = 3
+ debug = true
+diff --git a/Cargo.lock b/Cargo.lock
+index 444feec..fefaaf1 100644
+--- a/Cargo.lock
++++ b/Cargo.lock
+@@ -5046,6 +5046,17 @@ dependencies = [
+  "winresource",
+ ]
+ 
++[[package]]
++name = "snow_libretro"
++version = "0.1.0"
++dependencies = [
++ "anyhow",
++ "log",
++ "sha2",
++ "snow_core",
++ "strum 0.26.3",
++]
++
+ [[package]]
+ name = "snow_nat"
+ version = "1.5.0"
+diff --git a/libretro/.gitignore b/libretro/.gitignore
+new file mode 100644
+index 0000000..254658e
+--- /dev/null
++++ b/libretro/.gitignore
+@@ -0,0 +1 @@
++*.bc
+diff --git a/libretro/Cargo.toml b/libretro/Cargo.toml
+new file mode 100644
+index 0000000..9bd3b1b
+--- /dev/null
++++ b/libretro/Cargo.toml
+@@ -0,0 +1,19 @@
++[package]
++name = "snow_libretro"
++version = "0.1.0"
++edition = "2024"
++license = "MIT"
++description = "libretro core for the Snow Macintosh emulator"
++
++[lib]
++crate-type = ["staticlib"]
++
++[dependencies]
++anyhow = "1.0.86"
++log = "0.4.22"
++sha2 = "0.10.8"
++snow_core = { path = "../core", default-features = false }
++strum = "0.26.3"
++
++[lints]
++workspace = true
+diff --git a/libretro/Makefile b/libretro/Makefile
+new file mode 100644
+index 0000000..bde15cc
+--- /dev/null
++++ b/libretro/Makefile
+@@ -0,0 +1,38 @@
++# Builds the core as a static archive for EmulatorJS's RetroArch link.
++# std is rebuilt with panic=abort so no wasm exception handling is needed,
++# and with atomics for the threaded builds.
++
++CARGO ?= $(shell command -v cargo 2>/dev/null || echo $(HOME)/.cargo/bin/cargo)
++RUSTUP ?= $(shell command -v rustup 2>/dev/null || echo $(HOME)/.cargo/bin/rustup)
++TARGET := wasm32-unknown-emscripten
++TOOLCHAIN := $(shell sed -n 's/^channel *= *"\(.*\)"/\1/p' ../rust-toolchain.toml)
++SETUP_HINT := rustup toolchain install $(TOOLCHAIN) --profile minimal --component rust-src --target $(TARGET)
++
++ifeq ($(EMULATORJS_THREADS),1)
++   TARGET_DIR := ../target/emulatorjs-threads
++   RUSTFLAGS_EXTRA := -C target-feature=+atomics,+bulk-memory
++else
++   TARGET_DIR := ../target/emulatorjs
++   RUSTFLAGS_EXTRA :=
++endif
++
++ARCHIVE := $(TARGET_DIR)/$(TARGET)/libretro/libsnow_libretro.a
++OUT := snow_libretro_emscripten.bc
++
++all: check-toolchain
++	RUSTC_BOOTSTRAP=1 RUSTFLAGS="$(RUSTFLAGS_EXTRA)" CARGO_TARGET_DIR=$(TARGET_DIR) \
++		$(CARGO) build -p snow_libretro --target $(TARGET) --profile libretro -Zbuild-std=std,panic_abort
++	cp $(ARCHIVE) $(OUT)
++
++check-toolchain:
++	@test -x "$(CARGO)" && test -x "$(RUSTUP)" || \
++		{ echo "error: Rust is not installed. Install rustup (https://rustup.rs), then run: $(SETUP_HINT)"; exit 1; }
++	@$(RUSTUP) component list --toolchain $(TOOLCHAIN) --installed 2>/dev/null | grep -q '^rust-src' || \
++		{ echo "error: Rust $(TOOLCHAIN) with rust-src is not installed. Run: $(SETUP_HINT)"; exit 1; }
++	@$(RUSTUP) target list --toolchain $(TOOLCHAIN) --installed 2>/dev/null | grep -qx '$(TARGET)' || \
++		{ echo "error: the $(TARGET) target is not installed for Rust $(TOOLCHAIN). Run: $(SETUP_HINT)"; exit 1; }
++
++clean:
++	rm -f $(OUT)
++
++.PHONY: all check-toolchain clean

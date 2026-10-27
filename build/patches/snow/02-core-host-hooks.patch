@@ -1,0 +1,89 @@
+Small hooks the libretro core needs in snow_core: a configurable number of steps
+per tick, so the core can stop closer to the end of a frame, and access to the
+PRAM contents so the host can save and restore them.
+
+diff --git a/core/src/emulator/mod.rs b/core/src/emulator/mod.rs
+index 5d9ffa5..1dfcbc9 100644
+--- a/core/src/emulator/mod.rs
++++ b/core/src/emulator/mod.rs
+@@ -285,8 +285,13 @@ pub struct Emulator {
+     /// Serial bridges for SCC channels (index 0 = Channel A, index 1 = Channel B)
+     serial_bridges: [Option<SccBridge>; 2],
+     audio_provider: Option<Arc<Mutex<dyn AudioProvider>>>,
++    /// Number of steps run per tick
++    step_batch: usize,
+ }
+ 
++/// Default number of steps run per tick, batched for performance reasons
++const DEFAULT_STEP_BATCH: usize = 10000;
++
+ impl Emulator {
+     pub fn new(
+         rom: &[u8],
+@@ -557,6 +562,7 @@ impl Emulator {
+             replay_input: VecDeque::default(),
+             peripheral_debug: false,
+             serial_bridges: [None, None],
++            step_batch: DEFAULT_STEP_BATCH,
+             audio_provider: None,
+         };
+         emu.status_update()?;
+@@ -606,6 +612,7 @@ impl Emulator {
+             replay_input: VecDeque::default(),
+             peripheral_debug: false,
+             serial_bridges: [None, None],
++            step_batch: DEFAULT_STEP_BATCH,
+             audio_provider: None,
+         };
+         emu.status_update()?;
+@@ -631,6 +638,11 @@ impl Emulator {
+         self.config.rtc_mut().load_pram(pram_path);
+     }
+ 
++    /// The PRAM contents, for hosts that save and restore it themselves
++    pub fn pram_mut(&mut self) -> &mut [u8] {
++        self.config.rtc_mut().pram_mut()
++    }
++
+     /// Sets the RTC to a specific date/time.
+     /// This can be used to test date-dependent software behavior (e.g., easter eggs).
+     pub fn set_datetime(&mut self, dt: chrono::NaiveDateTime) {
+@@ -951,6 +963,12 @@ impl Emulator {
+         }
+     }
+ 
++    /// Sets the number of steps run per tick. Smaller batches let a host that
++    /// stops on every frame do so closer to where the frame ends.
++    pub fn set_step_batch(&mut self, steps: usize) {
++        self.step_batch = steps.max(1);
++    }
++
+     pub fn get_cycles(&self) -> Ticks {
+         self.config.cpu_cycles()
+     }
+@@ -1525,8 +1543,7 @@ impl Tickable for Emulator {
+                 self.replay_input.pop_front().unwrap();
+             }
+ 
+-            // Batch 10000 steps for performance reasons
+-            for _ in 0..10000 {
++            for _ in 0..self.step_batch {
+                 if !self.run {
+                     break;
+                 }
+diff --git a/core/src/mac/rtc.rs b/core/src/mac/rtc.rs
+index ca44712..40f35fe 100644
+--- a/core/src/mac/rtc.rs
++++ b/core/src/mac/rtc.rs
+@@ -247,6 +247,11 @@ impl Rtc {
+         self.data.seconds = seconds;
+     }
+ 
++    /// The PRAM contents, for hosts that save and restore it themselves
++    pub fn pram_mut(&mut self) -> &mut [u8] {
++        &mut self.data.pram[..]
++    }
++
+     /// Reads a byte of PRAM directly, for controllers which hold the PRAM
+     /// themselves
+     pub fn pram_read(&self, addr: u8) -> u8 {

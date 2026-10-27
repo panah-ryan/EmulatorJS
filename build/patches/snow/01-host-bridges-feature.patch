@@ -1,0 +1,125 @@
+Puts snow_core's serial (PTY/TCP) and LocalTalk-over-UDP host bridges behind a
+"host_bridges" feature. It is on by default, so desktop snow is unchanged; the
+libretro core turns it off, which keeps socket2 and nix out of the wasm build.
+
+diff --git a/core/Cargo.toml b/core/Cargo.toml
+index cab650e..8c9d8ee 100644
+--- a/core/Cargo.toml
++++ b/core/Cargo.toml
+@@ -8,6 +8,9 @@ build = "build.rs"
+ built = { version = "0.8.0", features = ["chrono", "git2"] }
+ 
+ [features]
++default = ["host_bridges"]
++# Enables serial (PTY/TCP) and LocalTalk-over-UDP bridges to the host
++host_bridges = ["dep:socket2", "dep:nix"]
+ # Enables the Daynaport SCSI/Link Ethernet device emulation
+ ethernet = ["dep:crc", "dep:binrw"]
+ # Enables Ethernet bridging (currently broken!)
+@@ -71,13 +74,13 @@ unicode-normalization = "0.1.24"
+ postcard = { version = "1.1.3", features = ["use-std"], optional = true }
+ binrw = { version = "0.15.0", optional = true }
+ zstd = { version = "0.13.3", optional = true }
+-socket2 = { version = "0.6", features = ["all"] }
++socket2 = { version = "0.6", features = ["all"], optional = true }
+ pnet = { version = "0.35.0", optional = true }
+ tun = { version = "0.7", optional = true, default-features = false }
+ image = { version = "0.25", default-features = false, features = ["png"], optional = true }
+ 
+ [target.'cfg(unix)'.dependencies]
+-nix = { version = "0.29", features = ["term", "fs"] }
++nix = { version = "0.29", features = ["term", "fs"], optional = true }
+ 
+ [target.'cfg(windows)'.dependencies]
+ windows = {
+diff --git a/core/src/mac/serial_bridge.rs b/core/src/mac/serial_bridge.rs
+index 1c04445..d9aea23 100644
+--- a/core/src/mac/serial_bridge.rs
++++ b/core/src/mac/serial_bridge.rs
+@@ -9,7 +9,9 @@
+ //! - TCP mode: Listens on a TCP port for connections
+ //! - LocalTalk mode: LocalTalk over UDP multicast for AppleTalk networking
+ 
+-use std::io::{self, Read, Write};
++use std::io;
++#[cfg(feature = "host_bridges")]
++use std::io::{Read, Write};
+ use std::path::PathBuf;
+ 
+ use log::*;
+@@ -78,7 +80,7 @@ pub trait SerialBridgeBackend: Send {
+ }
+ 
+ /// PTY-based serial bridge (Unix only)
+-#[cfg(unix)]
++#[cfg(all(unix, feature = "host_bridges"))]
+ pub mod pty {
+     use super::*;
+     use std::fs::File;
+@@ -184,6 +186,7 @@ pub mod pty {
+ }
+ 
+ /// TCP-based serial bridge
++#[cfg(feature = "host_bridges")]
+ pub mod tcp {
+     use super::*;
+     use std::net::{SocketAddr, TcpListener, TcpStream};
+@@ -305,18 +308,27 @@ pub struct SerialBridge {
+ impl SerialBridge {
+     /// Create a new serial bridge with the given configuration
+     /// Note: LocalTalk should use SccBridge::new() instead
++    #[cfg_attr(not(feature = "host_bridges"), allow(unused_variables, unreachable_code))]
+     pub fn new(config: &SerialBridgeConfig) -> io::Result<Self> {
+         let backend: Box<dyn SerialBridgeBackend> = match config {
+-            #[cfg(unix)]
++            #[cfg(all(unix, feature = "host_bridges"))]
+             SerialBridgeConfig::Pty => Box::new(pty::PtyBridge::new()?),
+-            #[cfg(not(unix))]
++            #[cfg(not(all(unix, feature = "host_bridges")))]
+             SerialBridgeConfig::Pty => {
+                 return Err(io::Error::new(
+                     io::ErrorKind::Unsupported,
+                     "PTY mode is only supported on Unix systems",
+                 ));
+             }
++            #[cfg(feature = "host_bridges")]
+             SerialBridgeConfig::Tcp(port) => Box::new(tcp::TcpBridge::new(*port)?),
++            #[cfg(not(feature = "host_bridges"))]
++            SerialBridgeConfig::Tcp(_) => {
++                return Err(io::Error::new(
++                    io::ErrorKind::Unsupported,
++                    "TCP mode requires the host_bridges feature",
++                ));
++            }
+             SerialBridgeConfig::LocalTalk => {
+                 return Err(io::Error::new(
+                     io::ErrorKind::InvalidInput,
+diff --git a/core/src/mac/localtalk_bridge.rs b/core/src/mac/localtalk_bridge.rs
+index b64ceb4..07cefc8 100644
+--- a/core/src/mac/localtalk_bridge.rs
++++ b/core/src/mac/localtalk_bridge.rs
+@@ -15,6 +15,7 @@ use std::io;
+ use std::net::{Ipv4Addr, SocketAddr, SocketAddrV4, UdpSocket};
+ 
+ use log::*;
++#[cfg(feature = "host_bridges")]
+ use socket2::{Domain, Protocol, Socket, Type};
+ 
+ /// LocalTalk over UDP port
+@@ -112,6 +113,16 @@ pub struct LocalTalkBridge {
+ 
+ impl LocalTalkBridge {
+     /// Create a new LocalTalk bridge
++    #[cfg(not(feature = "host_bridges"))]
++    pub fn new() -> io::Result<Self> {
++        Err(io::Error::new(
++            io::ErrorKind::Unsupported,
++            "LocalTalk requires the host_bridges feature",
++        ))
++    }
++
++    /// Create a new LocalTalk bridge
++    #[cfg(feature = "host_bridges")]
+     pub fn new() -> io::Result<Self> {
+         // Create UDP socket with socket2 so we can set options before binding
+         let socket = Socket::new(Domain::IPV4, Type::DGRAM, Some(Protocol::UDP))?;
