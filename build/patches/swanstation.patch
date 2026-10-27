@@ -1,0 +1,325 @@
+diff --git a/Makefile.libretro b/Makefile.libretro
+index bd88a2f..73c75f3 100644
+--- a/Makefile.libretro
++++ b/Makefile.libretro
+@@ -74,6 +74,11 @@ endif
+ # CPU_ARCH may be one of: x64, x86, aarch64, aarch32
+ CPU_ARCH ?=
+ 
++# No recompiler or fastmem backend for wasm
++ifeq ($(platform), emscripten)
++   CPU_ARCH := wasm
++endif
++
+ ifeq ($(CPU_ARCH),)
+    ifeq ($(platform), osx)
+       ifeq ($(arch),arm64)
+@@ -179,6 +184,73 @@ else ifneq (,$(findstring win,$(platform)))
+    LDFLAGS += -static-libgcc -static-libstdc++
+    LDFLAGS += -lwinmm -ld3d11 -ldxgi -lopengl32 -lgdi32 -luser32 -lkernel32
+ 
++# Emscripten (static, linked into RetroArch)
++else ifeq ($(platform), emscripten)
++   TARGET         := $(TARGET_NAME)_libretro_emscripten.bc
++   fpic           :=
++   SHARED         :=
++   STATIC_LINKING := 1
++   AR             ?= emar
++   ifeq ($(EMULATORJS_LEGACY),1)
++      FLAGS += -DEMULATORJS_LEGACY
++   endif
++   # RetroArch links its own libretro-common, so give the core's copy private names
++   LRCOMMON_SYMS := \
++      filestream_close filestream_cmp filestream_copy filestream_delete filestream_eof \
++      filestream_error filestream_exists filestream_flush filestream_get_mapped_ptr \
++      filestream_get_path filestream_get_size filestream_get_vfs_handle filestream_getc \
++      filestream_getline filestream_gets filestream_matches_buf filestream_open filestream_printf \
++      filestream_putc filestream_read filestream_read_file filestream_rename filestream_rewind \
++      filestream_scanf filestream_seek filestream_set_mapped_ptr_cb filestream_tell \
++      filestream_truncate filestream_vfs_init filestream_vprintf filestream_vscanf filestream_write \
++      filestream_write_file rfclose rfeof rfgetc rfgets rfopen rfread rfseek rftell rfwrite \
++      vfs_hybrid_init retro_vfs_closedir_impl retro_vfs_dirent_get_name_impl \
++      retro_vfs_dirent_is_dir_impl retro_vfs_file_close_impl retro_vfs_file_error_impl \
++      retro_vfs_file_flush_impl retro_vfs_file_get_mapped_ptr_impl retro_vfs_file_get_path_impl \
++      retro_vfs_file_open_impl retro_vfs_file_read_impl retro_vfs_file_remove_impl \
++      retro_vfs_file_rename_impl retro_vfs_file_seek_impl retro_vfs_file_seek_internal \
++      retro_vfs_file_size_impl retro_vfs_file_tell_impl retro_vfs_file_truncate_impl \
++      retro_vfs_file_write_impl retro_vfs_mkdir_impl retro_vfs_opendir_impl retro_vfs_readdir_impl \
++      retro_vfs_stat_64_impl retro_vfs_stat_impl dirent_vfs_init retro_closedir retro_dirent_error \
++      retro_dirent_get_name retro_dirent_is_dir retro_opendir retro_opendir_include_hidden \
++      retro_readdir path_get_size path_is_character_special path_is_directory path_is_valid path_mkdir \
++      path_stat path_vfs_init fill_dated_filename fill_pathname fill_pathname_abbreviated_or_relative \
++      fill_pathname_abbreviate_special fill_pathname_base fill_pathname_basedir fill_pathname_dir \
++      fill_pathname_expand_special fill_pathname_join fill_pathname_join_delim \
++      fill_pathname_join_special_ext fill_pathname_parent_dir fill_pathname_parent_dir_name \
++      fill_pathname_resolve_relative fill_pathname_slash fill_str_dated_filename find_last_slash \
++      is_path_accessible_using_standard_io path_basedir path_basedir_wrapper path_basename \
++      path_basename_nocompression path_get_archive_delim path_get_extension path_get_extension_mutable \
++      path_is_absolute path_is_compressed_file path_linked_list_add_path path_linked_list_free \
++      path_linked_list_new pathname_conform_slashes_to_os pathname_make_slashes_portable \
++      path_parent_dir path_relative_to path_remove_extension path_resolve_realpath sanitize_path_part \
++      strftime_am_pm strlcat_retro__ strlcpy_retro__ lr_char_props string_copy_only_ascii \
++      string_count_occurrences_single_character string_ext_list_append_dedup string_ext_list_find \
++      string_ext_list_merge_dedup string_find_index_substring_string string_hex_to_unsigned \
++      string_index_last_occurance string_remove_all_chars string_remove_all_whitespace \
++      string_replace_all_chars string_replace_multi_space_with_single_space string_replace_substring \
++      string_replace_whitespace_with_single_character string_tokenize string_to_lower \
++      string_to_unsigned string_to_upper string_trim_whitespace string_trim_whitespace_left \
++      string_trim_whitespace_right string_ucwords strlcpy_append word_wrap word_wrap_wideglyph \
++      local_to_utf8_string local_to_utf8_string_alloc utf16_conv_utf8 utf16_to_char_string \
++      utf16_to_utf8_string_alloc utf8_conv_utf32 utf8cpy utf8len utf8skip utf8_to_local_string_alloc \
++      utf8_to_utf16_string_alloc utf8_walk scond_broadcast scond_free scond_new scond_signal \
++      scond_wait scond_wait_timeout slock_free slock_lock slock_new slock_try_lock slock_unlock \
++      sthread_cancel sthread_create sthread_create_with_priority sthread_create_with_stack_size \
++      sthread_detach sthread_get_core_topology sthread_get_current_thread_id sthread_get_thread_id \
++      sthread_is_main_thread sthread_isself sthread_join sthread_prefer_fast_cores \
++      sthread_priority_override_begin sthread_priority_override_end sthread_raise_current_priority \
++      sthread_set_affinity sthread_set_cancel_enable sthread_set_current_affinity sthread_setname \
++      sthread_yield retro_eventcount_backend_name retro_eventcount_cancel_wait \
++      retro_eventcount_commit_wait retro_eventcount_commit_wait_timeout retro_eventcount_free \
++      retro_eventcount_init retro_eventcount_notify retro_eventcount_prepare_wait \
++      retro_eventcount_spin_iters retro_spsc_clear retro_spsc_free retro_spsc_init retro_spsc_peek \
++      retro_spsc_read retro_spsc_read_avail retro_spsc_read_begin retro_spsc_read_end retro_spsc_skip \
++      retro_spsc_write retro_spsc_write_avail retro_spsc_write_begin retro_spsc_write_end \
++      retro_spsc_write_frames rtime_deinit rtime_init rtime_localtime memcommit memdecommit \
++      mempagesize memprotect memrearm memrelease memreserve memsync
++   FLAGS += $(foreach sym,$(LRCOMMON_SYMS),-D$(sym)=swanstation_$(sym))
++
+ # Unrecognised platform - emit a clear error rather than silently building
+ # something broken.
+ else
+@@ -579,8 +651,10 @@ FLAGS += \
+ # on Windows (automatic under _WIN32, no define needed).  Mirrors the
+ # `if(NOT WIN32)` block in dep/libretro-common/CMakeLists.txt.
+ ifneq ($(IS_WINDOWS),1)
++ifneq ($(platform), emscripten)
+    FLAGS += -DHAVE_MMAP
+ endif
++endif
+ 
+ # Recompiler / fastmem flags - only when the host CPU has a JIT backend.
+ ifeq ($(WITH_RECOMPILER),1)
+@@ -710,8 +784,13 @@ $(SRC_LIBRETRO_DIR)/version.h:
+ $(OBJECTS): | $(SRC_DIR)/config.h $(SRC_LIBRETRO_DIR)/version.h
+ 
+ $(TARGET): $(OBJECTS)
++ifeq ($(STATIC_LINKING),1)
++	@echo "AR $@"
++	$(AR) rcs $@ $(OBJECTS)
++else
+ 	@echo "LD $@"
+ 	$(LD) -o $@ $(OBJECTS) $(LDFLAGS)
++endif
+ 
+ %.o: %.cpp
+ 	@if [ "$(SILENT)" != "1" ]; then echo "CXX $<"; fi
+diff --git a/dep/libretro-common/include/memmap.h b/dep/libretro-common/include/memmap.h
+index be7fbee..78891e0 100644
+--- a/dep/libretro-common/include/memmap.h
++++ b/dep/libretro-common/include/memmap.h
+@@ -27,7 +27,7 @@
+ #include <stdint.h>
+ #include <boolean.h>
+ 
+-#if defined(PSP) || defined(PS2) || defined(GEKKO) || defined(VITA) || defined(_XBOX) || defined(_3DS) || defined(WIIU) || defined(SWITCH) || defined(HAVE_LIBNX) || defined(__PS3__) || defined(__PSL1GHT__) || defined(__EMSCRIPTEN__)
++#if defined(PSP) || defined(PS2) || defined(GEKKO) || defined(VITA) || defined(_XBOX) || defined(_3DS) || defined(WIIU) || defined(SWITCH) || defined(HAVE_LIBNX) || defined(__PS3__) || defined(__PSL1GHT__)
+ /* No mman available */
+ #elif defined(_WIN32) && !defined(_XBOX)
+ #include <windows.h>
+diff --git a/src/common/jit_code_buffer.cpp b/src/common/jit_code_buffer.cpp
+index f768a57..e392e54 100644
+--- a/src/common/jit_code_buffer.cpp
++++ b/src/common/jit_code_buffer.cpp
+@@ -238,6 +238,8 @@ void JitCodeBuffer::FlushInstructionCache(void* address, uint32_t size)
+   // ___clear_cache instead - a compiler-rt symbol those SDKs do not ship, so
+   // the link ends in "Undefined symbols for architecture arm64".
+   sys_icache_invalidate(address, size);
++#elif defined(__EMSCRIPTEN__)
++  // No native code is generated on wasm
+ #elif defined(__GNUC__) || defined(__clang__)
+   __builtin___clear_cache(reinterpret_cast<char*>(address), reinterpret_cast<char*>(address) + size);
+ #else
+diff --git a/src/common/memory_arena.cpp b/src/common/memory_arena.cpp
+index 64bac61..b0f5312 100644
+--- a/src/common/memory_arena.cpp
++++ b/src/common/memory_arena.cpp
+@@ -12,7 +12,7 @@ Log_SetChannel(Common::MemoryArena);
+ #include <sys/ioctl.h>
+ #include <sys/mman.h>
+ #include <unistd.h>
+-#elif defined(__linux__) || defined(__APPLE__) || defined(__FreeBSD__)
++#elif defined(__linux__) || defined(__APPLE__) || defined(__FreeBSD__) || defined(__EMSCRIPTEN__)
+ #include <cerrno>
+ #include <fcntl.h>
+ #include <sys/mman.h>
+@@ -106,7 +106,7 @@ static std::string GetFileMappingName()
+ {
+ #if defined(_WIN32)
+   const unsigned pid = GetCurrentProcessId();
+-#elif defined(__ANDROID__) || defined(__linux__) || defined(__APPLE__) || defined(__FreeBSD__)
++#elif defined(__ANDROID__) || defined(__linux__) || defined(__APPLE__) || defined(__FreeBSD__) || defined(__EMSCRIPTEN__)
+   const unsigned pid = static_cast<unsigned>(getpid());
+ #else
+ #error Unknown platform.
+diff --git a/src/common/memory_arena.h b/src/common/memory_arena.h
+index d0eaf83..58e70fe 100644
+--- a/src/common/memory_arena.h
++++ b/src/common/memory_arena.h
+@@ -55,7 +55,7 @@ public:
+ private:
+ #if defined(_WIN32)
+   void* m_file_handle = nullptr;
+-#elif defined(__linux__) || defined(ANDROID) || defined(__APPLE__) || defined(__FreeBSD__)
++#elif defined(__linux__) || defined(ANDROID) || defined(__APPLE__) || defined(__FreeBSD__) || defined(__EMSCRIPTEN__)
+   int m_shmem_fd = -1;
+ #endif
+ 
+diff --git a/src/common/platform.h b/src/common/platform.h
+index 5c3c278..dca86fd 100644
+--- a/src/common/platform.h
++++ b/src/common/platform.h
+@@ -24,6 +24,8 @@
+ #define CPU_AARCH64 1
+ #elif defined(__arm__)
+ #define CPU_AARCH32 1
++#elif defined(__wasm__)
++#define CPU_WASM 1
+ #else
+ #error Unknown architecture.
+ #endif
+diff --git a/src/core/bus.cpp b/src/core/bus.cpp
+index 9240377..905c55a 100644
+--- a/src/core/bus.cpp
++++ b/src/core/bus.cpp
+@@ -260,6 +260,18 @@ void RecalculateMemoryTimings()
+ 
+ bool AllocateMemory(bool enable_8mb_ram)
+ {
++#ifdef __EMSCRIPTEN__
++  // No shared memory mappings on the web, and fastmem is off without the recompiler
++  const uint32_t ram_size = enable_8mb_ram ? RAM_8MB_SIZE : RAM_2MB_SIZE;
++  g_ram = static_cast<uint8_t*>(std::calloc(1, ram_size));
++  if (!g_ram)
++    return false;
++
++  g_ram_mask = enable_8mb_ram ? RAM_8MB_MASK : RAM_2MB_MASK;
++  g_ram_size = ram_size;
++  m_ram_code_page_count = enable_8mb_ram ? RAM_8MB_CODE_PAGE_COUNT : RAM_2MB_CODE_PAGE_COUNT;
++  return true;
++#else
+   if (!m_memory_arena.Create(MEMORY_ARENA_SIZE, true, false))
+     return false;
+ 
+@@ -274,13 +286,18 @@ bool AllocateMemory(bool enable_8mb_ram)
+   g_ram_size = ram_size;
+   m_ram_code_page_count = enable_8mb_ram ? RAM_8MB_CODE_PAGE_COUNT : RAM_2MB_CODE_PAGE_COUNT;
+   return true;
++#endif
+ }
+ 
+ void ReleaseMemory()
+ {
+   if (g_ram)
+   {
++#ifdef __EMSCRIPTEN__
++    std::free(g_ram);
++#else
+     m_memory_arena.ReleaseViewPtr(g_ram, g_ram_size);
++#endif
+     g_ram = nullptr;
+     g_ram_mask = 0;
+     g_ram_size = 0;
+diff --git a/src/core/gpu_hw_opengl.cpp b/src/core/gpu_hw_opengl.cpp
+index 8e976da..9c8688e 100644
+--- a/src/core/gpu_hw_opengl.cpp
++++ b/src/core/gpu_hw_opengl.cpp
+@@ -270,6 +270,11 @@ bool LibretroOpenGLHostDisplay::RequestHardwareRendererContext(retro_hw_render_c
+   cb->cache_context = false;
+   cb->bottom_left_origin = true;
+ 
++#ifdef __EMSCRIPTEN__
++  // WebGL 2 is GLES 3.0, there's no desktop GL
++  prefer_gles = true;
++#endif
++
+   if (!prefer_gles)
+   {
+     if (TryDesktopVersions(cb) || TryESVersions(cb))
+@@ -1721,11 +1726,14 @@ void GPU_HW_OpenGL::SetScissorFromDrawingArea()
+ 
+ void GPU_HW_OpenGL::UploadUniformBuffer(const void* data, uint32_t data_size)
+ {
+-  const GL::StreamBuffer::MappingResult res = m_uniform_stream_buffer->Map(m_uniform_buffer_alignment, data_size);
++  // std140 rounds block sizes up to 16 bytes, and WebGL rejects a smaller bound range
++  const uint32_t bind_size = (data_size + 15u) & ~15u;
++  const GL::StreamBuffer::MappingResult res = m_uniform_stream_buffer->Map(m_uniform_buffer_alignment, bind_size);
+   std::memcpy(res.pointer, data, data_size);
+-  m_uniform_stream_buffer->Unmap(data_size);
++  std::memset(static_cast<uint8_t*>(res.pointer) + data_size, 0, bind_size - data_size);
++  m_uniform_stream_buffer->Unmap(bind_size);
+ 
+-  glBindBufferRange(GL_UNIFORM_BUFFER, 1, m_uniform_stream_buffer->GetGLBufferId(), res.buffer_offset, data_size);
++  glBindBufferRange(GL_UNIFORM_BUFFER, 1, m_uniform_stream_buffer->GetGLBufferId(), res.buffer_offset, bind_size);
+ }
+ 
+ void GPU_HW_OpenGL::ClearDisplay()
+@@ -2040,6 +2048,9 @@ void GPU_HW_OpenGL::UpdateVRAM(uint32_t x, uint32_t y, uint32_t width, uint32_t
+                         scaled_x + scaled_width, scaled_flipped_y + scaled_height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+       glEnable(GL_SCISSOR_TEST);
+     }
++
++    // batch draws sample the read texture
++    m_vram_read_texture.Bind();
+   }
+ }
+ 
+@@ -2171,12 +2182,22 @@ void GPU_HW_OpenGL::UpdateDepthBufferFromMaskBit()
+   if (m_pgxp_depth_buffer)
+     return;
+ 
++#ifdef __EMSCRIPTEN__
++  // WebGL rejects sampling a texture attached to the bound framebuffer, so read the copy
++  if (m_vram_dirty_rect.Valid())
++    UpdateVRAMReadTexture();
++#endif
++
+   glDisable(GL_SCISSOR_TEST);
+   glDisable(GL_BLEND);
+   glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+   glDepthFunc(GL_ALWAYS);
+ 
++#ifdef __EMSCRIPTEN__
++  m_vram_read_texture.Bind();
++#else
+   m_vram_texture.Bind();
++#endif
+   m_vram_update_depth_program.Bind();
+   glBindVertexArray(m_attributeless_vao_id);
+   glDrawArrays(GL_TRIANGLES, 0, 3);
+diff --git a/src/libretro/libretro_host_interface.cpp b/src/libretro/libretro_host_interface.cpp
+index 6f97a84..fa87804 100644
+--- a/src/libretro/libretro_host_interface.cpp
++++ b/src/libretro/libretro_host_interface.cpp
+@@ -1456,6 +1456,10 @@ void HostInterface::LoadSettings()
+ {
+   LibretroSettingsInterface si;
+   g_settings.Load(si);
++#ifdef EMULATORJS_LEGACY
++  // The hardware renderer needs GLES 3, and legacy builds only have WebGL 1
++  g_settings.gpu_renderer = GPURenderer::Software;
++#endif
+ 
+   // turn percentage into fraction for overclock
+   const uint32_t overclock_percent = static_cast<uint32_t>(std::max(si.GetIntValue("CPU", "Overclock", 100), 1));
+@@ -2183,6 +2187,11 @@ static std::optional<GPURenderer> RenderAPIToRenderer(HostDisplay::RenderAPI api
+ 
+ bool HostInterface::RequestHardwareRendererContext()
+ {
++#ifdef EMULATORJS_LEGACY
++  m_hw_render_callback_valid = false;
++  return false;
++#endif
++
+   retro_variable renderer_variable{"swanstation_GPU_Renderer",
+                                    Settings::GetRendererName(Settings::DEFAULT_GPU_RENDERER)};
+   if (!g_retro_environment_callback(RETRO_ENVIRONMENT_GET_VARIABLE, &renderer_variable) || !renderer_variable.value)

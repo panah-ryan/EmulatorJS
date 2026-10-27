@@ -928,5 +928,31 @@
         "save": "srm",
         "license": "LICENSE",
         "repo": "https://git.libretro.com/libretro/emir"
+    },
+    {
+        "name": "swanstation",
+        "extensions": [
+            "cue",
+            "bin",
+            "img",
+            "iso",
+            "chd",
+            "ecm",
+            "mds",
+            "pbp",
+            "m3u",
+            "psf"
+        ],
+        "makeoptions": {
+            "buildpath": "./",
+            "makescript": "Makefile.libretro",
+            "arguments": []
+        },
+        "options": {
+            "defaultWebGL2": true
+        },
+        "save": "srm",
+        "license": "LICENSE",
+        "repo": "https://github.com/libretro/swanstation"
     }
 ]
