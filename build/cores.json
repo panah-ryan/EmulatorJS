@@ -1038,5 +1038,22 @@
         "save": false,
         "license": "LICENSE",
         "repo": "https://github.com/flyinghead/flycast"
+    },
+    {
+        "name": "mednafen_wswan",
+        "extensions": [
+            "ws",
+            "wsc",
+            "pc2"
+        ],
+        "makeoptions": {
+            "buildpath": "./",
+            "makescript": "Makefile",
+            "arguments": []
+        },
+        "options": {},
+        "save": "srm",
+        "license": "COPYING",
+        "repo": "https://github.com/libretro/beetle-wswan-libretro"
     }
 ]
