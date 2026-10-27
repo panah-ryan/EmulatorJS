@@ -79,7 +79,7 @@ To add a new core, add a stanza like the below:
 | ``build_command`` | The command that builds the core when ``custom`` is ``true`` |
 | ``build_retroarch_command`` | Optional command that replaces the standard RetroArch link step for a ``custom`` core |
 
-Local source fixes for a core can be placed in ``patches/<name>.patch`` (see [Patching cores](#patching-cores)).
+Local source fixes for a core can be placed in ``patches/<name>.patch``, or as a series in ``patches/<name>/`` (see [Patching cores](#patching-cores)).
 
 ### options
 | Attribute | Definition |
@@ -95,17 +95,19 @@ The cores are built from their upstream repositories, which mostly target deskto
 ## How it works
 Each patch is a ``git diff`` stored at ``patches/<name>.patch``, where ``<name>`` matches the core's ``name`` in ``cores.json``. ``patches/RetroArch.patch`` applies to RetroArch itself.
 
+A core with many changes can split them into a series instead: a directory ``patches/<name>/`` holding several ``.patch`` files, applied in file name order (so number them, e.g. ``01-port.patch``, ``02-jit.patch``). Text before the first ``diff --git`` line is ignored, so each patch can start with a short description. If both exist, the directory is used.
+
 When ``build.sh`` updates a repo in ``./compile``, it:
-1. Reverses the patch, if it is already applied, so the working tree is clean
+1. Reverses the patch, or the series last patch first, if it is already applied, so the working tree is clean
 2. Checks out the configured branch and runs ``git pull``
-3. Applies the patch again with ``git apply``
+3. Applies the patch, or each patch in the series, again with ``git apply``
 
 If the patch no longer applies (usually because upstream changed the same lines), the build stops. Update the patch against the new upstream code, or delete it if upstream has fixed the problem.
 
 ## Creating a patch
 1. Build the core once so its repo is cloned to ``./compile/<name>``
 2. Edit the files in ``./compile/<name>``
-3. Save the changes as the patch: ``git -C compile/<name> diff > patches/<name>.patch``
+3. Save the changes as the patch: ``git -C compile/<name> diff > patches/<name>.patch``. For a series, save each group of files to its own patch, e.g. ``git -C compile/<name> diff -- <files> > patches/<name>/02-jit.patch``. New files only show up in ``git diff`` after ``git add -N <files>``; run ``git reset <files>`` afterwards so ``build.sh`` can pull cleanly.
 4. Rebuild just that core to check it: ``bash build.sh --core=<name>``
 
 Keep each patch to the changes EmulatorJS needs. Fixes that would help every libretro user are better sent upstream, and the patch can be removed once they're merged.

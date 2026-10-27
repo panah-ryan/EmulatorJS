@@ -104,13 +104,17 @@ buildThreadsLegacy() {
     mv $linkerfilename "$buildPath/$tempPath/legacyThreads/"
 }
 
-cmakeBuildThreads() {
+# cmakeBuild <normal|threads>: configure and build the core, then merge its archives into one .bc
+cmakeBuild() {
+    local variant="$1"
+    local cflags="$EMCC_CFLAGS"
+    # compile with -pthread so objects can link into a shared-memory wasm, same as buildThreads
+    [ "$variant" = "threads" ] && cflags="$cflags -pthread"
     rm -rf "$cmakeBuildDir"
     mkdir -p "$cmakeBuildDir"
     cd "$cmakeBuildDir"
-    # compile with -pthread so objects can link into a shared-memory wasm, same as buildThreads
-    EMCC_CFLAGS="$EMCC_CFLAGS -pthread" emcmake cmake .. -DCMAKE_PROJECT_INCLUDE="$initialPath/cmake/emulatorjs-static.cmake" "${cmakeArgsArray[@]}" || exit 1
-    EMCC_CFLAGS="$EMCC_CFLAGS -pthread" emmake make -j$(nproc) || exit 1
+    EMCC_CFLAGS="$cflags" emcmake cmake .. -DCMAKE_PROJECT_INCLUDE="$initialPath/cmake/emulatorjs-static.cmake" "${cmakeArgsArray[@]}" || exit 1
+    EMCC_CFLAGS="$cflags" emmake make -j$(nproc) || exit 1
 
     if [ -n "$archivesString" ]; then
         printf "create %s\n%s\nsave\nend\n" "$outputArchive" "$archivesString" > merge.mri
@@ -134,10 +138,12 @@ cmakeBuildThreads() {
     emar -M < merge.mri || exit 1
 
     # the core archive doesn't depend on the GL version, so reuse it for the legacy link
+    local legacyDir="legacy"
+    [ "$variant" = "threads" ] && legacyDir="legacyThreads"
     if [ "$requiresWebgl2" = false ]; then
-        cp "$outputArchive" "$buildPath/$tempPath/legacyThreads/${name}_libretro_emscripten.bc"
+        cp "$outputArchive" "$buildPath/$tempPath/$legacyDir/${name}_libretro_emscripten.bc"
     fi
-    mv "$outputArchive" "$buildPath/$tempPath/threads/${name}_libretro_emscripten.bc"
+    mv "$outputArchive" "$buildPath/$tempPath/$variant/${name}_libretro_emscripten.bc"
     cd ..
 }
 
@@ -196,11 +202,20 @@ compileProject() {
     fi
     cd "$name"
 
-    # local fixes live in patches/<core>.patch; undo them before pulling so the pull stays clean
-    patchFile="$initialPath/patches/$name.patch"
-    if [ -f "$patchFile" ] && git apply --reverse --check "$patchFile" 2>/dev/null; then
-        git apply --reverse "$patchFile"
+    # local fixes live in patches/<core>.patch, or as a series in patches/<core>/*.patch applied in name order
+    patchFiles=()
+    if [ -d "$initialPath/patches/$name" ]; then
+        patchFiles=("$initialPath/patches/$name"/*.patch)
+    elif [ -f "$initialPath/patches/$name.patch" ]; then
+        patchFiles=("$initialPath/patches/$name.patch")
     fi
+
+    # undo them, last first, before pulling so the pull stays clean
+    for (( i=${#patchFiles[@]}-1; i>=0; i-- )); do
+        if git apply --reverse --check "${patchFiles[$i]}" 2>/dev/null; then
+            git apply --reverse "${patchFiles[$i]}"
+        fi
+    done
 
     if [ $branch != 'null' ]; then
         echo "Checking out branch $branch"
@@ -209,13 +224,16 @@ compileProject() {
     git pull
     git submodule update --recursive
 
-    if [ -f "$patchFile" ]; then
+    for patchFile in "${patchFiles[@]}"; do
         echo "Applying patch $patchFile"
         git apply "$patchFile" || exit 1
-    fi
+    done
 
     if [[ "$builder" = "cmake" ]]; then
-        cmakeBuildThreads
+        if [ "$requireThreads" = false ]; then
+            cmakeBuild normal
+        fi
+        cmakeBuild threads
     elif [[ "$custom" = "true" ]]; then
         eval "$build_command"
     else
