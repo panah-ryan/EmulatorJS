@@ -7,6 +7,7 @@ export const cores = {
     "snes": ["snes9x"],
     "n64": ["mupen64plus_next"],
     "gb": ["sameboy"],
+    "gba": ["mgba"],
     "atari2600": ["stella2014"],
     "vic20": ["vice_xvic"],
     "c64": ["vice_x64sc"],
