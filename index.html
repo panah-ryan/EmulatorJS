@@ -372,6 +372,9 @@
                     if (["z64", "n64", "v64"].includes(ext))
                         return "n64"
 
+                    if (["cdi", "gdi"].includes(ext))
+                        return "dreamcast"
+
                     if (["pce"].includes(ext))
                         return "pce"
 
@@ -438,6 +441,7 @@
                             "PC Engine / TurboGrafx-16": "pce",
                             "3DO": "3do",
                             "PlayStation": "psx",
+                            "Sega Dreamcast": "dreamcast",
                             "Atari 8-bit (400/800/XL/XE)": "atari800",
                             "Atari ST/STE/TT/Falcon": "atarist",
                             "NEC PC-8801": "pc88",

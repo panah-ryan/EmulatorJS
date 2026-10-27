@@ -2305,6 +2305,24 @@ class EJS_Frontend {
                 { id: 12, label: this.localization("LEFT ARROW") },
                 { id: 13, label: this.localization("RIGHT ARROW") },
             ];
+        } else if ("dreamcast" === this.ejs.getControlScheme()) {
+            buttons = [
+                { id: 0, label: this.localization("A") },
+                { id: 8, label: this.localization("B") },
+                { id: 1, label: this.localization("X") },
+                { id: 9, label: this.localization("Y") },
+                { id: 3, label: this.localization("START") },
+                { id: 4, label: this.localization("D-PAD UP") },
+                { id: 5, label: this.localization("D-PAD DOWN") },
+                { id: 6, label: this.localization("D-PAD LEFT") },
+                { id: 7, label: this.localization("D-PAD RIGHT") },
+                { id: 12, label: this.localization("L TRIGGER") },
+                { id: 13, label: this.localization("R TRIGGER") },
+                { id: 19, label: this.localization("STICK UP") },
+                { id: 18, label: this.localization("STICK DOWN") },
+                { id: 17, label: this.localization("STICK LEFT") },
+                { id: 16, label: this.localization("STICK RIGHT") },
+            ];
         } else if ("psx" === this.ejs.getControlScheme()) {
             buttons = [
                 { id: 9, label: this.localization("\u25B3") }, // △
@@ -2850,6 +2868,19 @@ class EJS_Frontend {
                 { "type": "button", "text": "Select", "id": "select", "location": "center", "left": -5, "fontSize": 15, "block": true, "input_value": 2 },
                 { "type": "button", "text": "L", "id": "l", "location": "left", "left": 3, "top": -100, "bold": true, "block": true, "input_value": 10 },
                 { "type": "button", "text": "R", "id": "r", "location": "right", "right": 3, "top": -100, "bold": true, "block": true, "input_value": 11 }
+            ];
+            info.push(...speedControlButtons);
+        } else if ("dreamcast" === this.ejs.getControlScheme()) {
+            info = [
+                { "type": "button", "text": "Y", "id": "y", "location": "right", "left": 40, "bold": true, "input_value": 9 },
+                { "type": "button", "text": "X", "id": "x", "location": "right", "top": 40, "bold": true, "input_value": 1 },
+                { "type": "button", "text": "B", "id": "b", "location": "right", "left": 81, "top": 40, "bold": true, "input_value": 8 },
+                { "type": "button", "text": "A", "id": "a", "location": "right", "left": 40, "top": 80, "bold": true, "input_value": 0 },
+                { "type": "zone", "id": "stick", "location": "left", "left": "50%", "top": "100%", "joystickInput": true, "inputValues": [16, 17, 18, 19] },
+                { "type": "zone", "id": "dpad", "location": "left", "left": "50%", "top": "0%", "joystickInput": false, "inputValues": [4, 5, 6, 7] },
+                { "type": "button", "text": "Start", "id": "start", "location": "center", "left": 30, "fontSize": 15, "block": true, "input_value": 3 },
+                { "type": "button", "text": "L", "id": "l", "location": "left", "left": 3, "top": -100, "bold": true, "block": true, "input_value": 12 },
+                { "type": "button", "text": "R", "id": "r", "location": "right", "right": 3, "top": -100, "bold": true, "block": true, "input_value": 13 }
             ];
             info.push(...speedControlButtons);
         } else if ("psx" === this.ejs.getControlScheme()) {
