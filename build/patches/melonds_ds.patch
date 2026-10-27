@@ -1,0 +1,968 @@
+diff --git a/cmake/emscripten-libretro-common-prefix.h b/cmake/emscripten-libretro-common-prefix.h
+new file mode 100644
+index 0000000..ec978a5
+--- /dev/null
++++ b/cmake/emscripten-libretro-common-prefix.h
+@@ -0,0 +1,770 @@
++/* RetroArch links its own, older libretro-common into the same wasm module,
++ * so give this copy's globals a melondsds_ prefix to keep the two apart. */
++#ifndef MELONDSDS_EMSCRIPTEN_LIBRETRO_COMMON_PREFIX_H
++#define MELONDSDS_EMSCRIPTEN_LIBRETRO_COMMON_PREFIX_H
++#define addr_6to4 melondsds_addr_6to4
++#define audio_resampler_driver_find_handle melondsds_audio_resampler_driver_find_handle
++#define audio_resampler_driver_find_ident melondsds_audio_resampler_driver_find_ident
++#define base64 melondsds_base64
++#define config_file_add_reference melondsds_config_file_add_reference
++#define config_file_append_conf melondsds_config_file_append_conf
++#define config_file_deinitialize melondsds_config_file_deinitialize
++#define config_file_dump melondsds_config_file_dump
++#define config_file_free melondsds_config_file_free
++#define config_file_get_io_default melondsds_config_file_get_io_default
++#define config_file_initialize melondsds_config_file_initialize
++#define config_file_load_file melondsds_config_file_load_file
++#define config_file_new_alloc melondsds_config_file_new_alloc
++#define config_file_new_from_string melondsds_config_file_new_from_string
++#define config_file_new_take_string melondsds_config_file_new_take_string
++#define config_file_new_take_string_with_io melondsds_config_file_new_take_string_with_io
++#define config_file_new_with_io melondsds_config_file_new_with_io
++#define config_file_set_io_default melondsds_config_file_set_io_default
++#define config_file_stream_finish melondsds_config_file_stream_finish
++#define config_file_stream_free melondsds_config_file_stream_free
++#define config_file_stream_new melondsds_config_file_stream_new
++#define config_file_stream_push melondsds_config_file_stream_push
++#define config_get_array melondsds_config_get_array
++#define config_get_bool melondsds_config_get_bool
++#define config_get_char melondsds_config_get_char
++#define config_get_config_path melondsds_config_get_config_path
++#define config_get_double melondsds_config_get_double
++#define config_get_entry melondsds_config_get_entry
++#define config_get_entry_list_head melondsds_config_get_entry_list_head
++#define config_get_entry_list_next melondsds_config_get_entry_list_next
++#define config_get_float melondsds_config_get_float
++#define config_get_hex melondsds_config_get_hex
++#define config_get_int melondsds_config_get_int
++#define config_get_path melondsds_config_get_path
++#define config_get_size_t melondsds_config_get_size_t
++#define config_get_string melondsds_config_get_string
++#define config_get_uint melondsds_config_get_uint
++#define config_get_uint64 melondsds_config_get_uint64
++#define config_set_char melondsds_config_set_char
++#define config_set_double melondsds_config_set_double
++#define config_set_float melondsds_config_set_float
++#define config_set_hex melondsds_config_set_hex
++#define config_set_int melondsds_config_set_int
++#define config_set_path melondsds_config_set_path
++#define config_set_string melondsds_config_set_string
++#define config_set_uint melondsds_config_set_uint
++#define config_set_uint64 melondsds_config_set_uint64
++#define config_take_string melondsds_config_take_string
++#define config_unset melondsds_config_unset
++#define config_userdata_free melondsds_config_userdata_free
++#define config_userdata_get_float melondsds_config_userdata_get_float
++#define config_userdata_get_float_array melondsds_config_userdata_get_float_array
++#define config_userdata_get_hex melondsds_config_userdata_get_hex
++#define config_userdata_get_int melondsds_config_userdata_get_int
++#define config_userdata_get_int_array melondsds_config_userdata_get_int_array
++#define config_userdata_get_string melondsds_config_userdata_get_string
++#define conv_0rgb1555_argb8888 melondsds_conv_0rgb1555_argb8888
++#define conv_0rgb1555_bgr24 melondsds_conv_0rgb1555_bgr24
++#define conv_0rgb1555_rgb565 melondsds_conv_0rgb1555_rgb565
++#define conv_abgr8888_bgr24 melondsds_conv_abgr8888_bgr24
++#define conv_argb8888_0rgb1555 melondsds_conv_argb8888_0rgb1555
++#define conv_argb8888_abgr8888 melondsds_conv_argb8888_abgr8888
++#define conv_argb8888_bgr24 melondsds_conv_argb8888_bgr24
++#define conv_argb8888_rgba4444 melondsds_conv_argb8888_rgba4444
++#define conv_bgr24_argb8888 melondsds_conv_bgr24_argb8888
++#define conv_bgr24_rgb565 melondsds_conv_bgr24_rgb565
++#define conv_copy melondsds_conv_copy
++#define convert_float_to_s16 melondsds_convert_float_to_s16
++#define convert_float_to_s16_init_simd melondsds_convert_float_to_s16_init_simd
++#define convert_s16_to_float melondsds_convert_s16_to_float
++#define convert_s16_to_float_init_simd melondsds_convert_s16_to_float_init_simd
++#define convert_to_dual_mono_float melondsds_convert_to_dual_mono_float
++#define convert_to_mono_float_left melondsds_convert_to_mono_float_left
++#define conv_rgb565_0rgb1555 melondsds_conv_rgb565_0rgb1555
++#define conv_rgb565_abgr8888 melondsds_conv_rgb565_abgr8888
++#define conv_rgb565_argb8888 melondsds_conv_rgb565_argb8888
++#define conv_rgb565_bgr24 melondsds_conv_rgb565_bgr24
++#define conv_rgba4444_argb8888 melondsds_conv_rgba4444_argb8888
++#define conv_rgba4444_rgb565 melondsds_conv_rgba4444_rgb565
++#define conv_yuyv_argb8888 melondsds_conv_yuyv_argb8888
++#define cpu_features_get melondsds_cpu_features_get
++#define cpu_features_get_core_amount melondsds_cpu_features_get_core_amount
++#define cpu_features_get_core_amount_physical melondsds_cpu_features_get_core_amount_physical
++#define cpu_features_get_model_name melondsds_cpu_features_get_model_name
++#define cpu_features_get_perf_counter melondsds_cpu_features_get_perf_counter
++#define cpu_features_get_processor_order melondsds_cpu_features_get_processor_order
++#define cpu_features_get_time_usec melondsds_cpu_features_get_time_usec
++#define deflate_deflate_backend melondsds_deflate_deflate_backend
++#define deflate_inflate_backend melondsds_deflate_inflate_backend
++#define dirent_vfs_init melondsds_dirent_vfs_init
++#define dir_list_append melondsds_dir_list_append
++#define dir_list_deinitialize melondsds_dir_list_deinitialize
++#define dir_list_free melondsds_dir_list_free
++#define dir_list_initialize melondsds_dir_list_initialize
++#define dir_list_iter_free melondsds_dir_list_iter_free
++#define dir_list_iter_new melondsds_dir_list_iter_new
++#define dir_list_iter_step melondsds_dir_list_iter_step
++#define dir_list_new melondsds_dir_list_new
++#define dir_list_sort melondsds_dir_list_sort
++#define dir_list_sort_cmp melondsds_dir_list_sort_cmp
++#define dir_list_sort_ignore_ext melondsds_dir_list_sort_ignore_ext
++#define disc_strings melondsds_disc_strings
++#define djb2_calculate melondsds_djb2_calculate
++#define encoding_crc16_ccitt melondsds_encoding_crc16_ccitt
++#define encoding_crc32 melondsds_encoding_crc32
++#define encoding_crc32_ogg melondsds_encoding_crc32_ogg
++#define fifo_deinitialize melondsds_fifo_deinitialize
++#define fifo_free melondsds_fifo_free
++#define fifo_initialize melondsds_fifo_initialize
++#define fifo_new melondsds_fifo_new
++#define fifo_read melondsds_fifo_read
++#define fifo_write melondsds_fifo_write
++#define file_archive_compressed_read melondsds_file_archive_compressed_read
++#define file_archive_entry_source_close melondsds_file_archive_entry_source_close
++#define file_archive_entry_source_open melondsds_file_archive_entry_source_open
++#define file_archive_entry_source_read melondsds_file_archive_entry_source_read
++#define file_archive_extract_file melondsds_file_archive_extract_file
++#define file_archive_get_7z_file_backend melondsds_file_archive_get_7z_file_backend
++#define file_archive_get_file_backend melondsds_file_archive_get_file_backend
++#define file_archive_get_file_crc32 melondsds_file_archive_get_file_crc32
++#define file_archive_get_file_crc32_and_size melondsds_file_archive_get_file_crc32_and_size
++#define file_archive_get_file_list melondsds_file_archive_get_file_list
++#define file_archive_get_file_list_noalloc melondsds_file_archive_get_file_list_noalloc
++#define file_archive_get_zlib_file_backend melondsds_file_archive_get_zlib_file_backend
++#define file_archive_get_zstd_file_backend melondsds_file_archive_get_zstd_file_backend
++#define file_archive_parse_file_iterate melondsds_file_archive_parse_file_iterate
++#define file_archive_parse_file_iterate_stop melondsds_file_archive_parse_file_iterate_stop
++#define file_archive_parse_file_progress melondsds_file_archive_parse_file_progress
++#define file_archive_perform_mode melondsds_file_archive_perform_mode
++#define file_archive_perform_mode_start melondsds_file_archive_perform_mode_start
++#define file_archive_perform_mode_step melondsds_file_archive_perform_mode_step
++#define file_list_append melondsds_file_list_append
++#define file_list_clear melondsds_file_list_clear
++#define file_list_deinitialize melondsds_file_list_deinitialize
++#define file_list_free melondsds_file_list_free
++#define file_list_free_actiondata melondsds_file_list_free_actiondata
++#define file_list_free_userdata melondsds_file_list_free_userdata
++#define file_list_get_actiondata_at_offset melondsds_file_list_get_actiondata_at_offset
++#define file_list_get_userdata_at_offset melondsds_file_list_get_userdata_at_offset
++#define file_list_insert melondsds_file_list_insert
++#define file_list_pop melondsds_file_list_pop
++#define file_list_reserve melondsds_file_list_reserve
++#define file_list_search melondsds_file_list_search
++#define file_list_set_alt_at_offset melondsds_file_list_set_alt_at_offset
++#define file_list_set_label_at_offset melondsds_file_list_set_label_at_offset
++#define file_list_sort_on_alt melondsds_file_list_sort_on_alt
++#define file_list_sort_on_type melondsds_file_list_sort_on_type
++#define filestream_close melondsds_filestream_close
++#define filestream_cmp melondsds_filestream_cmp
++#define filestream_copy melondsds_filestream_copy
++#define filestream_delete melondsds_filestream_delete
++#define filestream_eof melondsds_filestream_eof
++#define filestream_error melondsds_filestream_error
++#define filestream_exists melondsds_filestream_exists
++#define filestream_flush melondsds_filestream_flush
++#define filestream_getc melondsds_filestream_getc
++#define filestream_getline melondsds_filestream_getline
++#define filestream_get_mapped_ptr melondsds_filestream_get_mapped_ptr
++#define filestream_get_path melondsds_filestream_get_path
++#define filestream_gets melondsds_filestream_gets
++#define filestream_get_size melondsds_filestream_get_size
++#define filestream_get_vfs_handle melondsds_filestream_get_vfs_handle
++#define filestream_matches_buf melondsds_filestream_matches_buf
++#define filestream_open melondsds_filestream_open
++#define filestream_printf melondsds_filestream_printf
++#define filestream_putc melondsds_filestream_putc
++#define filestream_read melondsds_filestream_read
++#define filestream_read_file melondsds_filestream_read_file
++#define filestream_rename melondsds_filestream_rename
++#define filestream_rewind melondsds_filestream_rewind
++#define filestream_scanf melondsds_filestream_scanf
++#define filestream_seek melondsds_filestream_seek
++#define filestream_set_mapped_ptr_cb melondsds_filestream_set_mapped_ptr_cb
++#define filestream_tell melondsds_filestream_tell
++#define filestream_truncate melondsds_filestream_truncate
++#define filestream_vfs_init melondsds_filestream_vfs_init
++#define filestream_vprintf melondsds_filestream_vprintf
++#define filestream_vscanf melondsds_filestream_vscanf
++#define filestream_write melondsds_filestream_write
++#define filestream_write_file melondsds_filestream_write_file
++#define fill_dated_filename melondsds_fill_dated_filename
++#define fill_pathname melondsds_fill_pathname
++#define fill_pathname_abbreviated_or_relative melondsds_fill_pathname_abbreviated_or_relative
++#define fill_pathname_abbreviate_special melondsds_fill_pathname_abbreviate_special
++#define fill_pathname_base melondsds_fill_pathname_base
++#define fill_pathname_basedir melondsds_fill_pathname_basedir
++#define fill_pathname_dir melondsds_fill_pathname_dir
++#define fill_pathname_expand_special melondsds_fill_pathname_expand_special
++#define fill_pathname_join melondsds_fill_pathname_join
++#define fill_pathname_join_delim melondsds_fill_pathname_join_delim
++#define fill_pathname_join_special_ext melondsds_fill_pathname_join_special_ext
++#define fill_pathname_parent_dir melondsds_fill_pathname_parent_dir
++#define fill_pathname_parent_dir_name melondsds_fill_pathname_parent_dir_name
++#define fill_pathname_resolve_relative melondsds_fill_pathname_resolve_relative
++#define fill_pathname_slash melondsds_fill_pathname_slash
++#define fill_str_dated_filename melondsds_fill_str_dated_filename
++#define find_last_slash melondsds_find_last_slash
++#define form_bmp_header melondsds_form_bmp_header
++#define freeaddrinfo_retro melondsds_freeaddrinfo_retro
++#define generic_queue_free melondsds_generic_queue_free
++#define generic_queue_iterator melondsds_generic_queue_iterator
++#define generic_queue_iterator_free melondsds_generic_queue_iterator_free
++#define generic_queue_iterator_next melondsds_generic_queue_iterator_next
++#define generic_queue_iterator_remove melondsds_generic_queue_iterator_remove
++#define generic_queue_iterator_value melondsds_generic_queue_iterator_value
++#define generic_queue_length melondsds_generic_queue_length
++#define generic_queue_new melondsds_generic_queue_new
++#define generic_queue_peek melondsds_generic_queue_peek
++#define generic_queue_peek_first melondsds_generic_queue_peek_first
++#define generic_queue_pop melondsds_generic_queue_pop
++#define generic_queue_push melondsds_generic_queue_push
++#define generic_queue_remove melondsds_generic_queue_remove
++#define generic_queue_shift melondsds_generic_queue_shift
++#define generic_queue_unshift melondsds_generic_queue_unshift
++#define getaddrinfo_retro melondsds_getaddrinfo_retro
++#define getnameinfo_retro melondsds_getnameinfo_retro
++#define image_texture_free melondsds_image_texture_free
++#define image_texture_get_type melondsds_image_texture_get_type
++#define image_texture_load melondsds_image_texture_load
++#define image_texture_load_buffer melondsds_image_texture_load_buffer
++#define image_texture_narrow_10bit melondsds_image_texture_narrow_10bit
++#define image_texture_realize_rgba melondsds_image_texture_realize_rgba
++#define image_transfer_anim_free melondsds_image_transfer_anim_free
++#define image_transfer_anim_get_frame melondsds_image_transfer_anim_get_frame
++#define image_transfer_anim_get_info melondsds_image_transfer_anim_get_info
++#define image_transfer_anim_new melondsds_image_transfer_anim_new
++#define image_transfer_anim_num_frames melondsds_image_transfer_anim_num_frames
++#define image_transfer_anim_stream_complete_scan melondsds_image_transfer_anim_stream_complete_scan
++#define image_transfer_anim_stream_consumed melondsds_image_transfer_anim_stream_consumed
++#define image_transfer_anim_stream_free melondsds_image_transfer_anim_stream_free
++#define image_transfer_anim_stream_get_info melondsds_image_transfer_anim_stream_get_info
++#define image_transfer_anim_stream_media_floor melondsds_image_transfer_anim_stream_media_floor
++#define image_transfer_anim_stream_new melondsds_image_transfer_anim_stream_new
++#define image_transfer_anim_stream_new_avail melondsds_image_transfer_anim_stream_new_avail
++#define image_transfer_anim_stream_next melondsds_image_transfer_anim_stream_next
++#define image_transfer_anim_stream_rewind melondsds_image_transfer_anim_stream_rewind
++#define image_transfer_anim_stream_set_argb melondsds_image_transfer_anim_stream_set_argb
++#define image_transfer_anim_stream_set_avail melondsds_image_transfer_anim_stream_set_avail
++#define image_transfer_detach_anim_stream melondsds_image_transfer_detach_anim_stream
++#define image_transfer_free melondsds_image_transfer_free
++#define image_transfer_get_gpu_layout melondsds_image_transfer_get_gpu_layout
++#define image_transfer_is_10bit melondsds_image_transfer_is_10bit
++#define image_transfer_is_valid melondsds_image_transfer_is_valid
++#define image_transfer_iterate melondsds_image_transfer_iterate
++#define image_transfer_need_more melondsds_image_transfer_need_more
++#define image_transfer_new melondsds_image_transfer_new
++#define image_transfer_process melondsds_image_transfer_process
++#define image_transfer_set_avail melondsds_image_transfer_set_avail
++#define image_transfer_set_buffer_ptr melondsds_image_transfer_set_buffer_ptr
++#define image_transfer_set_rgba melondsds_image_transfer_set_rgba
++#define image_transfer_set_want_10bit melondsds_image_transfer_set_want_10bit
++#define image_transfer_start melondsds_image_transfer_start
++#define intfstream_close melondsds_intfstream_close
++#define intfstream_crc_step melondsds_intfstream_crc_step
++#define intfstream_eof melondsds_intfstream_eof
++#define intfstream_flush melondsds_intfstream_flush
++#define intfstream_getc melondsds_intfstream_getc
++#define intfstream_get_crc melondsds_intfstream_get_crc
++#define intfstream_get_first_sector melondsds_intfstream_get_first_sector
++#define intfstream_get_frame_size melondsds_intfstream_get_frame_size
++#define intfstream_get_offset_to_start melondsds_intfstream_get_offset_to_start
++#define intfstream_get_ptr melondsds_intfstream_get_ptr
++#define intfstream_gets melondsds_intfstream_gets
++#define intfstream_get_size melondsds_intfstream_get_size
++#define intfstream_init melondsds_intfstream_init
++#define intfstream_is_compressed melondsds_intfstream_is_compressed
++#define intfstream_open melondsds_intfstream_open
++#define intfstream_open_buffered melondsds_intfstream_open_buffered
++#define intfstream_open_chd_track melondsds_intfstream_open_chd_track
++#define intfstream_open_file melondsds_intfstream_open_file
++#define intfstream_open_memory melondsds_intfstream_open_memory
++#define intfstream_open_rzip_file melondsds_intfstream_open_rzip_file
++#define intfstream_open_writable_memory melondsds_intfstream_open_writable_memory
++#define intfstream_printf melondsds_intfstream_printf
++#define intfstream_putc melondsds_intfstream_putc
++#define intfstream_read melondsds_intfstream_read
++#define intfstream_rewind melondsds_intfstream_rewind
++#define intfstream_seek melondsds_intfstream_seek
++#define intfstream_tell melondsds_intfstream_tell
++#define intfstream_truncate melondsds_intfstream_truncate
++#define intfstream_write melondsds_intfstream_write
++#define ipv4_is_cgnat_address melondsds_ipv4_is_cgnat_address
++#define ipv4_is_lan_address melondsds_ipv4_is_lan_address
++#define is_path_accessible_using_standard_io melondsds_is_path_accessible_using_standard_io
++#define label_keep_disc melondsds_label_keep_disc
++#define label_keep_region melondsds_label_keep_region
++#define label_keep_region_and_disc melondsds_label_keep_region_and_disc
++#define label_remove_brackets melondsds_label_remove_brackets
++#define label_remove_parens melondsds_label_remove_parens
++#define label_remove_parens_and_brackets melondsds_label_remove_parens_and_brackets
++#define label_sanitize melondsds_label_sanitize
++#define linked_list_add melondsds_linked_list_add
++#define linked_list_foreach melondsds_linked_list_foreach
++#define linked_list_free melondsds_linked_list_free
++#define linked_list_get melondsds_linked_list_get
++#define linked_list_get_first_matching melondsds_linked_list_get_first_matching
++#define linked_list_get_last_matching melondsds_linked_list_get_last_matching
++#define linked_list_insert melondsds_linked_list_insert
++#define linked_list_iterator melondsds_linked_list_iterator
++#define linked_list_iterator_free melondsds_linked_list_iterator_free
++#define linked_list_iterator_next melondsds_linked_list_iterator_next
++#define linked_list_iterator_remove melondsds_linked_list_iterator_remove
++#define linked_list_iterator_value melondsds_linked_list_iterator_value
++#define linked_list_new melondsds_linked_list_new
++#define linked_list_remove_all melondsds_linked_list_remove_all
++#define linked_list_remove_all_matching melondsds_linked_list_remove_all_matching
++#define linked_list_remove_at melondsds_linked_list_remove_at
++#define linked_list_remove_first melondsds_linked_list_remove_first
++#define linked_list_remove_first_matching melondsds_linked_list_remove_first_matching
++#define linked_list_remove_last melondsds_linked_list_remove_last
++#define linked_list_remove_last_matching melondsds_linked_list_remove_last_matching
++#define linked_list_set_at melondsds_linked_list_set_at
++#define linked_list_size melondsds_linked_list_size
++#define local_to_utf8_string melondsds_local_to_utf8_string
++#define local_to_utf8_string_alloc melondsds_local_to_utf8_string_alloc
++#define logiqx_dat_free melondsds_logiqx_dat_free
++#define logiqx_dat_get_next melondsds_logiqx_dat_get_next
++#define logiqx_dat_html_code_list melondsds_logiqx_dat_html_code_list
++#define logiqx_dat_init_owned melondsds_logiqx_dat_init_owned
++#define logiqx_dat_parse_abort melondsds_logiqx_dat_parse_abort
++#define logiqx_dat_parse_begin_owned melondsds_logiqx_dat_parse_begin_owned
++#define logiqx_dat_parse_end melondsds_logiqx_dat_parse_end
++#define logiqx_dat_parse_step melondsds_logiqx_dat_parse_step
++#define logiqx_dat_search melondsds_logiqx_dat_search
++#define logiqx_dat_set_first melondsds_logiqx_dat_set_first
++#define lr_char_props melondsds_lr_char_props
++#define MD5_Final melondsds_MD5_Final
++#define MD5_Init melondsds_MD5_Init
++#define MD5_Update melondsds_MD5_Update
++#define memalign_alloc melondsds_memalign_alloc
++#define memalign_alloc_aligned melondsds_memalign_alloc_aligned
++#define memalign_free melondsds_memalign_free
++#define memcommit melondsds_memcommit
++#define memdecommit melondsds_memdecommit
++#define mempagesize melondsds_mempagesize
++#define memprotect melondsds_memprotect
++#define memrearm melondsds_memrearm
++#define memrelease melondsds_memrelease
++#define memreserve melondsds_memreserve
++#define memstream_close melondsds_memstream_close
++#define memstream_getc melondsds_memstream_getc
++#define memstream_get_ptr melondsds_memstream_get_ptr
++#define memstream_gets melondsds_memstream_gets
++#define memstream_get_size melondsds_memstream_get_size
++#define memstream_open melondsds_memstream_open
++#define memstream_pos melondsds_memstream_pos
++#define memstream_putc melondsds_memstream_putc
++#define memstream_read melondsds_memstream_read
++#define memstream_rewind melondsds_memstream_rewind
++#define memstream_seek melondsds_memstream_seek
++#define memstream_write melondsds_memstream_write
++#define memsync melondsds_memsync
++#define msg_queue_clear melondsds_msg_queue_clear
++#define msg_queue_deinitialize melondsds_msg_queue_deinitialize
++#define msg_queue_extract melondsds_msg_queue_extract
++#define msg_queue_free melondsds_msg_queue_free
++#define msg_queue_initialize melondsds_msg_queue_initialize
++#define msg_queue_new melondsds_msg_queue_new
++#define msg_queue_pull melondsds_msg_queue_pull
++#define msg_queue_push melondsds_msg_queue_push
++#define msg_queue_size melondsds_msg_queue_size
++#define nbio_begin_read melondsds_nbio_begin_read
++#define nbio_begin_write melondsds_nbio_begin_write
++#define nbio_cancel melondsds_nbio_cancel
++#define nbio_free melondsds_nbio_free
++#define nbio_get_fd melondsds_nbio_get_fd
++#define nbio_get_progress melondsds_nbio_get_progress
++#define nbio_get_ptr melondsds_nbio_get_ptr
++#define nbio_iterate melondsds_nbio_iterate
++#define nbio_load_entire melondsds_nbio_load_entire
++#define nbio_open melondsds_nbio_open
++#define nbio_resize melondsds_nbio_resize
++#define nbio_set_chunk_size melondsds_nbio_set_chunk_size
++#define nbio_stdio melondsds_nbio_stdio
++#define nested_list_add_item melondsds_nested_list_add_item
++#define nested_list_free melondsds_nested_list_free
++#define nested_list_get_item melondsds_nested_list_get_item
++#define nested_list_get_item_idx melondsds_nested_list_get_item_idx
++#define nested_list_get_size melondsds_nested_list_get_size
++#define nested_list_init melondsds_nested_list_init
++#define nested_list_item_get_address melondsds_nested_list_item_get_address
++#define nested_list_item_get_children melondsds_nested_list_item_get_children
++#define nested_list_item_get_id melondsds_nested_list_item_get_id
++#define nested_list_item_get_parent melondsds_nested_list_item_get_parent
++#define nested_list_item_get_parent_list melondsds_nested_list_item_get_parent_list
++#define nested_list_item_get_value melondsds_nested_list_item_get_value
++#define net_http_connection_done melondsds_net_http_connection_done
++#define net_http_connection_free melondsds_net_http_connection_free
++#define net_http_connection_iterate melondsds_net_http_connection_iterate
++#define net_http_connection_method melondsds_net_http_connection_method
++#define net_http_connection_new melondsds_net_http_connection_new
++#define net_http_connection_set_content melondsds_net_http_connection_set_content
++#define net_http_connection_set_headers melondsds_net_http_connection_set_headers
++#define net_http_connection_set_sink melondsds_net_http_connection_set_sink
++#define net_http_connection_set_user_agent melondsds_net_http_connection_set_user_agent
++#define net_http_connection_url melondsds_net_http_connection_url
++#define net_http_data melondsds_net_http_data
++#define net_http_deinit melondsds_net_http_deinit
++#define net_http_delete melondsds_net_http_delete
++#define net_http_error melondsds_net_http_error
++#define net_http_fd melondsds_net_http_fd
++#define net_http_headers melondsds_net_http_headers
++#define net_http_headers_ex melondsds_net_http_headers_ex
++#define net_http_init melondsds_net_http_init
++#define net_http_new melondsds_net_http_new
++#define net_http_status melondsds_net_http_status
++#define net_http_update melondsds_net_http_update
++#define net_http_urlencode melondsds_net_http_urlencode
++#define net_http_urlencode_full melondsds_net_http_urlencode_full
++#define netstream_close melondsds_netstream_close
++#define netstream_data melondsds_netstream_data
++#define netstream_eof melondsds_netstream_eof
++#define netstream_open melondsds_netstream_open
++#define netstream_read melondsds_netstream_read
++#define netstream_read_byte melondsds_netstream_read_byte
++#define netstream_read_dword melondsds_netstream_read_dword
++#define netstream_read_fixed_string melondsds_netstream_read_fixed_string
++#define netstream_read_qword melondsds_netstream_read_qword
++#define netstream_read_string melondsds_netstream_read_string
++#define netstream_read_word melondsds_netstream_read_word
++#define netstream_reset melondsds_netstream_reset
++#define netstream_seek melondsds_netstream_seek
++#define netstream_tell melondsds_netstream_tell
++#define netstream_truncate melondsds_netstream_truncate
++#define netstream_write melondsds_netstream_write
++#define netstream_write_byte melondsds_netstream_write_byte
++#define netstream_write_dword melondsds_netstream_write_dword
++#define netstream_write_fixed_string melondsds_netstream_write_fixed_string
++#define netstream_write_qword melondsds_netstream_write_qword
++#define netstream_write_string melondsds_netstream_write_string
++#define netstream_write_word melondsds_netstream_write_word
++#define network_init melondsds_network_init
++#define null_resampler melondsds_null_resampler
++#define path_basedir melondsds_path_basedir
++#define path_basedir_wrapper melondsds_path_basedir_wrapper
++#define path_basename melondsds_path_basename
++#define path_basename_nocompression melondsds_path_basename_nocompression
++#define path_get_archive_delim melondsds_path_get_archive_delim
++#define path_get_extension melondsds_path_get_extension
++#define path_get_extension_mutable melondsds_path_get_extension_mutable
++#define path_get_size melondsds_path_get_size
++#define path_is_absolute melondsds_path_is_absolute
++#define path_is_character_special melondsds_path_is_character_special
++#define path_is_compressed_file melondsds_path_is_compressed_file
++#define path_is_directory melondsds_path_is_directory
++#define path_is_valid melondsds_path_is_valid
++#define path_linked_list_add_path melondsds_path_linked_list_add_path
++#define path_linked_list_free melondsds_path_linked_list_free
++#define path_linked_list_new melondsds_path_linked_list_new
++#define path_mkdir melondsds_path_mkdir
++#define pathname_conform_slashes_to_os melondsds_pathname_conform_slashes_to_os
++#define pathname_make_slashes_portable melondsds_pathname_make_slashes_portable
++#define path_parent_dir melondsds_path_parent_dir
++#define path_relative_to melondsds_path_relative_to
++#define path_remove_extension melondsds_path_remove_extension
++#define path_resolve_realpath melondsds_path_resolve_realpath
++#define path_stat melondsds_path_stat
++#define path_vfs_init melondsds_path_vfs_init
++#define pipe_backend melondsds_pipe_backend
++#define rbmp_encode_row melondsds_rbmp_encode_row
++#define rbmp_row_size melondsds_rbmp_row_size
++#define rbmp_save_image_string melondsds_rbmp_save_image_string
++#define rdeflate_finish melondsds_rdeflate_finish
++#define rdeflate_free melondsds_rdeflate_free
++#define rdeflate_new melondsds_rdeflate_new
++#define rdeflate_process melondsds_rdeflate_process
++#define rdeflate_set_in melondsds_rdeflate_set_in
++#define rdeflate_set_out melondsds_rdeflate_set_out
++#define rd_probe_adler32 melondsds_rd_probe_adler32
++#define read_stdin melondsds_read_stdin
++#define region_strings melondsds_region_strings
++#define retro_closedir melondsds_retro_closedir
++#define retro_dirent_error melondsds_retro_dirent_error
++#define retro_dirent_get_name melondsds_retro_dirent_get_name
++#define retro_dirent_is_dir melondsds_retro_dirent_is_dir
++#define retro_opendir melondsds_retro_opendir
++#define retro_opendir_include_hidden melondsds_retro_opendir_include_hidden
++#define retro_readdir melondsds_retro_readdir
++#define retro_resampler_realloc melondsds_retro_resampler_realloc
++#define retro_vfs_closedir_impl melondsds_retro_vfs_closedir_impl
++#define retro_vfs_dirent_get_name_impl melondsds_retro_vfs_dirent_get_name_impl
++#define retro_vfs_dirent_is_dir_impl melondsds_retro_vfs_dirent_is_dir_impl
++#define retro_vfs_file_close_impl melondsds_retro_vfs_file_close_impl
++#define retro_vfs_file_error_impl melondsds_retro_vfs_file_error_impl
++#define retro_vfs_file_flush_impl melondsds_retro_vfs_file_flush_impl
++#define retro_vfs_file_get_mapped_ptr_impl melondsds_retro_vfs_file_get_mapped_ptr_impl
++#define retro_vfs_file_get_path_impl melondsds_retro_vfs_file_get_path_impl
++#define retro_vfs_file_open_impl melondsds_retro_vfs_file_open_impl
++#define retro_vfs_file_read_impl melondsds_retro_vfs_file_read_impl
++#define retro_vfs_file_remove_impl melondsds_retro_vfs_file_remove_impl
++#define retro_vfs_file_rename_impl melondsds_retro_vfs_file_rename_impl
++#define retro_vfs_file_seek_impl melondsds_retro_vfs_file_seek_impl
++#define retro_vfs_file_seek_internal melondsds_retro_vfs_file_seek_internal
++#define retro_vfs_file_size_impl melondsds_retro_vfs_file_size_impl
++#define retro_vfs_file_tell_impl melondsds_retro_vfs_file_tell_impl
++#define retro_vfs_file_truncate_impl melondsds_retro_vfs_file_truncate_impl
++#define retro_vfs_file_write_impl melondsds_retro_vfs_file_write_impl
++#define retro_vfs_mkdir_impl melondsds_retro_vfs_mkdir_impl
++#define retro_vfs_opendir_impl melondsds_retro_vfs_opendir_impl
++#define retro_vfs_readdir_impl melondsds_retro_vfs_readdir_impl
++#define retro_vfs_stat_64_impl melondsds_retro_vfs_stat_64_impl
++#define retro_vfs_stat_impl melondsds_retro_vfs_stat_impl
++#define rfclose melondsds_rfclose
++#define rfeof melondsds_rfeof
++#define rferror melondsds_rferror
++#define rfflush melondsds_rfflush
++#define rfgetc melondsds_rfgetc
++#define rfgets melondsds_rfgets
++#define rfopen melondsds_rfopen
++#define rfprintf melondsds_rfprintf
++#define rfputc melondsds_rfputc
++#define rfread melondsds_rfread
++#define rfscanf melondsds_rfscanf
++#define rfseek melondsds_rfseek
++#define rftell melondsds_rftell
++#define rfwrite melondsds_rfwrite
++#define rinflate_free melondsds_rinflate_free
++#define rinflate_new melondsds_rinflate_new
++#define rinflate_process melondsds_rinflate_process
++#define rinflate_reset melondsds_rinflate_reset
++#define rinflate_set_dictionary melondsds_rinflate_set_dictionary
++#define rinflate_set_in melondsds_rinflate_set_in
++#define rinflate_set_out melondsds_rinflate_set_out
++#define rinflate_set_start_bit melondsds_rinflate_set_start_bit
++#define rinflate_set_stop_at_block melondsds_rinflate_set_stop_at_block
++#define rinflate_tell_bits melondsds_rinflate_tell_bits
++#define rjson_check_context melondsds_rjson_check_context
++#define rjson_free melondsds_rjson_free
++#define rjson_get_context_count melondsds_rjson_get_context_count
++#define rjson_get_context_depth melondsds_rjson_get_context_depth
++#define rjson_get_context_type melondsds_rjson_get_context_type
++#define rjson_get_double melondsds_rjson_get_double
++#define rjson_get_error melondsds_rjson_get_error
++#define rjson_get_int melondsds_rjson_get_int
++#define rjson_get_source_column melondsds_rjson_get_source_column
++#define rjson_get_source_context_buf melondsds_rjson_get_source_context_buf
++#define rjson_get_source_context_len melondsds_rjson_get_source_context_len
++#define rjson_get_source_line melondsds_rjson_get_source_line
++#define rjson_get_string melondsds_rjson_get_string
++#define rjson_next melondsds_rjson_next
++#define rjson_open_buffer melondsds_rjson_open_buffer
++#define rjson_open_string melondsds_rjson_open_string
++#define rjson_open_user melondsds_rjson_open_user
++#define rjson_parse melondsds_rjson_parse
++#define rjson_parse_quick melondsds_rjson_parse_quick
++#define rjson_set_error melondsds_rjson_set_error
++#define rjson_set_max_depth melondsds_rjson_set_max_depth
++#define rjson_set_options melondsds_rjson_set_options
++#define _rjson_setup melondsds__rjson_setup
++#define rjsonwriter_add_double melondsds_rjsonwriter_add_double
++#define _rjsonwriter_add_escaped melondsds__rjsonwriter_add_escaped
++#define rjsonwriter_add_spaces melondsds_rjsonwriter_add_spaces
++#define rjsonwriter_add_string melondsds_rjsonwriter_add_string
++#define rjsonwriter_add_string_len melondsds_rjsonwriter_add_string_len
++#define rjsonwriter_add_tabs melondsds_rjsonwriter_add_tabs
++#define rjsonwriter_count_memory_buffer melondsds_rjsonwriter_count_memory_buffer
++#define rjsonwriter_erase_memory_buffer melondsds_rjsonwriter_erase_memory_buffer
++#define rjsonwriter_flush melondsds_rjsonwriter_flush
++#define rjsonwriter_free melondsds_rjsonwriter_free
++#define rjsonwriter_get_error melondsds_rjsonwriter_get_error
++#define rjsonwriter_get_memory_buffer melondsds_rjsonwriter_get_memory_buffer
++#define rjsonwriter_open_memory melondsds_rjsonwriter_open_memory
++#define rjsonwriter_open_user melondsds_rjsonwriter_open_user
++#define rjsonwriter_raw melondsds_rjsonwriter_raw
++#define rjsonwriter_rawf melondsds_rjsonwriter_rawf
++#define rjsonwriter_set_options melondsds_rjsonwriter_set_options
++#define rl_fnmatch melondsds_rl_fnmatch
++#define rpng_alloc melondsds_rpng_alloc
++#define rpng_free melondsds_rpng_free
++#define rpng_get_hdr_metadata melondsds_rpng_get_hdr_metadata
++#define rpng_header_ready melondsds_rpng_header_ready
++#define rpng_is_10bit melondsds_rpng_is_10bit
++#define rpng_is_valid melondsds_rpng_is_valid
++#define rpng_iterate_image melondsds_rpng_iterate_image
++#define rpng_need_more melondsds_rpng_need_more
++#define rpng_process_image melondsds_rpng_process_image
++#define rpng_save_image_bgr24_hdr_string melondsds_rpng_save_image_bgr24_hdr_string
++#define rpng_save_image_bgr24_string melondsds_rpng_save_image_bgr24_string
++#define rpng_save_image_rgb48_hdr_string melondsds_rpng_save_image_rgb48_hdr_string
++#define rpng_save_image_stream melondsds_rpng_save_image_stream
++#define rpng_save_image_stream_fmt melondsds_rpng_save_image_stream_fmt
++#define rpng_set_avail melondsds_rpng_set_avail
++#define rpng_set_buf_ptr melondsds_rpng_set_buf_ptr
++#define rpng_set_want_10bit melondsds_rpng_set_want_10bit
++#define rpng_start melondsds_rpng_start
++#define rtime_deinit melondsds_rtime_deinit
++#define rtime_init melondsds_rtime_init
++#define rtime_localtime melondsds_rtime_localtime
++#define rtime_localtime_lock melondsds_rtime_localtime_lock
++#define rzipstream_close melondsds_rzipstream_close
++#define rzipstream_eof melondsds_rzipstream_eof
++#define rzipstream_getc melondsds_rzipstream_getc
++#define rzipstream_gets melondsds_rzipstream_gets
++#define rzipstream_get_size melondsds_rzipstream_get_size
++#define rzipstream_is_compressed melondsds_rzipstream_is_compressed
++#define rzipstream_matches_buf melondsds_rzipstream_matches_buf
++#define rzipstream_open melondsds_rzipstream_open
++#define rzipstream_printf melondsds_rzipstream_printf
++#define rzipstream_putc melondsds_rzipstream_putc
++#define rzipstream_read melondsds_rzipstream_read
++#define rzipstream_read_file melondsds_rzipstream_read_file
++#define rzipstream_rewind melondsds_rzipstream_rewind
++#define rzipstream_tell melondsds_rzipstream_tell
++#define rzipstream_vprintf melondsds_rzipstream_vprintf
++#define rzipstream_write melondsds_rzipstream_write
++#define rzipstream_write_file melondsds_rzipstream_write_file
++#define sanitize_path_part melondsds_sanitize_path_part
++#define scaler_argb8888_horiz melondsds_scaler_argb8888_horiz
++#define scaler_argb8888_point_special melondsds_scaler_argb8888_point_special
++#define scaler_argb8888_vert melondsds_scaler_argb8888_vert
++#define scaler_ctx_gen_filter melondsds_scaler_ctx_gen_filter
++#define scaler_ctx_gen_reset melondsds_scaler_ctx_gen_reset
++#define scaler_ctx_scale melondsds_scaler_ctx_scale
++#define scaler_gen_filter melondsds_scaler_gen_filter
++#define scaler_xrgb2101010_horiz melondsds_scaler_xrgb2101010_horiz
++#define scaler_xrgb2101010_vert melondsds_scaler_xrgb2101010_vert
++#define scond_broadcast melondsds_scond_broadcast
++#define scond_free melondsds_scond_free
++#define scond_new melondsds_scond_new
++#define scond_signal melondsds_scond_signal
++#define scond_wait melondsds_scond_wait
++#define scond_wait_timeout melondsds_scond_wait_timeout
++#define sha1_calculate melondsds_sha1_calculate
++#define SHA1Digest melondsds_SHA1Digest
++#define sha1_stream_block melondsds_sha1_stream_block
++#define sha1_stream_final melondsds_sha1_stream_final
++#define sha1_stream_init melondsds_sha1_stream_init
++#define sha1_stream_update melondsds_sha1_stream_update
++#define sha256_hash melondsds_sha256_hash
++#define sha256_stream_block melondsds_sha256_stream_block
++#define sha256_stream_final melondsds_sha256_stream_final
++#define sha256_stream_init melondsds_sha256_stream_init
++#define sha256_stream_update melondsds_sha256_stream_update
++#define sinc_resampler melondsds_sinc_resampler
++#define slock_free melondsds_slock_free
++#define slock_lock melondsds_slock_lock
++#define slock_new melondsds_slock_new
++#define slock_try_lock melondsds_slock_try_lock
++#define slock_unlock melondsds_slock_unlock
++#define socket_bind melondsds_socket_bind
++#define socket_close melondsds_socket_close
++#define socket_connect melondsds_socket_connect
++#define socket_connect_with_timeout melondsds_socket_connect_with_timeout
++#define socket_create melondsds_socket_create
++#define socket_init melondsds_socket_init
++#define socket_next melondsds_socket_next
++#define socket_nonblock melondsds_socket_nonblock
++#define socket_poll melondsds_socket_poll
++#define socket_receive_all_blocking melondsds_socket_receive_all_blocking
++#define socket_receive_all_blocking_with_timeout melondsds_socket_receive_all_blocking_with_timeout
++#define socket_receive_all_nonblocking melondsds_socket_receive_all_nonblocking
++#define socket_select melondsds_socket_select
++#define socket_send_all_blocking melondsds_socket_send_all_blocking
++#define socket_send_all_blocking_with_timeout melondsds_socket_send_all_blocking_with_timeout
++#define socket_send_all_nonblocking melondsds_socket_send_all_nonblocking
++#define socket_set_block melondsds_socket_set_block
++#define socket_set_target melondsds_socket_set_target
++#define socket_wait melondsds_socket_wait
++#define sthread_cancel melondsds_sthread_cancel
++#define sthread_create melondsds_sthread_create
++#define sthread_create_with_priority melondsds_sthread_create_with_priority
++#define sthread_detach melondsds_sthread_detach
++#define sthread_get_current_thread_id melondsds_sthread_get_current_thread_id
++#define sthread_get_thread_id melondsds_sthread_get_thread_id
++#define sthread_is_main_thread melondsds_sthread_is_main_thread
++#define sthread_isself melondsds_sthread_isself
++#define sthread_join melondsds_sthread_join
++#define sthread_priority_override_begin melondsds_sthread_priority_override_begin
++#define sthread_priority_override_end melondsds_sthread_priority_override_end
++#define sthread_set_cancel_enable melondsds_sthread_set_cancel_enable
++#define sthread_setname melondsds_sthread_setname
++#define strftime_am_pm melondsds_strftime_am_pm
++#define string_copy_only_ascii melondsds_string_copy_only_ascii
++#define string_count_occurrences_single_character melondsds_string_count_occurrences_single_character
++#define string_ext_list_append_dedup melondsds_string_ext_list_append_dedup
++#define string_ext_list_find melondsds_string_ext_list_find
++#define string_ext_list_merge_dedup melondsds_string_ext_list_merge_dedup
++#define string_find_index_substring_string melondsds_string_find_index_substring_string
++#define string_hex_to_unsigned melondsds_string_hex_to_unsigned
++#define string_index_last_occurance melondsds_string_index_last_occurance
++#define string_list_append melondsds_string_list_append
++#define string_list_append_n melondsds_string_list_append_n
++#define string_list_capacity melondsds_string_list_capacity
++#define string_list_clone melondsds_string_list_clone
++#define string_list_deinitialize melondsds_string_list_deinitialize
++#define string_list_find_elem melondsds_string_list_find_elem
++#define string_list_find_elem_prefix melondsds_string_list_find_elem_prefix
++#define string_list_free melondsds_string_list_free
++#define string_list_initialize melondsds_string_list_initialize
++#define string_list_join_concat melondsds_string_list_join_concat
++#define string_list_join_concat_special melondsds_string_list_join_concat_special
++#define string_list_new melondsds_string_list_new
++#define string_parse_html_anchor melondsds_string_parse_html_anchor
++#define string_remove_all_chars melondsds_string_remove_all_chars
++#define string_remove_all_whitespace melondsds_string_remove_all_whitespace
++#define string_replace_all_chars melondsds_string_replace_all_chars
++#define string_replace_multi_space_with_single_space melondsds_string_replace_multi_space_with_single_space
++#define string_replace_substring melondsds_string_replace_substring
++#define string_replace_whitespace_with_single_character melondsds_string_replace_whitespace_with_single_character
++#define string_split melondsds_string_split
++#define string_split_noalloc melondsds_string_split_noalloc
++#define string_tokenize melondsds_string_tokenize
++#define string_to_lower melondsds_string_to_lower
++#define string_to_unsigned melondsds_string_to_unsigned
++#define string_to_upper melondsds_string_to_upper
++#define string_trim_whitespace melondsds_string_trim_whitespace
++#define string_trim_whitespace_left melondsds_string_trim_whitespace_left
++#define string_trim_whitespace_right melondsds_string_trim_whitespace_right
++#define string_ucwords melondsds_string_ucwords
++#define strlcat_retro__ melondsds_strlcat_retro__
++#define strlcpy_append melondsds_strlcpy_append
++#define strlcpy_retro__ melondsds_strlcpy_retro__
++#define strldup melondsds_strldup
++#define task_free_error melondsds_task_free_error
++#define task_free_title melondsds_task_free_title
++#define task_get_data melondsds_task_get_data
++#define task_get_error melondsds_task_get_error
++#define task_get_flags melondsds_task_get_flags
++#define task_get_progress melondsds_task_get_progress
++#define task_get_title melondsds_task_get_title
++#define task_init melondsds_task_init
++#define task_is_on_main_thread melondsds_task_is_on_main_thread
++#define task_queue_cancel_task melondsds_task_queue_cancel_task
++#define task_queue_check melondsds_task_queue_check
++#define task_queue_deinit melondsds_task_queue_deinit
++#define task_queue_find melondsds_task_queue_find
++#define task_queue_init melondsds_task_queue_init
++#define task_queue_is_threaded melondsds_task_queue_is_threaded
++#define task_queue_push melondsds_task_queue_push
++#define task_queue_reset melondsds_task_queue_reset
++#define task_queue_retrieve melondsds_task_queue_retrieve
++#define task_queue_retriever_info_free melondsds_task_queue_retriever_info_free
++#define task_queue_retriever_info_next melondsds_task_queue_retriever_info_next
++#define task_queue_set_slow_handler_cb melondsds_task_queue_set_slow_handler_cb
++#define task_queue_set_threaded melondsds_task_queue_set_threaded
++#define task_queue_unset_threaded melondsds_task_queue_unset_threaded
++#define task_queue_wait melondsds_task_queue_wait
++#define task_queue_wait_timeout melondsds_task_queue_wait_timeout
++#define task_set_data melondsds_task_set_data
++#define task_set_error melondsds_task_set_error
++#define task_set_flags melondsds_task_set_flags
++#define task_set_progress melondsds_task_set_progress
++#define task_set_title melondsds_task_set_title
++#define trans_stream_get_deflate_deflate_backend melondsds_trans_stream_get_deflate_deflate_backend
++#define trans_stream_get_deflate_inflate_backend melondsds_trans_stream_get_deflate_inflate_backend
++#define trans_stream_get_pipe_backend melondsds_trans_stream_get_pipe_backend
++#define trans_stream_get_zlib_deflate_backend melondsds_trans_stream_get_zlib_deflate_backend
++#define trans_stream_get_zlib_inflate_backend melondsds_trans_stream_get_zlib_inflate_backend
++#define trans_stream_trans_full melondsds_trans_stream_trans_full
++#define unbase64 melondsds_unbase64
++#define utf16_conv_utf8 melondsds_utf16_conv_utf8
++#define utf16_to_char_string melondsds_utf16_to_char_string
++#define utf16_to_utf8_string_alloc melondsds_utf16_to_utf8_string_alloc
++#define utf8_conv_utf32 melondsds_utf8_conv_utf32
++#define utf8cpy melondsds_utf8cpy
++#define utf8len melondsds_utf8len
++#define utf8skip melondsds_utf8skip
++#define utf8_to_local_string_alloc melondsds_utf8_to_local_string_alloc
++#define utf8_to_utf16_string_alloc melondsds_utf8_to_utf16_string_alloc
++#define utf8_walk melondsds_utf8_walk
++#define word_wrap melondsds_word_wrap
++#define word_wrap_wideglyph melondsds_word_wrap_wideglyph
++#define zlib_backend melondsds_zlib_backend
++#define zlib_deflate_backend melondsds_zlib_deflate_backend
++#define zlib_inflate_backend melondsds_zlib_inflate_backend
++#endif
+diff --git a/cmake/libretro-common.cmake b/cmake/libretro-common.cmake
+index 0487266..7012606 100644
+--- a/cmake/libretro-common.cmake
++++ b/cmake/libretro-common.cmake
+@@ -43,7 +43,6 @@ target_sources(libretro-common PRIVATE
+     ${libretro-common_SOURCE_DIR}/lists/nested_list.c
+     ${libretro-common_SOURCE_DIR}/lists/string_list.c
+     ${libretro-common_SOURCE_DIR}/memmap/memalign.c
+-    ${libretro-common_SOURCE_DIR}/memmap/memmap.c
+     ${libretro-common_SOURCE_DIR}/playlists/label_sanitization.c
+     ${libretro-common_SOURCE_DIR}/queues/fifo_queue.c
+     ${libretro-common_SOURCE_DIR}/queues/generic_queue.c
+@@ -65,6 +64,13 @@ target_sources(libretro-common PRIVATE
+     ${libretro-common_SOURCE_DIR}/vfs/vfs_implementation.c
+     )
+ 
++if (NOT EMSCRIPTEN)
++    # memmap.c's mmap shim would replace libc's mmap on Emscripten
++    target_sources(libretro-common PRIVATE ${libretro-common_SOURCE_DIR}/memmap/memmap.c)
++else ()
++    target_compile_options(libretro-common PUBLIC "SHELL:-include ${CMAKE_SOURCE_DIR}/cmake/emscripten-libretro-common-prefix.h")
++endif ()
++
+ add_common_definitions(libretro-common)
+ target_include_directories(libretro-common PRIVATE ${CMAKE_SOURCE_DIR}/src/libretro)
+ target_compile_definitions(libretro-common PRIVATE HAVE_GLSYM_PRIVATE HAVE_RPNG)
+diff --git a/src/libretro/CMakeLists.txt b/src/libretro/CMakeLists.txt
+index d8b1062..e693d4d 100644
+--- a/src/libretro/CMakeLists.txt
++++ b/src/libretro/CMakeLists.txt
+@@ -267,6 +267,8 @@ if (APPLE)
+     set_target_properties(melondsds_libretro PROPERTIES SUFFIX ".dylib")
+ elseif(ANDROID)
+     set_target_properties(melondsds_libretro PROPERTIES SUFFIX "_android.so")
++elseif (EMSCRIPTEN)
++    set_target_properties(melondsds_libretro PROPERTIES SUFFIX ".a")
+ elseif (UNIX)
+     set_target_properties(melondsds_libretro PROPERTIES SUFFIX ".so")
+ elseif (WIN32)
+diff --git a/src/libretro/config/config.cpp b/src/libretro/config/config.cpp
+index 641ce91..db100e8 100644
+--- a/src/libretro/config/config.cpp
++++ b/src/libretro/config/config.cpp
+@@ -50,7 +50,9 @@
+ #include <SPI_Firmware.h>
+ #include <FreeBIOS.h>
+ #include <file/config_file.h>
++#ifdef HAVE_NETWORKING_DIRECT_MODE
+ #include <Net_PCap.h>
++#endif
+ 
+ #include "config/constants.hpp"
+ #include "config/definitions.hpp"
+@@ -1027,7 +1029,7 @@ bool MelonDsDs::RegisterCoreOptions(CoreConfig& config) noexcept {
+     if (!dsiNandPaths.empty()) {
+         ZoneScopedN("MelonDsDs::config::set_core_options::init_dsi_nand_options");
+         // If we found at least one DSi NAND image...
+-        retro_core_option_v2_definition* dsiNandPathOption = find_if(definitions.begin(), definitions.end(), [](const auto& def) {
++        auto dsiNandPathOption = find_if(definitions.begin(), definitions.end(), [](const auto& def) {
+             return string_is_equal(def.key, MelonDsDs::config::storage::DSI_NAND_PATH);
+         });
+ 
+@@ -1059,10 +1061,10 @@ bool MelonDsDs::RegisterCoreOptions(CoreConfig& config) noexcept {
+     if (!firmware.empty()) {
+         ZoneScopedN("MelonDsDs::config::set_core_options::init_firmware_options");
+         // If we found at least one firmware image...
+-        retro_core_option_v2_definition* firmwarePathOption = find_if(definitions.begin(), definitions.end(), [](const auto& def) {
++        auto firmwarePathOption = find_if(definitions.begin(), definitions.end(), [](const auto& def) {
+             return string_is_equal(def.key, MelonDsDs::config::system::FIRMWARE_PATH);
+         });
+-        retro_core_option_v2_definition* firmwarePathDsiOption = find_if(definitions.begin(), definitions.end(), [](const auto& def) {
++        auto firmwarePathDsiOption = find_if(definitions.begin(), definitions.end(), [](const auto& def) {
+             return string_is_equal(def.key, MelonDsDs::config::system::FIRMWARE_DSI_PATH);
+         });
+ 
+@@ -1088,7 +1090,7 @@ bool MelonDsDs::RegisterCoreOptions(CoreConfig& config) noexcept {
+     }
+     if(!macAddresses.empty()) {
+         ZoneScopedN("MelonDsDs::config::set_core_options::init_mac_address_options");
+-        retro_core_option_v2_definition* macAddressOption = find_if(definitions.begin(), definitions.end(), [](const auto& def) {
++        auto macAddressOption = find_if(definitions.begin(), definitions.end(), [](const auto& def) {
+             return string_is_equal(def.key, MelonDsDs::config::network::MAC_ADDRESS_MODE);
+         });
+         retro_assert(macAddressOption != definitions.end());
+diff --git a/src/libretro/config/parse.hpp b/src/libretro/config/parse.hpp
+index 0b0822b..260b689 100644
+--- a/src/libretro/config/parse.hpp
++++ b/src/libretro/config/parse.hpp
+@@ -56,7 +56,7 @@ namespace MelonDsDs {
+         if (value.empty()) return std::nullopt;
+ 
+         T parsed_number = 0;
+-        std::from_chars_result result = std::from_chars(value.begin(), value.end(), parsed_number);
++        std::from_chars_result result = std::from_chars(value.data(), value.data() + value.size(), parsed_number);
+ 
+         if (result.ec != std::errc()) return std::nullopt;
+         for (T t: list) {
+diff --git a/src/libretro/core/core.cpp b/src/libretro/core/core.cpp
+index df32f07..9a6bef2 100644
+--- a/src/libretro/core/core.cpp
++++ b/src/libretro/core/core.cpp
+@@ -1238,7 +1238,7 @@ void MelonDsDs::CoreState::CheatSet(unsigned index, bool enabled, std::string_vi
+ 
+     // NDS cheats are sequence of unsigned 32-bit integers, each of which is hex-encoded
+     auto end = std::cregex_iterator();
+-    for (auto i = std::cregex_iterator(code.cbegin(), code.cend(), _tokenSyntax); i != end; ++i) {
++    for (auto i = std::cregex_iterator(code.data(), code.data() + code.size(), _tokenSyntax); i != end; ++i) {
+         const std::csub_match& match = (*i)[0];
+         retro_assert(match.matched);
+         uint32_t token = 0;
+diff --git a/src/libretro/environment.cpp b/src/libretro/environment.cpp
+index 2608b2e..d73255c 100644
+--- a/src/libretro/environment.cpp
++++ b/src/libretro/environment.cpp
+@@ -924,10 +924,10 @@ void retro::NormalizePath(std::span<char> buffer, size_t& pathLength) noexcept {
+     // Ensure all slashes are forward...
+     pathname_make_slashes_portable(buffer.data());
+ 
+-    // Then if the path ends in a slash, strip it.
++    // Then if the path ends in a slash, strip it (but keep the root directory "/").
+     pathLength = strnlen(buffer.data(), buffer.size());
+-    if (pathLength > 0 && buffer[pathLength - 1] == '/') {
+-        // If this path is non-empty and ends with a slash...
++    if (pathLength > 1 && buffer[pathLength - 1] == '/') {
++        // If this path is longer than "/" and ends with a slash...
+         buffer[pathLength - 1] = '\0';
+         pathLength--;
+     }
+diff --git a/src/libretro/format.cpp b/src/libretro/format.cpp
+index 78ab324..fbd9f20 100644
+--- a/src/libretro/format.cpp
++++ b/src/libretro/format.cpp
+@@ -81,6 +81,7 @@ auto fmt::formatter<MelonDsDs::FormattedGLEnum>::format(MelonDsDs::FormattedGLEn
+ }
+ #endif
+ 
++#ifdef HAVE_NETWORKING_DIRECT_MODE
+ auto fmt::formatter<MelonDsDs::FormattedPCapFlags>::format(MelonDsDs::FormattedPCapFlags e, format_context& ctx) const -> decltype(ctx.out()) {
+     auto flags = static_cast<uint32_t>(e);
+ 
+@@ -118,6 +119,7 @@ auto fmt::formatter<MelonDsDs::FormattedPCapFlags>::format(MelonDsDs::FormattedP
+ 
+     return formatter<decltype(flagNames)>::format(flagNames, ctx);
+ }
++#endif
+ 
+ auto fmt::formatter<MelonDsDs::BiosType>::format(MelonDsDs::BiosType c, format_context& ctx) const -> decltype(ctx.out()) {
+     string_view name = "unknown";
+diff --git a/src/libretro/net/net.cpp b/src/libretro/net/net.cpp
+index 0bc67e8..d009cc1 100644
+--- a/src/libretro/net/net.cpp
++++ b/src/libretro/net/net.cpp
+@@ -125,16 +125,15 @@ int MelonDsDs::NetState::RecvPacket(u8* data) noexcept
+     return _net.RecvPacket(data, 0);
+ }
+ 
++#ifdef HAVE_NETWORKING_DIRECT_MODE
+ vector<melonDS::AdapterData> MelonDsDs::NetState::GetAdapters() const noexcept
+ {
+     ZoneScopedN(TracyFunction);
+ 
+-#ifdef HAVE_NETWORKING_DIRECT_MODE
+     if (_pcap)
+     {
+         return _pcap->GetAdapters();
+     }
+-#endif
+ 
+     return {};
+ }
+@@ -150,6 +149,7 @@ bool operator==(const melonDS::AdapterData& lhs, const melonDS::AdapterData& rhs
+         strncmp(lhs.DeviceName, rhs.DeviceName, sizeof(lhs.DeviceName)) == 0
+     ;
+ }
++#endif
+ 
+ void MelonDsDs::NetState::Apply(const CoreConfig& config) noexcept
+ {
+diff --git a/src/libretro/net/net.hpp b/src/libretro/net/net.hpp
+index e61880e..754afb4 100644
+--- a/src/libretro/net/net.hpp
++++ b/src/libretro/net/net.hpp
+@@ -48,7 +48,9 @@ namespace MelonDsDs
+ 
+         int SendPacket(std::span<std::byte> data) noexcept;
+         int RecvPacket(melonDS::u8* data) noexcept;
++#ifdef HAVE_NETWORKING_DIRECT_MODE
+         [[nodiscard]] std::vector<melonDS::AdapterData> GetAdapters() const noexcept;
++#endif
+         void Apply(const CoreConfig& config) noexcept;
+         [[nodiscard]] NetworkMode GetNetworkMode() const noexcept;
+     private:

@@ -1082,5 +1082,34 @@
         "save": "srm",
         "license": "LICENSE",
         "repo": "https://github.com/libretro/mgba"
+    },
+    {
+        "name": "melonds_ds",
+        "extensions": [
+            "nds",
+            "dsi",
+            "ids"
+        ],
+        "makeoptions": {
+            "builder": "cmake",
+            "cmake_args": [
+                "-DENABLE_OPENGL=OFF",
+                "-DENABLE_JIT=OFF",
+                "-DENABLE_DYNAMIC=OFF",
+                "-DENABLE_THREADED_RENDERER=OFF",
+                "-DHAVE_MMAP=OFF",
+                "-DCMAKE_BUILD_TYPE=Release"
+            ],
+            "archives_exclude": [
+                "libfoo.a",
+                "libz.a"
+            ],
+            "output_archive": "melonds_ds_libretro_emscripten.bc",
+            "emcc_flags": "-fwasm-exceptions"
+        },
+        "options": {},
+        "save": "srm",
+        "license": "LICENSE",
+        "repo": "https://github.com/JesseTG/melonds-ds"
     }
 ]
