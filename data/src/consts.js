@@ -37,6 +37,7 @@ export const cores = {
     "jaguar": ["virtualjaguar"],
     "lynx": ["mednafen_lynx"],
     "ngp": ["mednafen_ngp"],
+    "ws": ["mednafen_wswan"],
     "pc98": ["nekop2"],
     "pcfx": ["mednafen_pcfx"],
     "fmtowns": ["geartowns"],

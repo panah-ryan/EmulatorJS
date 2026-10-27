@@ -1960,6 +1960,7 @@ class EJS_Frontend {
                 { id: 8, label: this.localization("A") },
                 { id: 0, label: this.localization("B") },
                 { id: 3, label: this.localization("START") },
+                { id: 2, label: this.localization("ROTATE") },
                 { id: 4, label: this.localization("X UP") },
                 { id: 5, label: this.localization("X DOWN") },
                 { id: 6, label: this.localization("X LEFT") },
@@ -3020,7 +3021,8 @@ class EJS_Frontend {
                 { "type": "button", "text": "A", "id": "a", "location": "right", "right": 5, "top": 150, "bold": true, "input_value": 8 },
                 { "type": "dpad", "id": "x_dpad", "location": "left", "left": "50%", "right": "50%", "joystickInput": false, "inputValues": [4, 5, 6, 7] },
                 { "type": "dpad", "id": "y_dpad", "location": "right", "left": "50%", "right": "50%", "joystickInput": false, "inputValues": [13, 12, 10, 11] },
-                { "type": "button", "text": "Start", "id": "start", "location": "center", "left": 30, "fontSize": 15, "block": true, "input_value": 3 },
+                { "type": "button", "text": "Rotate", "id": "rotate", "location": "center", "left": -5, "fontSize": 15, "block": true, "input_value": 2 },
+                { "type": "button", "text": "Start", "id": "start", "location": "center", "left": 60, "fontSize": 15, "block": true, "input_value": 3 },
             ];
             info.push(...speedControlButtons);
         } else if ("pcfx" === this.ejs.getControlScheme()) {

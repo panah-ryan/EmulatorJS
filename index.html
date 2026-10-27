@@ -390,6 +390,9 @@
                     if (["ngp", "ngc", "ngpc", "npc"].includes(ext))
                         return "ngp"
 
+                    if (["ws", "wsc", "pc2"].includes(ext))
+                        return "ws"
+
                     if (["xfd", "atr", "atx", "dcm", "xex"].includes(ext))
                         return "atari800"
 
@@ -424,6 +427,7 @@
                             "Atari 7800": "atari7800",
                             "Atari Lynx": "lynx",
                             "Neo Geo Pocket / Color": "ngp",
+                            "WonderSwan / Color": "ws",
                             "Atari Jaguar": "jaguar",
                             "Commodore VIC-20": "vic20",
                             "Commodore 64": "c64",
