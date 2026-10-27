@@ -1,0 +1,217 @@
+diff --git a/GLideN64/src/Graphics/OpenGLContext/opengl_BufferManipulationObjectFactory.cpp b/GLideN64/src/Graphics/OpenGLContext/opengl_BufferManipulationObjectFactory.cpp
+index ffbcde6..e35b23f 100644
+--- a/GLideN64/src/Graphics/OpenGLContext/opengl_BufferManipulationObjectFactory.cpp
++++ b/GLideN64/src/Graphics/OpenGLContext/opengl_BufferManipulationObjectFactory.cpp
+@@ -438,6 +438,10 @@ BlitFramebuffers * BufferManipulationObjectFactory::getBlitFramebuffers() const
+ 
+ CreatePixelReadBuffer * BufferManipulationObjectFactory::createPixelReadBuffer() const
+ {
++#ifdef __EMSCRIPTEN__
++	// PBO reads need glMapBufferRange with GL_MAP_READ_BIT, which WebGL can't do
++	return nullptr;
++#endif
+ 	if (m_glInfo.isGLES2)
+ 		return nullptr;
+ 
+diff --git a/GLideN64/src/Graphics/OpenGLContext/opengl_ContextImpl.cpp b/GLideN64/src/Graphics/OpenGLContext/opengl_ContextImpl.cpp
+index 0d80351..14962c0 100644
+--- a/GLideN64/src/Graphics/OpenGLContext/opengl_ContextImpl.cpp
++++ b/GLideN64/src/Graphics/OpenGLContext/opengl_ContextImpl.cpp
+@@ -387,8 +387,11 @@ graphics::ColorBufferReader * ContextImpl::createColorBufferReader(CachedTexture
+ 	if (m_glInfo.bufferStorage && m_glInfo.renderer != Renderer::Intel)
+ 		return new ColorBufferReaderWithBufferStorage(_pTexture, m_cachedFunctions->getCachedBindBuffer());
+ 
++	// WebGL can't map buffers for reading, so read pixels directly
++#ifndef __EMSCRIPTEN__
+ 	if (!m_glInfo.isGLES2)
+ 		return new ColorBufferReaderWithPixelBuffer(_pTexture, m_cachedFunctions->getCachedBindBuffer());
++#endif
+ 
+ 	return new ColorBufferReaderWithReadPixels(_pTexture);
+ }
+@@ -549,6 +552,9 @@ bool ContextImpl::isSupported(graphics::SpecialFeatures _feature) const
+ 
+ s32 ContextImpl::getMaxMSAALevel()
+ {
++	// GL_MAX_SAMPLES isn't a valid query without multisampling support (e.g. GLES2)
++	if (!m_glInfo.msaa)
++		return 0;
+ 	GLint maxMSAALevel = 0;
+ 	glGetIntegerv(GL_MAX_SAMPLES, &maxMSAALevel);
+ 	// Limit maxMSAALevel by 16.
+diff --git a/GLideN64/src/Graphics/OpenGLContext/opengl_GLInfo.cpp b/GLideN64/src/Graphics/OpenGLContext/opengl_GLInfo.cpp
+index c1e51b5..62aeed3 100644
+--- a/GLideN64/src/Graphics/OpenGLContext/opengl_GLInfo.cpp
++++ b/GLideN64/src/Graphics/OpenGLContext/opengl_GLInfo.cpp
+@@ -196,7 +196,8 @@ void GLInfo::init() {
+ #endif
+ 
+ 	depthTexture = !isGLES2 || Utils::isExtensionSupported(*this, "GL_OES_depth_texture");
+-	noPerspective = Utils::isExtensionSupported(*this, "GL_NV_shader_noperspective_interpolation");
++	// the extension only applies to ESSL 3.00 shaders, not the #version 100 ones GLES2 builds use
++	noPerspective = !isGLES2 && Utils::isExtensionSupported(*this, "GL_NV_shader_noperspective_interpolation");
+ 
+ 	fetch_depth = Utils::isExtensionSupported(*this, "GL_ARM_shader_framebuffer_fetch_depth_stencil");
+ 	texture_barrier = !isGLESX && (numericVersion >= 45 || Utils::isExtensionSupported(*this, "GL_ARB_texture_barrier"));
+diff --git a/Makefile b/Makefile
+index 2443f80..39c4586 100644
+--- a/Makefile
++++ b/Makefile
+@@ -543,7 +543,12 @@ else ifneq (,$(findstring android,$(platform)))
+ # emscripten
+ else ifeq ($(platform), emscripten)
+    TARGET := $(TARGET_NAME)_libretro_emscripten.bc
+-   GLES := 1
++   # WebGL 2 is GLES 3.0; legacy builds only have WebGL 1
++   ifeq ($(EMULATORJS_LEGACY), 1)
++      GLES := 1
++   else
++      GLES3 := 1
++   endif
+    WITH_DYNAREC :=
+    CPUFLAGS += -DEMSCRIPTEN -DNO_ASM -s USE_ZLIB=1
+    PLATCFLAGS += \
+@@ -558,8 +563,10 @@ else ifeq ($(platform), emscripten)
+       -Daudio_resampler_driver_find_handle=glupen_audio_resampler_driver_find_handle \
+       -Daudio_resampler_driver_find_ident=glupen_audio_resampler_driver_find_ident \
+       -Drarch_resampler_realloc=glupen_rarch_resampler_realloc \
++      -Dconvert_float_to_s16=glupen_convert_float_to_s16 \
+       -Dconvert_float_to_s16_C=glupen_convert_float_to_s16_C \
+       -Dconvert_float_to_s16_init_simd=glupen_convert_float_to_s16_init_simd \
++      -Dconvert_s16_to_float=glupen_convert_s16_to_float \
+       -Dconvert_s16_to_float_C=glupen_convert_s16_to_float_C \
+       -Dconvert_s16_to_float_init_simd=glupen_convert_s16_to_float_init_simd \
+       -Dcpu_features_get_perf_counter=glupen_cpu_features_get_perf_counter \
+@@ -571,6 +578,8 @@ else ifeq ($(platform), emscripten)
+       -Dstrlcat_retro__=glupen_strlcat_retro__
+    CC = emcc
+    CXX = em++
++   AR = emar
++   STATIC_LINKING = 1
+    HAVE_NEON = 0
+ 
+    COREFLAGS += -DOS_LINUX
+diff --git a/libretro-common/libco/emscripten.c b/libretro-common/libco/emscripten.c
+new file mode 100644
+index 0000000..a39af94
+--- /dev/null
++++ b/libretro-common/libco/emscripten.c
+@@ -0,0 +1,79 @@
++/*
++  libco.emscripten
++  license: public domain
++*/
++
++#define LIBCO_C
++#include <libco.h>
++#include <stdlib.h>
++#include <emscripten/fiber.h>
++
++/* Asyncify saves the unwound call stack here while a fiber is switched out */
++#define ASYNCIFY_STACK_SIZE (128 * 1024)
++
++typedef struct
++{
++   emscripten_fiber_t fiber;
++   void *c_stack;
++   char asyncify_stack[ASYNCIFY_STACK_SIZE];
++} cothread_struct;
++
++static thread_local cothread_struct *co_primary = 0;
++static thread_local cothread_struct *co_running = 0;
++
++static void co_entry(void *entrypoint)
++{
++   ((void (*)(void))entrypoint)();
++}
++
++cothread_t co_active(void)
++{
++   if (!co_running)
++   {
++      co_primary = (cothread_struct*)calloc(1, sizeof(cothread_struct));
++      emscripten_fiber_init_from_current_context(&co_primary->fiber,
++            co_primary->asyncify_stack, ASYNCIFY_STACK_SIZE);
++      co_running = co_primary;
++   }
++   return (cothread_t)co_running;
++}
++
++cothread_t co_create(unsigned int size, void (*entrypoint)(void))
++{
++   cothread_struct *thread;
++
++   co_active();
++
++   thread = (cothread_struct*)calloc(1, sizeof(cothread_struct));
++   if (!thread)
++      return 0;
++
++   thread->c_stack = aligned_alloc(16, (size + 15) & ~15u);
++   if (!thread->c_stack)
++   {
++      free(thread);
++      return 0;
++   }
++
++   emscripten_fiber_init(&thread->fiber, co_entry, (void*)entrypoint,
++         thread->c_stack, size, thread->asyncify_stack, ASYNCIFY_STACK_SIZE);
++   return (cothread_t)thread;
++}
++
++void co_delete(cothread_t cothread)
++{
++   cothread_struct *thread = (cothread_struct*)cothread;
++
++   if (!thread || thread == co_primary)
++      return;
++   free(thread->c_stack);
++   free(thread);
++}
++
++void co_switch(cothread_t cothread)
++{
++   cothread_struct *previous = co_running;
++
++   co_running = (cothread_struct*)cothread;
++   emscripten_fiber_swap(&previous->fiber, &co_running->fiber);
++}
+diff --git a/libretro-common/libco/libco.c b/libretro-common/libco/libco.c
+index e73003e..79de76e 100644
+--- a/libretro-common/libco/libco.c
++++ b/libretro-common/libco/libco.c
+@@ -23,6 +23,8 @@ void genode_free_secondary_stack(void *stack);
+ #elif defined __GNUC__
+   #ifdef _WIN32
+     #include "fiber.c"
++  #elif defined __EMSCRIPTEN__
++    #include "emscripten.c"
+   #elif defined __i386__
+     #include "x86.c"
+   #elif defined __amd64__
+diff --git a/libretro/libretro.c b/libretro/libretro.c
+index 4a9f129..81453dd 100644
+--- a/libretro/libretro.c
++++ b/libretro/libretro.c
+@@ -494,6 +494,12 @@ static void* EmuThreadFunction(void* param)
+     return NULL;
+ }
+ 
++/* co_create needs a void(void) entry, and wasm traps on a mismatched cast */
++static void EmuCoroutineFunction(void)
++{
++    EmuThreadFunction(NULL);
++}
++
+ static void reinit_gfx_plugin(void)
+ {
+ #ifdef HAVE_PARALLEL_RDP
+@@ -725,7 +731,7 @@ void retro_init(void)
+         initializing = true;
+ 
+         retro_thread = co_active();
+-        game_thread = co_create(65536 * sizeof(void*) * 16, (void (*)(void))EmuThreadFunction);
++        game_thread = co_create(65536 * sizeof(void*) * 16, EmuCoroutineFunction);
+     }
+ 
+     m64p_error ret = CoreStartup(FRONTEND_API_VERSION, ".", ".", NULL, n64DebugCallback, 0, n64StateCallback);
