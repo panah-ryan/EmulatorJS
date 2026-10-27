@@ -8,6 +8,7 @@ export const cores = {
     "n64": ["mupen64plus_next"],
     "gb": ["sameboy"],
     "gba": ["mgba"],
+    "nds": ["melonds_ds"],
     "atari2600": ["stella2014"],
     "vic20": ["vice_xvic"],
     "c64": ["vice_x64sc"],
@@ -58,7 +59,7 @@ export const requiresWebGL2 = ["flycast"];
 export const keyboardSystems = ["vic20", "c64", "c128", "plus4", "amiga", "cpc", "mac", "zxspectrum", "dos", "x1", "electron", "sg1000", "pc88", "atari800", "pc98", "fmtowns", "msx", "atarist", "x68000", "apple2"];
 
 // systems where a touch on the game screen acts as the mouse
-export const mouseSystems = ["mac"];
+export const mouseSystems = ["mac", "nds"];
 
 // systems where the game screen acts as a trackpad, for cores that read relative mouse movement
 export const trackpadSystems = ["amiga", "atarist", "x68000", "fmtowns"];

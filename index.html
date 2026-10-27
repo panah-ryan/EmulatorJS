@@ -330,6 +330,9 @@
                     if (["gba"].includes(ext))
                         return "gba"
 
+                    if (["nds", "dsi", "ids"].includes(ext))
+                        return "nds"
+
                     if (["a26"].includes(ext))
                         return "atari2600"
 
@@ -426,6 +429,7 @@
                             "Nintendo 64": "n64",
                             "Game Boy / Game Boy Color": "gb",
                             "Game Boy Advance": "gba",
+                            "Nintendo DS": "nds",
                             "Atari 2600": "atari2600",
                             "Atari 5200": "atari5200",
                             "Atari 7800": "atari7800",
