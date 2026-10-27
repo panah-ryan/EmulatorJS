@@ -1,0 +1,616 @@
+Hardware emulation fixes found while bringing up the JIT, plus their diagnostic
+probes (compiled out unless JIT_PROD_BUILD is unset).
+
+diff --git a/core/hw/aica/aica.cpp b/core/hw/aica/aica.cpp
+index 18b440f..27d3a26 100644
+--- a/core/hw/aica/aica.cpp
++++ b/core/hw/aica/aica.cpp
+@@ -7,6 +7,13 @@
+ #include "hw/sh4/sh4_sched.h"
+ #include "hw/arm7/arm7.h"
+ #include "hw/arm7/arm_mem.h"
++#ifdef __EMSCRIPTEN__
++#include <emscripten.h>
++#endif
++
++#if defined(__EMSCRIPTEN__) && !defined(JIT_PROD_BUILD)
++extern double g_fly_rp[10];
++#endif
+ 
+ namespace aica
+ {
+@@ -86,7 +93,15 @@ constexpr int AICA_TICK = 4535;		// 44.1 KHz
+ 
+ static int AicaUpdate(int tag, int cycles, int jitter, void *arg)
+ {
++#if defined(__EMSCRIPTEN__) && !defined(JIT_PROD_BUILD)
++	// Render-phase timer [5]: ARM7 interpreter slice (fires at 44.1kHz —
++	// get_now pairs add ~1-2% skew; diagnostic-grade, not verdict-grade).
++	double fly_t0 = emscripten_get_now();
++	arm::run(1);
++	::g_fly_rp[5] += emscripten_get_now() - fly_t0;
++#else
+ 	arm::run(1);
++#endif
+ 
+ 	return AICA_TICK;
+ }
+@@ -95,6 +110,9 @@ static int AicaUpdate(int tag, int cycles, int jitter, void *arg)
+ 
+ void timeStep()
+ {
++#if defined(__EMSCRIPTEN__) && !defined(JIT_PROD_BUILD)
++	double fly_t0 = emscripten_get_now();
++#endif
+ 	for (auto& timer : timers)
+ 		timer.StepTimer(1);
+ 
+@@ -105,7 +123,10 @@ void timeStep()
+ 
+ 	//Make sure sh4/arm interrupt system is up to date
+ 	update_arm_interrupts();
+-	UpdateSh4Ints();	
++	UpdateSh4Ints();
++#if defined(__EMSCRIPTEN__) && !defined(JIT_PROD_BUILD)
++	::g_fly_rp[5] += emscripten_get_now() - fly_t0;
++#endif
+ }
+ 
+ static void AicaInternalDMA()
+diff --git a/core/hw/holly/holly_intc.cpp b/core/hw/holly/holly_intc.cpp
+index a6d5946..cea15fd 100644
+--- a/core/hw/holly/holly_intc.cpp
++++ b/core/hw/holly/holly_intc.cpp
+@@ -38,8 +38,48 @@ static void asic_RL2Pending()
+ 	InterruptPend(sh4_IRL_13, t1 || t2 || t3 || t4);
+ }
+ 
++#if defined(__EMSCRIPTEN__) && !defined(JIT_PROD_BUILD)
++#include <emscripten.h>
++extern "C" {
++u32 g_fly_asic_total = 0;        // every asic_RaiseInterrupt call
++u32 g_fly_asic_vblank_in = 0;    // holly_SCANINT1 = 0x0003
++u32 g_fly_asic_vblank_out = 0;   // holly_SCANINT2 = 0x0004
++u32 g_fly_asic_hblank = 0;       // holly_HBLank = 0x0005
++u32 g_fly_asic_maple = 0;        // holly_MAPLE_DMA = 0x0012
++// Full per-ID histogram: index = (type << 5) | bit, type 0=NRM 1=EXT 2=ERR.
++// For the JGR interrupt-storm hunt: production raises ASIC interrupts at up
++// to ~360/vblank (clean: 10-14) — this identifies WHICH interrupt storms.
++u32 g_fly_asic_by_id[96];
++u32 EMSCRIPTEN_KEEPALIVE fly_asic_hist_ptr() { return (u32)(uintptr_t)g_fly_asic_by_id; }
++u32 EMSCRIPTEN_KEEPALIVE fly_asic_hist_len() { return 96; }
++// Raise-vs-ack accounting (dropped-delivery hunt, 2026-06-12): if the game's
++// ISR misses a CH2-DMA-end delivery, its display-list append pointer never
++// resets and lists accumulate — the observed storm shape. An "ack" = the game
++// write-clearing an ISTNRM bit that was SET (it saw + handled the interrupt).
++// "clears(unset)" = write-clearing an already-clear bit (double delivery).
++// [0] CH2 raises [1] CH2 acks(set) [2] CH2 clears(unset)
++// [3] OPQ raises [4] OPQ acks(set) [5] OPQ clears(unset)
++// [6] ISTNRM reads seeing CH2 set [7] reads seeing OPQ set
++u32 g_fly_ack[8];
++u32 EMSCRIPTEN_KEEPALIVE fly_ack_ptr() { return (u32)(uintptr_t)g_fly_ack; }
++u32 EMSCRIPTEN_KEEPALIVE fly_ack_len() { return 8; }
++}
++#endif
++
+ void asic_RaiseInterrupt(HollyInterruptID inter)
+ {
++#if defined(__EMSCRIPTEN__) && !defined(JIT_PROD_BUILD)
++	g_fly_asic_total++;
++	g_fly_asic_by_id[(((u32)inter >> 8) << 5) | ((u32)inter & 31)]++;
++	if ((u32)inter == 0x0013) g_fly_ack[0]++;       // CH2-DMA-end raise
++	else if ((u32)inter == 0x0007) g_fly_ack[3]++;  // opaque-EOL raise
++	switch ((u32)inter) {
++	case 0x0003: g_fly_asic_vblank_in++;  break;
++	case 0x0004: g_fly_asic_vblank_out++; break;
++	case 0x0005: g_fly_asic_hblank++;     break;
++	case 0x0012: g_fly_asic_maple++;      break;
++	}
++#endif
+ 	u8 type = inter >> 8;
+ 	u32 mask = 1 << (u8)inter;
+ 	switch(type)
+@@ -89,6 +129,13 @@ static u32 Read_SB_ISTNRM(u32 addr)
+ 	 * SB_ISTEXT and SB_ISTERR, respectively,
+ 	 * and writes to these two bits are ignored. */
+ 	u32 tmp = (Naomi2 && (addr & 0x02000000) != 0 ? SB_ISTNRM1 : SB_ISTNRM) & 0x3FFFFFFF;
++#if defined(__EMSCRIPTEN__) && !defined(JIT_PROD_BUILD)
++	{
++		extern u32 g_fly_ack[8];
++		if (tmp & (1u << 19)) g_fly_ack[6]++;
++		if (tmp & (1u << 7))  g_fly_ack[7]++;
++	}
++#endif
+ 
+ 	if (SB_ISTEXT)
+ 		tmp|=0x40000000;
+@@ -102,6 +149,13 @@ static u32 Read_SB_ISTNRM(u32 addr)
+ template<bool Naomi2>
+ static void Write_SB_ISTNRM(u32 addr, u32 data)
+ {
++#if defined(__EMSCRIPTEN__) && !defined(JIT_PROD_BUILD)
++	{
++		extern u32 g_fly_ack[8];
++		if (data & (1u << 19)) ((SB_ISTNRM & (1u << 19)) ? g_fly_ack[1] : g_fly_ack[2])++;
++		if (data & (1u << 7))  ((SB_ISTNRM & (1u << 7))  ? g_fly_ack[4] : g_fly_ack[5])++;
++	}
++#endif
+ 	/* writing a 1 clears the interrupt */
+ 	if (Naomi2 && (addr & 0x02000000) != 0)
+ 		SB_ISTNRM1 &= ~data;
+diff --git a/core/hw/mem/addrspace.cpp b/core/hw/mem/addrspace.cpp
+index 8cf3722..0fe5043 100644
+--- a/core/hw/mem/addrspace.cpp
++++ b/core/hw/mem/addrspace.cpp
+@@ -7,6 +7,9 @@
+ #include "oslib/oslib.h"
+ #include "oslib/virtmem.h"
+ #include <cassert>
++#ifdef __EMSCRIPTEN__
++#include <emscripten.h>
++#endif
+ 
+ namespace addrspace
+ {
+@@ -159,6 +162,30 @@ void DYNACALL writet(u32 addr, T data)
+ {
+ 	constexpr u32 sz = sizeof(T);
+ 
++#if defined(__EMSCRIPTEN__) && !defined(JIT_PROD_BUILD)
++	// Diagnostic: log writes to DOA2 freeze-relevant addresses. These pass
++	// through writet<T> from SH4 interpreter (OpPtr), DMA, MMIO-callback
++	// chains — anything NOT the JIT's direct-fast-path WASM store.
++	{
++		u32 aligned = addr & ~3;
++		if (aligned == 0x8c0d9324 || aligned == 0x8c1b89b0 || aligned == 0x8c1c47c8
++		    || aligned == 0x0c0d9324 || aligned == 0x0c1b89b0 || aligned == 0x0c1c47c8
++		    || aligned == 0xac0d9324 || aligned == 0xac1b89b0 || aligned == 0xac1c47c8) {
++			static u32 writet_log_count = 0;
++			if (writet_log_count < 30) {
++				writet_log_count++;
++				EM_ASM({
++					if (!window._flyLog) window._flyLog = [];
++					window._flyLog.push('[WRITET] #' + $0
++						+ ' addr=0x' + ($1>>>0).toString(16)
++						+ ' data=0x' + ($2>>>0).toString(16)
++						+ ' sz=' + $3);
++				}, writet_log_count, addr, (u32)data, (u32)sz);
++			}
++		}
++	}
++#endif
++
+ 	u32 page = addr>>24;
+ 	uintptr_t iirf = (uintptr_t)memInfo_ptr[page];
+ 	void *ptr = (void *)(iirf & ~HANDLER_MAX);
+@@ -425,9 +452,21 @@ void initMappings()
+ 		WARN_LOG(VMEM, "Warning! nvmem is DISABLED (due to failure or not being built-in)");
+ 
+ 		// Allocate it all and initialize it.
++#if defined(__EMSCRIPTEN__) && !defined(JIT_PROD_BUILD)
++		EM_ASM({ console.log('[rec_wasm] initMappings: allocating Sh4RCB, size=' + $0); }, (int)sizeof(Sh4RCB));
++#endif
+ 		p_sh4rcb = (Sh4RCB*)malloc_pages(sizeof(Sh4RCB));
++#if defined(__EMSCRIPTEN__) && !defined(JIT_PROD_BUILD)
++		EM_ASM({ console.log('[rec_wasm] initMappings: p_sh4rcb=' + $0); }, (int)(uintptr_t)p_sh4rcb);
++#endif
+ #if FEAT_SHREC != DYNAREC_NONE
++#if defined(__EMSCRIPTEN__) && !defined(JIT_PROD_BUILD)
++		EM_ASM({ console.log('[rec_wasm] initMappings: bm_vmem_pagefill FPCB, size=' + $0); }, (int)sizeof(p_sh4rcb->fpcb));
++#endif
+ 		bm_vmem_pagefill((void**)p_sh4rcb->fpcb, sizeof(p_sh4rcb->fpcb));
++#if defined(__EMSCRIPTEN__) && !defined(JIT_PROD_BUILD)
++		EM_ASM({ console.log('[rec_wasm] initMappings: bm_vmem_pagefill done'); });
++#endif
+ #endif
+ 		memset(&p_sh4rcb->cntx, 0, sizeof(p_sh4rcb->cntx));
+ 
+diff --git a/core/hw/naomi/naomi.cpp b/core/hw/naomi/naomi.cpp
+index 45005d7..fcaeac0 100644
+--- a/core/hw/naomi/naomi.cpp
++++ b/core/hw/naomi/naomi.cpp
+@@ -48,8 +48,13 @@ static X76F100SerialFlash romSerialId;
+ static int dmaSchedId = -1;
+ static int dmaXferDelay = 10;	// cart dma xfer speed, in cycles/byte (default 20 MB/s)
+ 
++// Diagnostic counters for serial EEPROM access tracking
++u32 g_naomi_board_write_count = 0;
++u32 g_naomi_board_read_count = 0;
++
+ void NaomiBoardIDWrite(const u16 data)
+ {
++	g_naomi_board_write_count++;
+ 	// bit 2: clock
+ 	// bit 3: data
+ 	// bit 4: reset (x76f100 only)
+@@ -62,6 +67,7 @@ void NaomiBoardIDWrite(const u16 data)
+ 
+ u16 NaomiBoardIDRead()
+ {
++	g_naomi_board_read_count++;
+ 	// bit 0 indicates the eeprom is a X76F100, otherwise the BIOS expects an AT93C46
+ 	// bit 3 is xf76f100 SDA
+ 	// bit 4 is at93c46 DO
+diff --git a/core/hw/pvr/pvr_regs.cpp b/core/hw/pvr/pvr_regs.cpp
+index 0538b3c..50a843a 100644
+--- a/core/hw/pvr/pvr_regs.cpp
++++ b/core/hw/pvr/pvr_regs.cpp
+@@ -4,6 +4,17 @@
+ #include "ta.h"
+ #include "spg.h"
+ #include <map>
++#ifdef __EMSCRIPTEN__
++#include <emscripten.h>
++#include "hw/sh4/sh4_core.h"  // for Sh4cntx (sh4ctx->pc)
++extern u32 g_wasm_block_count;
++#endif
++
++// Render-pipeline diagnostic logs (STARTRENDER / FB_R_CTRL writes).
++// Noisy — only useful for BLANK-cluster investigation. Default off.
++#ifndef FLY_PVR_DIAG
++#define FLY_PVR_DIAG 0
++#endif
+ 
+ bool pal_needs_update=true;
+ 
+@@ -129,6 +140,16 @@ void pvr_WriteReg(u32 paddr,u32 data)
+ 		return; // read only
+ 
+ 	case STARTRENDER_addr:
++#if defined(__EMSCRIPTEN__) && !defined(JIT_PROD_BUILD) && FLY_PVR_DIAG
++		{
++			static int startrender_count = 0;
++			startrender_count++;
++			EM_ASM({ console.log('[STARTRENDER] #' + $0 +
++				' blk=' + $1 +
++				' pc=0x' + ($2>>>0).toString(16)); },
++				startrender_count, g_wasm_block_count, p_sh4rcb->cntx.pc);
++		}
++#endif
+ 		rend_start_render();
+ 		YUV_init();
+ 		return;
+@@ -163,6 +184,21 @@ void pvr_WriteReg(u32 paddr,u32 data)
+ 
+ 	case FB_R_CTRL_addr:
+ 		{
++#if defined(__EMSCRIPTEN__) && !defined(JIT_PROD_BUILD) && FLY_PVR_DIAG
++			static int fb_r_ctrl_write_count = 0;
++			fb_r_ctrl_write_count++;
++			u32 old_val = PvrReg(addr, u32);
++			u32 sh4_pc = p_sh4rcb->cntx.pc;
++			// Log ALL writes to FB_R_CTRL with block count and SH4 PC
++			EM_ASM({ console.log('[FB_R_CTRL-WR] #' + $0 +
++				' blk=' + $1 +
++				' pc=0x' + ($2>>>0).toString(16) +
++				' old=0x' + ($3>>>0).toString(16) +
++				' new=0x' + ($4>>>0).toString(16) +
++				' fb_enable: ' + ($3 & 1) + '->' + ($4 & 1)); },
++				fb_r_ctrl_write_count, g_wasm_block_count, sh4_pc,
++				old_val, data);
++#endif
+ 			bool vclk_div_changed = (PvrReg(addr, u32) ^ data) & (1 << 23);
+ 			PvrReg(addr, u32) = data;
+ 			if (vclk_div_changed)
+diff --git a/core/hw/pvr/ta.cpp b/core/hw/pvr/ta.cpp
+index 4207b04..9e6af18 100644
+--- a/core/hw/pvr/ta.cpp
++++ b/core/hw/pvr/ta.cpp
+@@ -2,6 +2,10 @@
+ #include "ta_ctx.h"
+ #include "hw/holly/holly_intc.h"
+ #include "pvr_mem.h"
++#if defined(__EMSCRIPTEN__) && !defined(JIT_PROD_BUILD)
++#include <emscripten.h>
++#include "hw/sh4/sh4_core.h"   // Sh4cntx — EOL-storm probe (guest pc at raise)
++#endif
+ 
+ /*
+ 	Threaded TA Implementation
+@@ -221,14 +225,67 @@ static void DYNACALL ta_handle_cmd(u32 trans)
+ 	{
+ 		if (dat->pcw.ParaType == ParamType_End_Of_List)
+ 		{
++			// ORPHAN-EOL HARDENING (2026-06-12, FLY_TA_ORPHAN_EOL_FIX): an
++			// End-Of-List param arriving when NO list is open (ta_fsm_cl==7)
++			// is ignored — no interrupt, no list-state churn. Rationale: JGR
++			// legitimately streams zero-filled 32-byte slots (entities built
++			// then killed in-frame); a zero PCW parses as EOL/ListType=0.
++			// The previous behavior "adopted" the orphan EOL's list type and
++			// raised holly_OPAQUE for every such param: 88-1024 phantom
++			// interrupts/frame (storm), phantom list-state resets that mangle
++			// the parsing of subsequent real params (flicker/missing
++			// geometry), sound-driver desync, eventual freeze. Real hardware
++			// plausibly ignores EOL with no open list; a game only ever ACKs
++			// ~1 opaque EOL/frame even while streaming hundreds of zeros.
++			// Note: this matches upstream's code otherwise — candidate
++			// upstream patch if verified.
++#ifndef FLY_TA_ORPHAN_EOL_FIX
++#define FLY_TA_ORPHAN_EOL_FIX 1
++#endif
++			bool orphan_eol_ignored = false;
++#if FLY_TA_ORPHAN_EOL_FIX
++			if (ta_fsm_cl == 7)
++			{
++				orphan_eol_ignored = true;
++#if defined(__EMSCRIPTEN__) && !defined(JIT_PROD_BUILD)
++				static u32 orphan_eol = 0;
++				orphan_eol++;
++				if (orphan_eol <= 10 || (orphan_eol & 0xFFF) == 0)
++					EM_ASM({ console.log('[TA-ORPHAN-EOL] #' + $0 + ' ignored (no open list)'); }, orphan_eol);
++#endif
++			}
++#else
+ 			if (ta_fsm_cl==7)
+ 				ta_fsm_cl=dat->pcw.ListType;
++#endif
+ 			//printf("List %d ended\n",ta_fsm_cl);
+ 
++			if (!orphan_eol_ignored)
++			{
+ 			if (settings.platform.isNaomi2())
+ 				asic_RaiseInterruptBothCLX(ListEndInterrupt[ta_fsm_cl]);
+ 			else
+ 				asic_RaiseInterrupt(ListEndInterrupt[ta_fsm_cl]);
++#if defined(__EMSCRIPTEN__) && !defined(JIT_PROD_BUILD)
++			// OPAQUE-EOL storm probe (2026-06-12): production raises ~88 opaque
++			// list-complete ints per frame (clean: 1). Log guest pc + frame for
++			// the first raises and periodically — distinguishes a GAME retry
++			// loop (pc clusters in one small loop) from a TA-side duplication.
++			if (ta_fsm_cl == 0) {
++				extern u32 FrameCount;
++				static u32 eol_log = 0;
++				eol_log++;
++				if (eol_log <= 40 || (eol_log & 0x3FF) == 0) {
++					EM_ASM({
++						if (!window._flyLog) window._flyLog = [];
++						window._flyLog.push('[EOL-OPQ] #' + $0 + ' frame=' + $1
++							+ ' pc=0x' + ($2>>>0).toString(16)
++							+ ' pr=0x' + ($3>>>0).toString(16));
++					}, eol_log, FrameCount, Sh4cntx.pc, Sh4cntx.pr);
++				}
++			}
++#endif
++			}  // end if (!orphan_eol_ignored)
+ 			ta_fsm_cl=7;
+ 			trans=TAS_NS;
+ 		}
+diff --git a/core/hw/sh4/modules/dmac.cpp b/core/hw/sh4/modules/dmac.cpp
+index 6fadc99..695a599 100644
+--- a/core/hw/sh4/modules/dmac.cpp
++++ b/core/hw/sh4/modules/dmac.cpp
+@@ -12,6 +12,10 @@
+ #include "dmac.h"
+ #include "hw/sh4/sh4_interrupts.h"
+ #include "hw/holly/holly_intc.h"
++#if defined(__EMSCRIPTEN__) && !defined(JIT_PROD_BUILD)
++#include <emscripten.h>
++#include "hw/sh4/sh4_core.h"   // Sh4cntx — CH2-DMA storm probe
++#endif
+ 
+ DMACRegisters dmac;
+ 
+@@ -26,6 +30,21 @@ void DMAC_Ch2St()
+ 	if (0x8201 != (dmaor & DMAOR_MASK))
+ 	{
+ 		INFO_LOG(SH4, "DMAC: DMAOR has invalid settings (%X) !", dmaor);
++#if defined(__EMSCRIPTEN__) && !defined(JIT_PROD_BUILD)
++		// CH2-DMA STORM PROBE (2026-06-12): this silent return swallows the
++		// kick — no completion int, no TE, no C2DST clear → the game's TA-DMA
++		// submit loop (JGR: 0x8c21faac) retries forever. Log it loudly.
++		{
++			static u32 bador = 0;
++			bador++;
++			if (bador <= 20 || (bador & 0x3FF) == 0)
++				EM_ASM({
++					if (!window._flyLog) window._flyLog = [];
++					window._flyLog.push('[CH2-BADOR] #' + $0 + ' DMAOR=0x' + ($1>>>0).toString(16)
++						+ ' pc=0x' + ($2>>>0).toString(16) + ' CHCR2=0x' + ($3>>>0).toString(16));
++				}, bador, dmaor, Sh4cntx.pc, DMAC_CHCR(2).full);
++		}
++#endif
+ 		return;
+ 	}
+ 	if ((src >> 26) != 3)
+@@ -38,6 +57,72 @@ void DMAC_Ch2St()
+ 	}
+ 
+ 	DEBUG_LOG(SH4, ">> DMAC: Ch2 DMA SRC=%X DST=%X LEN=%X", src, SB_C2DSTAT, SB_C2DLEN);
++#if defined(__EMSCRIPTEN__) && !defined(JIT_PROD_BUILD)
++	// CH2-DMA transfer log: EOL storm shows ~1024 opaque-EOLs/frame vs ~4.4
++	// ch2 completions/frame → each transfer must carry hundreds of EOL params
++	// = garbage stream. Log src/dst/len to see whether SAR2/LEN are sane.
++	{
++		static u32 ch2n = 0;
++		ch2n++;
++		// STREAM-CONTENT SCAN at transfer time (the dump-based zero-tail read
++		// was ambiguous: the game may clear the buffer post-DMA, so only the
++		// content AT TRANSFER TIME is trustworthy). Count params whose PCW
++		// parses as End-Of-List (type 0 = top 3 bits clear) and, of those, how
++		// many are fully zero words. Expectation: clean ~1 EOL/transfer-ish;
++		// prod dozens+ — and zeroEol tells zeros-in-stream vs real repeats.
++		u32 eolParams = 0, zeroEol = 0, nParams = 0;
++		// Zero-run geometry: discriminates tail-truncation (builder/kick race)
++		// vs scattered 32B holes (lost SQ bursts) vs interior blocks (skipped
++		// builder section). A "zero param" = PCW == 0 at a 32B boundary.
++		u32 zeroRuns = 0, firstZeroOff = 0xFFFFFFFF, lastDataOff = 0, inRun = 0;
++		if ((SB_C2DSTAT & 0x01000000) == 0 && (src & RAM_MASK) + len <= RAM_SIZE) {
++			const u8* p = (const u8*)GetMemPtr(src, len);
++			if (p) {
++				for (u32 off = 0; off + 32 <= len; off += 32) {
++					u32 pcw = *(const u32*)(p + off);
++					nParams++;
++					if ((pcw >> 29) == 0) {
++						eolParams++;
++						if (pcw == 0) zeroEol++;
++					}
++					if (pcw == 0) {
++						if (!inRun) { zeroRuns++; inRun = 1; if (firstZeroOff == 0xFFFFFFFF) firstZeroOff = off; }
++					} else {
++						inRun = 0;
++						lastDataOff = off;
++					}
++				}
++			}
++		}
++		extern u32 FrameCount;
++		if (ch2n <= 40 || eolParams > 8 || (ch2n & 0xFF) == 0)
++			EM_ASM({
++				if (!window._flyLog) window._flyLog = [];
++				window._flyLog.push('[CH2-DMA] #' + $0 + ' frame=' + $1
++					+ ' len=0x' + ($2>>>0).toString(16)
++					+ ' params=' + $3 + ' eol=' + $4 + ' zeroEol=' + $5
++					+ ' runs=' + $6 + ' firstZero=0x' + ($7>>>0).toString(16)
++					+ ' lastData=0x' + ($8>>>0).toString(16));
++			}, ch2n, FrameCount, SB_C2DLEN, nParams, eolParams, zeroEol,
++			   zeroRuns, firstZeroOff, lastDataOff);
++		// Adopt this transfer's first hole as the live watch target (dynamic
++		// write-provenance: see g_fly_watch_off in rec_wasm.cpp). Only when a
++		// real anomaly exists (>8 EOLs) to avoid chasing the legit terminator.
++		if (eolParams > 8 && firstZeroOff != 0xFFFFFFFF) {
++			extern u32 g_fly_watch_off[2];
++			u32 newoff = (src & RAM_MASK) + firstZeroOff;
++			if (g_fly_watch_off[0] != newoff) {
++				g_fly_watch_off[1] = g_fly_watch_off[0];
++				g_fly_watch_off[0] = newoff;
++				EM_ASM({
++					if (!window._flyLog) window._flyLog = [];
++					window._flyLog.push('[WATCH-SET] frame=' + $0
++						+ ' off=0x' + ($1>>>0).toString(16));
++				}, FrameCount, newoff);
++			}
++		}
++	}
++#endif
+ 
+ 	// Direct DList DMA (Ch2)
+ 
+diff --git a/core/hw/sh4/sh4_interrupts.cpp b/core/hw/sh4/sh4_interrupts.cpp
+index 49a3be4..aeeeea7 100644
+--- a/core/hw/sh4/sh4_interrupts.cpp
++++ b/core/hw/sh4/sh4_interrupts.cpp
+@@ -196,10 +196,39 @@ static void Do_Interrupt(Sh4ExceptionCode intEvn)
+ 	debugger::subroutineCall();
+ }
+ 
++#if defined(__EMSCRIPTEN__) && !defined(JIT_PROD_BUILD)
++// Exception histogram for freeze-watchdog diagnostics.
++// Sh4ExceptionCode fits in the lower 16 bits; bucket by the raw value.
++extern "C" {
++u32 g_fly_exc_count[1024] = {0};          // counter per expEvn (indexed by expEvn & 0x3FF)
++u32 g_fly_exc_total = 0;                  // total Do_Exception calls
++#define FLY_EXC_TRACE_LEN 32
++u32 g_fly_exc_trace_epc[FLY_EXC_TRACE_LEN] = {0};
++u32 g_fly_exc_trace_evn[FLY_EXC_TRACE_LEN] = {0};
++u32 g_fly_exc_trace_head = 0;             // monotonic; last written = (head-1) & mask
++// Snapshot-on-first-illegal hook (defined in rec_wasm.cpp)
++void fly_snapshot_first_exc(u32 epc, u32 evn);
++}
++#endif
++
+ void Do_Exception(u32 epc, Sh4ExceptionCode expEvn)
+ {
+ 	assert((expEvn >= Sh4Ex_TlbMissRead && expEvn <= Sh4Ex_SlotIllegalInstr)
+ 			|| expEvn == Sh4Ex_FpuDisabled || expEvn == Sh4Ex_SlotFpuDisabled || expEvn == Sh4Ex_UserBreak);
++#if defined(__EMSCRIPTEN__) && !defined(JIT_PROD_BUILD)
++	g_fly_exc_total++;
++	g_fly_exc_count[((u32)expEvn) & 0x3FF]++;
++	u32 ti = g_fly_exc_trace_head & (FLY_EXC_TRACE_LEN - 1);
++	g_fly_exc_trace_epc[ti] = epc;
++	g_fly_exc_trace_evn[ti] = (u32)expEvn;
++	g_fly_exc_trace_head++;
++	// Snapshot the PC trace on the very first illegal-instruction fault.
++	// The handler immediately starts overwriting the live ring, so we need
++	// a preserved copy to find which block made the initial bad jump.
++	if (expEvn == Sh4Ex_IllegalInstr || expEvn == Sh4Ex_SlotIllegalInstr) {
++		fly_snapshot_first_exc(epc, (u32)expEvn);
++	}
++#endif
+ 	if (Sh4cntx.sr.BL != 0)
+ 		throw FlycastException("Fatal: SH4 exception when blocked");
+ 	CCN_EXPEVT = expEvn;
+diff --git a/core/hw/sh4/storeq.cpp b/core/hw/sh4/storeq.cpp
+index 2f4f712..9239347 100644
+--- a/core/hw/sh4/storeq.cpp
++++ b/core/hw/sh4/storeq.cpp
+@@ -21,6 +21,45 @@
+ 
+ static u32 CCN_QACR_TR[2];
+ 
++#if defined(__EMSCRIPTEN__) && !defined(JIT_PROD_BUILD)
++#include <emscripten.h>
++// SQ lifecycle counters (JGR zero-hole hunt, 2026-06-12): which stage loses
++// the ~2% of 32-byte bursts in production? [0]=flush calls total,
++// [1]=flushes to RAM area3, [2]=flushes landing in the JGR staging region
++// (0x6dae00..0x740000 RAM offset), [3]=flushes routed to TA, [4]=handler
++// is generic sqWrite (QACR-translated), [5]=current QACR_TR[0] sample.
++extern "C" {
++u32 g_fly_sq[8];
++u32 EMSCRIPTEN_KEEPALIVE fly_sq_ptr() { return (u32)(uintptr_t)g_fly_sq; }
++u32 EMSCRIPTEN_KEEPALIVE fly_sq_len() { return 8; }
++}
++// Watch the live hole addresses (shared dynamic targets, see rec_wasm.cpp)
++extern "C" u32 g_fly_watch_off[2];
++static inline void fly_sq_watch(u32 ramOff, const void* data) {
++	const u32* WOFF = g_fly_watch_off;
++	for (int i = 0; i < 2; i++) {
++		if (ramOff <= WOFF[i] && WOFF[i] < ramOff + 32) {
++			extern u32 FrameCount;
++			EM_ASM({
++				if (!window._flyLog) window._flyLog = [];
++				window._flyLog.push('[WATCH-SQ] frame=' + $0 + ' off=0x' + ($1>>>0).toString(16)
++					+ ' first=0x' + ($2>>>0).toString(16));
++			}, FrameCount, ramOff, *(const u32*)data);
++		}
++	}
++}
++static inline void fly_sq_note(u32 address) {
++	g_fly_sq[0]++;
++	if (((address >> 26) & 7) == 3) {
++		g_fly_sq[1]++;
++		u32 off = address & RAM_MASK;
++		if (off >= 0x6dae00 && off < 0x740000) g_fly_sq[2]++;
++	} else if (((address >> 26) & 7) == 4) {
++		g_fly_sq[3]++;
++	}
++}
++#endif
++
+ template<bool mmu_on>
+ static void DYNACALL sqWrite(u32 dest, Sh4Context *ctx)
+ {
+@@ -49,6 +88,11 @@ static void DYNACALL sqWrite(u32 dest, Sh4Context *ctx)
+ 	{
+ 		TAWriteSQ(address, ctx->sq_buffer);	// TODO pass the correct SQBuffer instead of letting TAWriteSQ deal with it
+ 	}
++#if defined(__EMSCRIPTEN__) && !defined(JIT_PROD_BUILD)
++	fly_sq_note(address);
++	g_fly_sq[4]++;  // generic QACR-translated handler used
++	g_fly_sq[5] = CCN_QACR_TR[0];
++#endif
+ }
+ 
+ //yes, this micro optimization makes a difference
+@@ -64,11 +108,22 @@ static void DYNACALL sqWrite_nommu_area_3_nonvmem(u32 dest, Sh4Context *ctx)
+ 	u8* pmem = &mem_b[0];
+ 
+ 	memcpy((SQBuffer *)&pmem[dest & (RAM_MASK - 0x1F)], &ctx->sq_buffer[(dest >> 5) & 1], sizeof(SQBuffer));
++#if defined(__EMSCRIPTEN__) && !defined(JIT_PROD_BUILD)
++	{
++		u32 off = dest & (RAM_MASK - 0x1F);
++		g_fly_sq[0]++; g_fly_sq[1]++;
++		if (off >= 0x6dae00 && off < 0x740000) g_fly_sq[2]++;
++		fly_sq_watch(off, &ctx->sq_buffer[(dest >> 5) & 1]);
++	}
++#endif
+ }
+ 
+ static void DYNACALL sqWriteTA(u32 dest, Sh4Context *ctx)
+ {
+ 	TAWriteSQ(dest, ctx->sq_buffer);
++#if defined(__EMSCRIPTEN__) && !defined(JIT_PROD_BUILD)
++	g_fly_sq[0]++; g_fly_sq[3]++;
++#endif
+ }
+ 
+ void setSqwHandler()

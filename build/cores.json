@@ -995,5 +995,48 @@
         "save": "flash",
         "license": "COPYING",
         "repo": "https://github.com/libretro/beetle-ngp-libretro"
+    },
+    {
+        "name": "flycast",
+        "extensions": [
+            "cdi",
+            "gdi",
+            "chd",
+            "cue",
+            "bin",
+            "elf",
+            "zip",
+            "7z",
+            "lst",
+            "dat",
+            "m3u"
+        ],
+        "makeoptions": {
+            "builder": "cmake",
+            "cmake_args": [
+                "-DLIBRETRO=ON",
+                "-DUSE_GLES=ON",
+                "-DUSE_VULKAN=OFF",
+                "-DUSE_OPENMP=OFF",
+                "-DUSE_LUA=OFF",
+                "-DUSE_BREAKPAD=OFF",
+                "-DUSE_HOST_LIBZIP=OFF",
+                "-DCMAKE_BUILD_TYPE=Release",
+                "-DCMAKE_C_FLAGS=-DJIT_PROD_BUILD=1 -DFLY_RELEASE_BUILD=1",
+                "-DCMAKE_CXX_FLAGS=-DJIT_PROD_BUILD=1 -DFLY_RELEASE_BUILD=1"
+            ],
+            "output_archive": "flycast_libretro_emscripten.bc",
+            "emcc_flags": "-fwasm-exceptions -sALLOW_TABLE_GROWTH"
+        },
+        "options": {
+            "settings": {
+                "flycast_threaded_rendering": "disabled"
+            },
+            "requiresWebgl2": true,
+            "defaultWebGL2": true
+        },
+        "save": false,
+        "license": "LICENSE",
+        "repo": "https://github.com/flyinghead/flycast"
     }
 ]

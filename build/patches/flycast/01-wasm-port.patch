@@ -1,0 +1,252 @@
+Build flycast as a static libretro core for Emscripten/wasm: CMake target, wasm32
+architecture, a CPU target with no native dynarec, and stubbed virtual memory
+(no mmap or mprotect on wasm).
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index fee2357..eede002 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -195,6 +195,25 @@ if(NINTENDO_SWITCH)
+ 		SA_NOCLDWAIT=0
+ 		IMGUI_DISABLE_DEFAULT_SHELL_FUNCTIONS)
+ 
++elseif(LIBRETRO AND EMSCRIPTEN)
++	# Static library, linked into EmulatorJS's RetroArch
++	add_library(${PROJECT_NAME} STATIC core/emulator.cpp)
++	target_compile_definitions(${PROJECT_NAME} PRIVATE
++		LIBRETRO
++		GLES GLES3 HAVE_OPENGLES HAVE_OPENGLES3 HAVE_OIT)
++	set(USE_VULKAN OFF CACHE BOOL "Force vulkan off" FORCE)
++	set(USE_DX9 OFF CACHE BOOL "Force DX9 off" FORCE)
++	set(USE_DX11 OFF CACHE BOOL "Force DX11 off" FORCE)
++	set(USE_OPENMP OFF CACHE BOOL "Force OpenMP off" FORCE)
++	set(USE_BREAKPAD OFF CACHE BOOL "Force breakpad off" FORCE)
++	set(USE_LUA OFF CACHE BOOL "Force Lua off" FORCE)
++	set(USE_DISCORD OFF CACHE BOOL "Force Discord off" FORCE)
++	set(USE_GLES ON CACHE BOOL "Force GLES for Emscripten" FORCE)
++	# asio: the core runs single-threaded
++	target_compile_definitions(${PROJECT_NAME} PRIVATE
++		ASIO_DISABLE_THREADS
++		ASIO_DISABLE_LOCAL_SOCKETS
++		ASIO_DISABLE_SERIAL_PORT)
+ elseif(LIBRETRO)
+ 	add_library(${PROJECT_NAME} SHARED core/emulator.cpp)
+ 	if(APPLE)
+@@ -965,6 +984,13 @@ if(LIBRETRO)
+ 		target_sources(${PROJECT_NAME} PRIVATE
+ 			core/deps/libretro-common/glsm/glsm.c
+ 			core/deps/libretro-common/glsym/rglgen.c)
++		if(EMSCRIPTEN)
++			# RetroArch links its own libretro-common, so give the core's copy private names
++			target_compile_definitions(${PROJECT_NAME} PRIVATE
++				rglgen_symbol_map=flycast_rglgen_symbol_map
++				rglgen_resolve_symbols=flycast_rglgen_resolve_symbols
++				rglgen_resolve_symbols_custom=flycast_rglgen_resolve_symbols_custom)
++		endif()
+ 		if(ANDROID OR IOS OR USE_GLES)
+ 			target_sources(${PROJECT_NAME} PRIVATE core/deps/libretro-common/glsym/glsym_es3.c)
+ 		elseif(USE_GLES2)
+@@ -1220,6 +1246,9 @@ if("x86" IN_LIST ARCHITECTURE OR "x86_64" IN_LIST ARCHITECTURE)
+ 	endif()
+ endif()
+ 
++if(EMSCRIPTEN)
++	target_sources(${PROJECT_NAME} PRIVATE core/rec-wasm/rec_wasm.cpp)
++endif()
+ if((USE_OPENGL OR USE_GLES2 OR USE_GLES) AND NOT LIBRETRO)
+ 	add_library(glad STATIC core/deps/glad/src/gl.c)
+ 	if(NOT APPLE AND NOT WIN32 AND NOT SDL2_FOUND)
+diff --git a/core/build.h b/core/build.h
+index 6ea5355..07c7738 100755
+--- a/core/build.h
++++ b/core/build.h
+@@ -17,6 +17,7 @@
+ #define CPU_ARM      0x20000002
+ #define CPU_ARM64    0x20000003
+ #define CPU_X64      0x20000004
++#define CPU_GENERIC  0x20000005
+ 
+ //FEAT_SHREC, FEAT_AREC, FEAT_DSPREC
+ #define DYNAREC_NONE	0x40000001
+@@ -24,7 +25,13 @@
+ 
+ //automatic
+ 
+-#if defined(__x86_64__) || defined(_M_X64)
++#if defined(__EMSCRIPTEN__) || defined(__wasm__)
++	#define HOST_CPU CPU_GENERIC
++	// WASM JIT backend
++	#define FEAT_SHREC DYNAREC_JIT
++	#define FEAT_AREC DYNAREC_NONE
++	#define FEAT_DSPREC DYNAREC_NONE
++#elif defined(__x86_64__) || defined(_M_X64)
+ 	#define HOST_CPU CPU_X64
+ #elif defined(__i386__) || defined(_M_IX86)
+ 	#define HOST_CPU CPU_X86
+@@ -48,7 +55,7 @@
+ #endif
+ 
+ #if defined(TARGET_NO_REC)
+-#define FEAT_SHREC DYNAREC_NONE
++#define FEAT_SHREC DYNAREC_JIT
+ #define FEAT_AREC DYNAREC_NONE
+ #define FEAT_DSPREC DYNAREC_NONE
+ #endif
+@@ -69,7 +76,7 @@
+ 	#if HOST_CPU == CPU_ARM || HOST_CPU == CPU_ARM64 || HOST_CPU == CPU_X86 || HOST_CPU == CPU_X64
+ 		#define FEAT_SHREC DYNAREC_JIT
+ 	#else
+-		#define FEAT_SHREC DYNAREC_NONE
++		#define FEAT_SHREC DYNAREC_JIT
+ 	#endif
+ #endif
+ 
+diff --git a/core/hw/sh4/sh4_core_regs.cpp b/core/hw/sh4/sh4_core_regs.cpp
+index 88c1405..3f49521 100644
+--- a/core/hw/sh4/sh4_core_regs.cpp
++++ b/core/hw/sh4/sh4_core_regs.cpp
+@@ -18,8 +18,23 @@ static void ChangeGPR()
+ 
+ //called when sr is changed and we must check for reg banks etc.
+ //returns true if interrupt pending
++#if defined(__EMSCRIPTEN__) && !defined(JIT_PROD_BUILD)
++extern "C" {
++// BL transitions — captures exception entry (0→1) and exit (1→0) regardless of
++// whether the code path goes through the RTE interpreter or gets rewritten into
++// SHIL ops by the JIT decoder. The raw `g_fly_rte_count` from sh4_opcodes.cpp
++// only counts interpreter-mode RTEs and massively under-reports.
++u32 g_fly_bl_clear_count = 0;
++u32 g_fly_bl_set_count = 0;
++}
++#endif
++
+ bool UpdateSR()
+ {
++#if defined(__EMSCRIPTEN__) && !defined(JIT_PROD_BUILD)
++	if (Sh4cntx.old_sr.BL == 1 && Sh4cntx.sr.BL == 0) g_fly_bl_clear_count++;
++	if (Sh4cntx.old_sr.BL == 0 && Sh4cntx.sr.BL == 1) g_fly_bl_set_count++;
++#endif
+ 	if (Sh4cntx.sr.MD)
+ 	{
+ 		if (Sh4cntx.old_sr.RB != Sh4cntx.sr.RB)
+@@ -120,6 +135,10 @@ static void setHostRoundingMode(u32 roundingMode, u32 denorm2zero)
+                 : "r"(off_mask), "r"(on_mask)
+ 				: "x10"
+             );
++    #elif defined(__EMSCRIPTEN__) || defined(__wasm__) || HOST_CPU == CPU_GENERIC
++		// WASM/generic: no hardware FPU control — rounding mode is not configurable
++		(void)roundingMode;
++		(void)denorm2zero;
+     #else
+ 	#error "SetFloatStatusReg: Unsupported platform"
+     #endif
+diff --git a/core/linux/context.cpp b/core/linux/context.cpp
+index 461ff26..a8ba32c 100644
+--- a/core/linux/context.cpp
++++ b/core/linux/context.cpp
+@@ -130,6 +130,10 @@ static void context_segfault(host_context_t* hostctx, void* segfault_ctx)
+     #else
+         #error "Unsupported OS"
+ 	#endif
++#elif HOST_CPU == CPU_GENERIC
++	// No segfault context handling for generic/WASM platform (interpreter only)
++	(void)hostctx;
++	(void)segfault_ctx;
+ #else
+ 	#error Unsupported HOST_CPU
+ #endif
+diff --git a/core/linux/posix_vmem.cpp b/core/linux/posix_vmem.cpp
+index 2d42410..4210561 100644
+--- a/core/linux/posix_vmem.cpp
++++ b/core/linux/posix_vmem.cpp
+@@ -4,7 +4,7 @@
+ // Android and OSX since they are slightly different in some areas.
+ #include "types.h"
+ 
+-#ifndef __SWITCH__
++#if !defined(__SWITCH__) && !defined(__EMSCRIPTEN__)
+ #include <sys/mman.h>
+ #include <sys/types.h>
+ #include <sys/stat.h>
+@@ -325,7 +325,50 @@ void release_jit_block(void *code_area1, void *code_area2, size_t size)
+ 
+ } // namespace virtmem
+ 
+-#endif // !__SWITCH__
++#endif // !__SWITCH__ && !__EMSCRIPTEN__
++
++#ifdef __EMSCRIPTEN__
++// Emscripten: no mmap/shm_open/mprotect support.
++// All virtmem functions are no-ops. addrspace::initMappings() will use
++// the malloc-based fallback path when virtmem::init() returns false.
++#include "hw/mem/addrspace.h"
++#include "hw/sh4/sh4_if.h"
++#include "oslib/virtmem.h"
++
++namespace virtmem
++{
++
++bool region_lock(void *start, size_t len) { return true; }
++bool region_unlock(void *start, size_t len) { return true; }
++bool region_set_exec(void *start, size_t len) { return true; }
++bool init(void **vmem_base_addr, void **sh4rcb_addr, size_t ramSize) { return false; }
++void destroy() {}
++void reset_mem(void *ptr, unsigned size_bytes) { memset(ptr, 0, size_bytes); }
++void ondemand_page(void *address, unsigned size_bytes) {}
++void create_mappings(const Mapping *vmem_maps, unsigned nummaps) {}
++bool prepare_jit_block(void *code_area, size_t size, void **code_area_rwx) {
++	// WASM JIT: no native code execution, but we need a valid buffer for the block manager
++	// Allocate a dummy buffer — rec_wasm doesn't write native code into it, but driver.cpp expects non-null
++	static u8* wasmJitBuffer = nullptr;
++	if (!wasmJitBuffer)
++		wasmJitBuffer = (u8*)malloc(size);
++	if (!wasmJitBuffer)
++		return false;
++	memset(wasmJitBuffer, 0, size);
++	*code_area_rwx = wasmJitBuffer;
++	return true;
++}
++bool prepare_jit_block(void *code_area, size_t size, void **code_area_rw, ptrdiff_t *rx_offset) {
++	bool rc = prepare_jit_block(code_area, size, code_area_rw);
++	if (rc && rx_offset)
++		*rx_offset = 0;
++	return rc;
++}
++void release_jit_block(void *code_area, size_t size) { /* buffer is static, leaked intentionally */ }
++void release_jit_block(void *code_area1, void *code_area2, size_t size) {}
++
++} // namespace virtmem
++#endif // __EMSCRIPTEN__
+ 
+ namespace virtmem
+ {
+diff --git a/core/oslib/virtmem.h b/core/oslib/virtmem.h
+index 2a02ab6..0e9edbd 100644
+--- a/core/oslib/virtmem.h
++++ b/core/oslib/virtmem.h
+@@ -1,7 +1,10 @@
+ #pragma once
+ #include "types.h"
+ 
+-#if defined(_WIN32) || defined(__APPLE__)
++#if defined(__EMSCRIPTEN__)
++// No native code execution on wasm; the pointer is allocated in prepare_jit_block
++#define DECLARE_CODE_CACHE(Name, Size) static u8 *Name;
++#elif defined(_WIN32) || defined(__APPLE__)
+ #define DECLARE_CODE_CACHE(Name, Size) static u8 *Name;
+ #elif defined(__ANDROID__)
+ #define DECLARE_CODE_CACHE(Name, Size) alignas(4096) static u8 Name[Size];
+diff --git a/shell/cmake/DetectArchitecture.cmake b/shell/cmake/DetectArchitecture.cmake
+index 9a4b855..031fd86 100644
+--- a/shell/cmake/DetectArchitecture.cmake
++++ b/shell/cmake/DetectArchitecture.cmake
+@@ -21,6 +21,9 @@ function(detect_architecture symbol arch)
+     endif()
+ endfunction()
+ 
++detect_architecture("__EMSCRIPTEN__" wasm32)
++detect_architecture("__wasm__" wasm32)
++
+ detect_architecture("__ARM64__" arm64)
+ detect_architecture("__aarch64__" arm64)
+ detect_architecture("_M_ARM64" arm64)

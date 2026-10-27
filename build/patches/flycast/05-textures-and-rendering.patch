@@ -1,0 +1,402 @@
+Texture invalidation without page faults (checksum-on-use and manual invalidation
+for YUV writes), WebGL2 fixes, and render timing instrumentation.
+
+diff --git a/core/hw/pvr/Renderer_if.cpp b/core/hw/pvr/Renderer_if.cpp
+index 3d4c0a4..6ebe869 100644
+--- a/core/hw/pvr/Renderer_if.cpp
++++ b/core/hw/pvr/Renderer_if.cpp
+@@ -15,6 +15,20 @@
+ #include <mutex>
+ #include <deque>
+ 
++#ifdef __EMSCRIPTEN__
++#include <emscripten.h>
++// Defined in pvr_mem.cpp — resets the per-page "already invalidated this
++// frame" bitmap so writes in the new frame invalidate cached textures.
++// fly_vram_page_reset removed — batched VRAM invalidation reverted to simplify build
++#endif
++
++// Render-pipeline diagnostic logs (present/vblank/STARTRENDER frequency).
++// Noisy — only useful for BLANK-cluster (PVR state-machine) investigation.
++// Flip to 1 when doing render-pipeline debugging; leave 0 for JIT work.
++#ifndef FLY_PVR_DIAG
++#define FLY_PVR_DIAG 0
++#endif
++
+ #ifdef LIBRETRO
+ void retro_rend_present();
+ void retro_resize_renderer(int w, int h, float aspectRatio);
+@@ -265,7 +279,18 @@ private:
+ 	{
+ 		FC_PROFILE_SCOPE;
+ 
++#if defined(__EMSCRIPTEN__) && !defined(JIT_PROD_BUILD) && FLY_PVR_DIAG
++		static int present_count = 0;
++		present_count++;
++		bool presResult = renderer->Present();
++		if (present_count <= 5) {
++			EM_ASM({ console.log('[rend] present #' + $0 + ': Present()=' + $1 + ' threaded=' + $2); },
++				present_count, presResult ? 1 : 0, (int)config::ThreadedRendering);
++		}
++		if (presResult)
++#else
+ 		if (renderer->Present())
++#endif
+ 		{
+ 			presented = true;
+ 			if (!config::ThreadedRendering && !config::VblankPacing && !ggpo::active())
+@@ -507,8 +532,31 @@ void rend_reset()
+ 	swapIntervalDetector.reset();
+ }
+ 
++#if defined(__EMSCRIPTEN__) && !defined(JIT_PROD_BUILD)
++// Exposed for the interrupt/timer test harness in rec_wasm.cpp —
++// run_interrupt_timer_tests reads the count before/after a synthetic
++// STARTRENDER register write to verify the dispatch path.
++extern "C" {
++u32 g_fly_rend_start_render_calls = 0;
++u32 g_fly_rend_start_render_null_ctx = 0;
++}
++#endif
++
+ void rend_start_render()
+ {
++#if defined(__EMSCRIPTEN__) && !defined(JIT_PROD_BUILD) && FLY_PVR_DIAG
++	g_fly_rend_start_render_calls++;
++	// Log the first 5 calls so we know rendering started, then every 120
++	// thereafter for steady-state activity.
++	if (g_fly_rend_start_render_calls <= 5 || (g_fly_rend_start_render_calls % 120) == 0) {
++		EM_ASM({
++			console.log('[fly-pvr] rend_start_render=' + $0 + ' null_ctx=' + $1);
++		}, (int)g_fly_rend_start_render_calls, (int)g_fly_rend_start_render_null_ctx);
++	}
++	// Note: batched VRAM page-dirty invalidation was prototyped here but
++	// reverted to simplify the build. YUV-path invalidation in pvr_mem.cpp
++	// handles FMV games. General pvr_write32p invalidation is future work.
++#endif
+ 	render_called = true;
+ 	pend_rend = false;
+ 
+@@ -538,8 +586,12 @@ void rend_start_render()
+ 
+ 	scheduleRenderDone(ctx);
+ 
+-	if (ctx == nullptr)
++	if (ctx == nullptr) {
++#if defined(__EMSCRIPTEN__) && !defined(JIT_PROD_BUILD)
++		g_fly_rend_start_render_null_ctx++;
++#endif
+ 		return;
++	}
+ 
+ 	FillBGP(ctx);
+ 
+@@ -610,6 +662,21 @@ int rend_end_render(int tag, int cycles, int jitter, void *arg)
+ 
+ void rend_vblank()
+ {
++#if defined(__EMSCRIPTEN__) && !defined(JIT_PROD_BUILD) && FLY_PVR_DIAG
++	static int vblank_count = 0;
++	static int last_fb_enable = -1;
++	static int last_fb_dirty = -1;
++	vblank_count++;
++	int cur_fb_enable = (int)FB_R_CTRL.fb_enable;
++	int cur_fb_dirty = (int)fb_dirty;
++	// Log on change or every 30 vblanks
++	if (cur_fb_enable != last_fb_enable || cur_fb_dirty != last_fb_dirty || (vblank_count % 30) == 0) {
++		EM_ASM({ console.log('[rend] vblank #' + $0 + ': fb_dirty=' + $1 + ' fb_enable=' + $2 + ' render_called=' + $3 + ' rend_enabled=' + $4); },
++			vblank_count, cur_fb_dirty, cur_fb_enable, (int)render_called, (int)rend_is_enabled());
++		last_fb_enable = cur_fb_enable;
++		last_fb_dirty = cur_fb_dirty;
++	}
++#endif
+ 	if (config::EmulateFramebuffer
+ 			|| (!render_called && fb_dirty && FB_R_CTRL.fb_enable))
+ 	{
+diff --git a/core/hw/pvr/pvr_mem.cpp b/core/hw/pvr/pvr_mem.cpp
+index 4b809d6..7089b9d 100644
+--- a/core/hw/pvr/pvr_mem.cpp
++++ b/core/hw/pvr/pvr_mem.cpp
+@@ -10,6 +10,8 @@
+ #include "hw/holly/sb.h"
+ #include "hw/holly/holly_intc.h"
+ #include "serialize.h"
++#include "rend/TexCache.h"  // VramLockedWriteOffset — manual tex-cache inval
++                             // on the WASM build, which has no mprotect
+ 
+ static u32 pvr_map32(u32 offset32);
+ 
+@@ -102,6 +104,23 @@ static void YUV_ConvertMacroBlock(const u8 *datap)
+ 
+ 	YUV_Block384(datap, &vram[YUV_dest]);
+ 
++#ifdef __EMSCRIPTEN__
++	// WASM: mprotect is a no-op, so texture cache page-fault invalidation
++	// never fires. Manually invalidate cached textures for the VRAM pages
++	// this macroblock wrote to. Fixes FMV playback (Dave Mirra, SoF).
++	{
++		const u32 PAGE = 4096;
++		const u32 row_bytes = YUV_x_size * 2;
++		for (u32 row = 0; row < 16; row++) {
++			u32 row_start = YUV_dest + row * row_bytes;
++			u32 row_end   = row_start + 32;
++			for (u32 off = row_start & ~(PAGE - 1); off < row_end; off += PAGE) {
++				VramLockedWriteOffset(off);
++			}
++		}
++	}
++#endif
++
+ 	YUV_dest+=32;
+ 
+ 	YUV_x_curr+=16;
+diff --git a/core/hw/pvr/ta_util.cpp b/core/hw/pvr/ta_util.cpp
+index d9ed2b4..b8b95b1 100644
+--- a/core/hw/pvr/ta_util.cpp
++++ b/core/hw/pvr/ta_util.cpp
+@@ -19,6 +19,9 @@
+ #include "ta_ctx.h"
+ #include "pvr_mem.h"
+ #include <algorithm>
++#ifdef __EMSCRIPTEN__
++#include <emscripten.h>
++#endif
+ #include <glm/glm.hpp>
+ #include <glm/gtc/type_ptr.hpp>
+ 
+@@ -69,6 +72,16 @@ void sortTriangles(rend_context& ctx, RenderPass& pass, const RenderPass& previo
+ 	int count = pass.tr_count - first;
+ 	if (count == 0)
+ 		return;
++#ifdef __EMSCRIPTEN__
++	// Render-phase timer [1]: CPU translucency sort (render campaign).
++	// RAII — the function has several exits below.
++	extern double g_fly_rp[10];
++	struct FlyRpSortTimer {
++		double t0;
++		FlyRpSortTimer() : t0(emscripten_get_now()) {}
++		~FlyRpSortTimer() { g_fly_rp[1] += emscripten_get_now() - t0; }
++	} fly_rp_sort_timer;
++#endif
+ 
+ 	const PolyParam * const pp_base = &ctx.global_param_tr[first];
+ 	const PolyParam * const pp_end = pp_base + count;
+diff --git a/core/rend/TexCache.cpp b/core/rend/TexCache.cpp
+index 6d45ead..6e21411 100644
+--- a/core/rend/TexCache.cpp
++++ b/core/rend/TexCache.cpp
+@@ -226,8 +226,36 @@ void BaseTextureCacheData::PrintTextureName()
+ #endif
+ }
+ 
++// DIAGNOSTIC (2026-06-12): on WASM, texture invalidation-on-write is dead —
++// protectVram relies on mprotect page faults (no-op under Emscripten), so
++// `dirty` is never set by guest VRAM writes and every texture is permanently
++// frozen at its first upload (palette/YUV paths aside). Suspected cause of the
++// JGR menu glitches. This flag forces a re-decode from live VRAM on every use:
++// slow, but isolates exactly one variable (texture freshness). If glitches
++// vanish with this ON, the fix is per-page write tracking (area-1 is currently
++// direct-mapped in addrspace writet — needs handler routing to observe writes).
++#define FLY_TEX_ALWAYS_UPDATE 0   // diagnostic OFF — replaced by checksum-on-use below (2026-07-16). The always-update run was user-verified on Skies: forcing texture freshness removed the "textures where they aren't supposed to be" glitches. Keep for future A/B.
++
++#ifdef __EMSCRIPTEN__
++// Hash of the texture's full VRAM source — the same [startAddress,
++// mmStartAddress+size) range protectVRam guards natively (VQ codebook and
++// all mip levels included, since they sit between the two).
++u32 BaseTextureCacheData::liveVramHash() const
++{
++	u32 end = mmStartAddress + size;
++	if (end > VRAM_SIZE)
++		end = VRAM_SIZE;
++	if (startAddress >= end)
++		return 0;
++	return XXH32(&vram[startAddress], end - startAddress, 7);
++}
++#endif
++
+ //true if : dirty or paletted texture and hashes don't match
+ bool BaseTextureCacheData::NeedsUpdate() {
++#if defined(__EMSCRIPTEN__) && FLY_TEX_ALWAYS_UPDATE
++	return true;
++#endif
+ 	bool rc = dirty != 0;
+ 	if (tex_type != TextureType::_8)
+ 	{
+@@ -236,6 +264,25 @@ bool BaseTextureCacheData::NeedsUpdate() {
+ 		else if (tcw.PixelFmt == PixelPal8 && palette_hash != pal_hash_256[tcw.PalSelect >> 4])
+ 			rc = true;
+ 	}
++#ifdef __EMSCRIPTEN__
++	// Checksum-on-use invalidation: mprotect is a no-op on WASM so `dirty` is
++	// never set by guest VRAM writes and textures would stay frozen at first
++	// upload (user-verified cause of the Skies misplaced-texture glitches).
++	// Rehash the VRAM source (at most once per frame per texture) and
++	// re-decode when it changed. Unlike write-side page tracking, this cannot
++	// be bypassed by unobserved write paths (SQ bursts, DMA memcpy) — it
++	// checks the data, not the writers.
++	if (!rc && Updates > 0 && wasm_hash_frame != FrameCount)
++	{
++		wasm_hash_frame = FrameCount;
++		u32 h = liveVramHash();
++		if (h != wasm_vram_hash)
++		{
++			wasm_vram_hash = h;
++			rc = true;
++		}
++	}
++#endif
+ 
+ 	return rc;
+ }
+@@ -442,6 +489,12 @@ bool BaseTextureCacheData::Update()
+ 	dirty = 0;
+ 	gpuPalette = false;
+ 	tex_type = tex->type;
++#ifdef __EMSCRIPTEN__
++	// Baseline for checksum-on-use invalidation: hash the exact VRAM bytes
++	// this update is about to decode.
++	wasm_vram_hash = liveVramHash();
++	wasm_hash_frame = FrameCount;
++#endif
+ 
+ 	bool has_alpha = false;
+ 	if (IsPaletted())
+diff --git a/core/rend/TexCache.h b/core/rend/TexCache.h
+index 65f5ed9..d22fd4f 100644
+--- a/core/rend/TexCache.h
++++ b/core/rend/TexCache.h
+@@ -106,6 +106,14 @@ public:
+ 	u32 texture_hash;			// xxhash of texture data, used for custom textures
+ 	u32 old_vqtexture_hash;		// legacy hash for vq textures
+ 	u32 old_texture_hash;		// legacy hash
++#ifdef __EMSCRIPTEN__
++	// Checksum-on-use invalidation (WASM has no mprotect, so VramLockedWrite
++	// never fires): xxhash of the texture's full VRAM protect range, refreshed
++	// at Update() and re-checked at most once per frame in NeedsUpdate().
++	u32 wasm_vram_hash = 0;
++	u32 wasm_hash_frame = ~0u;	// FrameCount of the last hash check
++	u32 liveVramHash() const;
++#endif
+ 	u8* custom_image_data;		// loaded custom image data
+ 	u32 custom_width;
+ 	u32 custom_height;
+diff --git a/core/rend/gles/gles.cpp b/core/rend/gles/gles.cpp
+index aaecb6c..07dd761 100644
+--- a/core/rend/gles/gles.cpp
++++ b/core/rend/gles/gles.cpp
+@@ -2,6 +2,9 @@
+ #include "gles.h"
+ #include "quad.h"
+ #include "hw/pvr/ta.h"
++#ifdef __EMSCRIPTEN__
++#include <emscripten.h>
++#endif
+ #ifndef LIBRETRO
+ #include "ui/gui.h"
+ #else
+@@ -1059,6 +1062,16 @@ void OpenGLRenderer::drawOSD()
+ #endif
+ }
+ 
++// ★ RENDER-PHASE TIMERS (2026-07-22, render campaign): prod-active
++// per-frame accumulators, reported via the HUD/hudlog recorder.
++// [0]=ta_parse total ms (includes sort)  [1]=sortTriangles ms
++// [2]=renderFrame (GL submission) ms    [3]=render count
++// [4]=emu.render() total ms             [5]=AICA/ARM7 ms
++// [6]=vblanks emulated                  [7]=multi-frame ticks
++// [8]=SH4 mainloop ms (rec_wasm FRAME window)  [9]=spare
++// Decomposes core-time: mainloop vs render-glue vs parse vs GL submit.
++double g_fly_rp[10];
++
+ void OpenGLRenderer::Process(TA_context* ctx)
+ {
+ 	if (gl.gl_major < 3 && settings.platform.isNaomi2())
+@@ -1080,7 +1093,15 @@ void OpenGLRenderer::Process(TA_context* ctx)
+ 	}
+ 	if (!ctx->rend.isRTT && ctx->rend.swapInterval > 0)
+ 		GraphicsContext::Instance()->setSwapInterval(ctx->rend.swapInterval);
++#ifdef __EMSCRIPTEN__
++	{
++		double t0 = emscripten_get_now();
++		ta_parse(ctx, gl.prim_restart_fixed_supported || gl.prim_restart_supported);
++		g_fly_rp[0] += emscripten_get_now() - t0;
++	}
++#else
+ 	ta_parse(ctx, gl.prim_restart_fixed_supported || gl.prim_restart_supported);
++#endif
+ }
+ 
+ static void upload_vertex_indices()
+@@ -1101,6 +1122,14 @@ static void upload_vertex_indices()
+ 
+ bool OpenGLRenderer::renderFrame(int width, int height)
+ {
++#ifdef __EMSCRIPTEN__
++	// RAII: renderFrame has multiple exits; [2]=GL submit ms, [3]=renders
++	struct FlyRpTimer {
++		double t0;
++		FlyRpTimer() : t0(emscripten_get_now()) {}
++		~FlyRpTimer() { g_fly_rp[2] += emscripten_get_now() - t0; g_fly_rp[3] += 1; }
++	} fly_rp_timer;
++#endif
+ 	if (!config::EmulateFramebuffer)
+ 		initVideoRoutingFrameBuffer();
+ 	
+@@ -1184,7 +1213,8 @@ bool OpenGLRenderer::renderFrame(int width, int height)
+ 		ShaderUniforms.Set(&it.second);
+ 		resetN2UniformCache(&it.second);
+ 	}
+-#ifndef GLES2
++#if !defined(GLES2) && !defined(__EMSCRIPTEN__)
++	// WebGL2 always uses fixed index primitive restart and rejects the enum
+ 	if (gl.prim_restart_fixed_supported)
+ 		glEnable(GL_PRIMITIVE_RESTART_FIXED_INDEX);
+ #ifndef GLES
+diff --git a/core/rend/gles/gltex.cpp b/core/rend/gles/gltex.cpp
+index cedf3c5..397c4b5 100644
+--- a/core/rend/gles/gltex.cpp
++++ b/core/rend/gles/gltex.cpp
+@@ -276,17 +276,43 @@ void ReadRTTBuffer()
+ 	glBindFramebuffer(GL_FRAMEBUFFER, gl.ofbo.origFbo);
+ }
+ 
++#if defined(__EMSCRIPTEN__) && !defined(JIT_PROD_BUILD)
++// Spike-composition instrument (2026-07-16): per-frame texture time,
++// split into staleness checks (checksum) and decode+upload (Update).
++// Reset + read each frame by the rec_wasm mainloop breakdown logger.
++#include <emscripten.h>
++extern "C" {
++double g_fly_tex_check_ms = 0;
++double g_fly_tex_update_ms = 0;
++u32 g_fly_tex_update_count = 0;
++}
++#endif
++
+ BaseTextureCacheData *OpenGLRenderer::GetTexture(TSP tsp, TCW tcw, int area)
+ {
+ 	//lookup texture
+ 	TextureCacheData* tf = TexCache.getTextureCacheData(tsp, tcw, area);
+ 
++#if defined(__EMSCRIPTEN__) && !defined(JIT_PROD_BUILD)
++	double t0 = emscripten_get_now();
++	bool needs = tf->NeedsUpdate();
++	double t1 = emscripten_get_now();
++	g_fly_tex_check_ms += t1 - t0;
++	if (needs)
++	{
++		if (!tf->Update())
++			tf = nullptr;
++		g_fly_tex_update_ms += emscripten_get_now() - t1;
++		g_fly_tex_update_count++;
++	}
++#else
+ 	//update if needed
+ 	if (tf->NeedsUpdate())
+ 	{
+ 		if (!tf->Update())
+ 			tf = nullptr;
+ 	}
++#endif
+ 	else if (tf->IsCustomTextureAvailable())
+ 	{
+ 		TexCache.DeleteLater(tf->texID);
