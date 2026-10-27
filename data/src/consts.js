@@ -26,6 +26,7 @@ export const cores = {
     "segaCD": ["genesis_plus_gx"],
     "sega32x": ["picodrive"],
     "pce": ["mednafen_pce_fast"],
+    "psx": ["swanstation"],
     "3do": ["opera"],
     "pc88": ["quasi88"],
     "atari800": ["atari800"],

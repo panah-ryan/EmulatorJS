@@ -2852,6 +2852,21 @@ class EJS_Frontend {
                 { "type": "button", "text": "R", "id": "r", "location": "right", "right": 3, "top": -100, "bold": true, "block": true, "input_value": 11 }
             ];
             info.push(...speedControlButtons);
+        } else if ("psx" === this.ejs.getControlScheme()) {
+            info = [
+                { "type": "button", "text": "△", "id": "triangle", "location": "right", "left": 40, "input_value": 9 },
+                { "type": "button", "text": "□", "id": "square", "location": "right", "top": 40, "input_value": 1 },
+                { "type": "button", "text": "○", "id": "circle", "location": "right", "left": 81, "top": 40, "input_value": 8 },
+                { "type": "button", "text": "✕", "id": "cross", "location": "right", "left": 40, "top": 80, "input_value": 0 },
+                { "type": "dpad", "id": "dpad", "location": "left", "left": "50%", "top": "50%", "joystickInput": false, "inputValues": [4, 5, 6, 7] },
+                { "type": "button", "text": "Start", "id": "start", "location": "center", "left": 60, "fontSize": 15, "block": true, "input_value": 3 },
+                { "type": "button", "text": "Select", "id": "select", "location": "center", "left": -5, "fontSize": 15, "block": true, "input_value": 2 },
+                { "type": "button", "text": "L1", "id": "l1", "location": "left", "left": 3, "top": -90, "fontSize": 20, "bold": true, "block": true, "input_value": 10 },
+                { "type": "button", "text": "R1", "id": "r1", "location": "right", "right": 3, "top": -90, "fontSize": 20, "bold": true, "block": true, "input_value": 11 },
+                { "type": "button", "text": "L2", "id": "l2", "location": "left", "left": 3, "top": -130, "fontSize": 20, "bold": true, "block": true, "input_value": 12 },
+                { "type": "button", "text": "R2", "id": "r2", "location": "right", "right": 3, "top": -130, "fontSize": 20, "bold": true, "block": true, "input_value": 13 }
+            ];
+            info.push(...speedControlButtons);
         } else if (["segaMD", "segaCD", "sega32x"].includes(this.ejs.getControlScheme())) {
             info = [
                 { "type": "button", "text": "A", "id": "a", "location": "right", "right": 145, "top": 70, "bold": true, "input_value": 1 },
