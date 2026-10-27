@@ -5,6 +5,7 @@ export const cores = {
     "neogeo": ["fbneo"],
     "nes": ["nestopia"],
     "snes": ["snes9x"],
+    "n64": ["mupen64plus_next"],
     "gb": ["sameboy"],
     "atari2600": ["stella2014"],
     "vic20": ["vice_xvic"],
