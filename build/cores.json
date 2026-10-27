@@ -1055,5 +1055,32 @@
         "save": "srm",
         "license": "COPYING",
         "repo": "https://github.com/libretro/beetle-wswan-libretro"
+    },
+    {
+        "name": "mgba",
+        "extensions": [
+            "gb",
+            "gbc",
+            "gba"
+        ],
+        "makeoptions": {
+            "builder": "cmake",
+            "cmake_args": [
+                "-DLIBMGBA_ONLY=ON",
+                "-DBUILD_LIBRETRO=ON",
+                "-DLIBRETRO_STATIC=ON",
+                "-DSKIP_LIBRARY=ON",
+                "-DHAVE_CRC32=ON",
+                "-DCMAKE_BUILD_TYPE=Release"
+            ],
+            "archives": [
+                "mgba_libretro.bc"
+            ],
+            "output_archive": "mgba_libretro_emscripten.bc"
+        },
+        "options": {},
+        "save": "srm",
+        "license": "LICENSE",
+        "repo": "https://github.com/libretro/mgba"
     }
 ]
