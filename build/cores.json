@@ -977,5 +977,23 @@
         "save": "srm",
         "license": "LICENSE",
         "repo": "https://github.com/libretro/mupen64plus-libretro-nx"
+    },
+    {
+        "name": "mednafen_ngp",
+        "extensions": [
+            "ngp",
+            "ngc",
+            "ngpc",
+            "npc"
+        ],
+        "makeoptions": {
+            "buildpath": "./",
+            "makescript": "Makefile",
+            "arguments": []
+        },
+        "options": {},
+        "save": "flash",
+        "license": "COPYING",
+        "repo": "https://github.com/libretro/beetle-ngp-libretro"
     }
 ]
