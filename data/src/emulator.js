@@ -1797,36 +1797,38 @@ class EmulatorJS {
                 } else if (e.type === "axischanged") {
                     if (typeof controlValue === "string" && controlValue.split(":")[0] === e.axis) {
                         if (isAnalog) {
+                            // Some pads (DualSense) report slightly past 1, which would overflow the stick
+                            const axisValue = Math.max(-1, Math.min(1, e.value));
                             if (j === 16 || j === 17) {
                                 if (e.value > 0) {
-                                    this.gameManager.simulateInput(i, 16, 0x7fff * e.value);
+                                    this.gameManager.simulateInput(i, 16, 0x7fff * axisValue);
                                     this.gameManager.simulateInput(i, 17, 0);
                                 } else {
-                                    this.gameManager.simulateInput(i, 17, -0x7fff * e.value);
+                                    this.gameManager.simulateInput(i, 17, -0x7fff * axisValue);
                                     this.gameManager.simulateInput(i, 16, 0);
                                 }
                             } else if (j === 18 || j === 19) {
                                 if (e.value > 0) {
-                                    this.gameManager.simulateInput(i, 18, 0x7fff * e.value);
+                                    this.gameManager.simulateInput(i, 18, 0x7fff * axisValue);
                                     this.gameManager.simulateInput(i, 19, 0);
                                 } else {
-                                    this.gameManager.simulateInput(i, 19, -0x7fff * e.value);
+                                    this.gameManager.simulateInput(i, 19, -0x7fff * axisValue);
                                     this.gameManager.simulateInput(i, 18, 0);
                                 }
                             } else if (j === 20 || j === 21) {
                                 if (e.value > 0) {
-                                    this.gameManager.simulateInput(i, 20, 0x7fff * e.value);
+                                    this.gameManager.simulateInput(i, 20, 0x7fff * axisValue);
                                     this.gameManager.simulateInput(i, 21, 0);
                                 } else {
-                                    this.gameManager.simulateInput(i, 21, -0x7fff * e.value);
+                                    this.gameManager.simulateInput(i, 21, -0x7fff * axisValue);
                                     this.gameManager.simulateInput(i, 20, 0);
                                 }
                             } else if (j === 22 || j === 23) {
                                 if (e.value > 0) {
-                                    this.gameManager.simulateInput(i, 22, 0x7fff * e.value);
+                                    this.gameManager.simulateInput(i, 22, 0x7fff * axisValue);
                                     this.gameManager.simulateInput(i, 23, 0);
                                 } else {
-                                    this.gameManager.simulateInput(i, 23, -0x7fff * e.value);
+                                    this.gameManager.simulateInput(i, 23, -0x7fff * axisValue);
                                     this.gameManager.simulateInput(i, 22, 0);
                                 }
                             }
