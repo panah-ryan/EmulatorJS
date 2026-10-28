@@ -1,8 +1,29 @@
 diff --git a/Makefile.emulatorjs b/Makefile.emulatorjs
-index b5862b3..c215624 100644
+index b5862b3..d497109 100644
 --- a/Makefile.emulatorjs
 +++ b/Makefile.emulatorjs
-@@ -129,7 +129,7 @@ EXPORTED_FUNCTIONS = _main,_malloc,_free,_load_state, \
+@@ -52,6 +52,10 @@ HAVE_IBXM = 1
+ HAVE_CORE_INFO_CACHE = 1
+ HAVE_7ZIP = 1
+ HAVE_BSV_MOVIE = 1
++# Emscripten's libc has getopt_long. RetroArch's own copy defines optind and
++# the other getopt globals, which clash with libc's for a core using getopt.
++HAVE_GETOPT_LONG = 1
++DEFINES += -DHAVE_GETOPT_LONG
+ HAVE_CHD ?= 0
+ HAVE_NETPLAYDISCOVERY ?= 0
+ 
+@@ -104,6 +108,9 @@ PTHREAD_POOL_SIZE ?= 4
+ ASYNCIFY_ADD ?= dynCall_*,emscripten_mainloop
+ ASYNCIFY_REMOVE ?= threaded_worker
+ 
++# link flags a single core needs (see emulatorjs/build-emulatorjs.sh)
++CORE_LDFLAGS ?=
++
+ STACK_SIZE ?= 4194304
+ INITIAL_HEAP ?= 134217728
+ 
+@@ -129,7 +136,7 @@ EXPORTED_FUNCTIONS = _main,_malloc,_free,_load_state, \
                       _set_vsync,_set_video_rotation,_get_video_dimensions,EmscriptenSendCommand,EmscriptenReceiveCommandReply,_get_memory_data, \
                       _ejs_set_controller_port_device,_ejs_get_controller_port_info
  
@@ -11,7 +32,7 @@ index b5862b3..c215624 100644
  
  LIBS   := -s USE_ZLIB=1
  CFLAGS := -s USE_ZLIB=1
-@@ -168,6 +168,7 @@ LDFLAGS := -L. $(LIBS) -s STACK_SIZE=$(STACK_SIZE) -s INITIAL_MEMORY=$(INITIAL_H
+@@ -168,6 +175,7 @@ LDFLAGS := -L. $(LIBS) -s STACK_SIZE=$(STACK_SIZE) -s INITIAL_MEMORY=$(INITIAL_H
             -s EXPORTED_RUNTIME_METHODS=$(EXPORTS) \
             -s ALLOW_MEMORY_GROWTH=1 -s EXPORTED_FUNCTIONS="$(EXPORTED_FUNCTIONS)" \
             -s ERROR_ON_UNDEFINED_SYMBOLS=0 \
@@ -19,7 +40,15 @@ index b5862b3..c215624 100644
             -lidbfs.js \
             -s MODULARIZE=1 -s EXPORT_NAME="EJS_Runtime" \
             -s ENVIRONMENT=web,worker -s WASM_BIGINT=1 \
-@@ -283,10 +284,6 @@ libretro     =
+@@ -277,16 +285,14 @@ endif
+ 
+ include Makefile.common
+ 
++LDFLAGS += $(CORE_LDFLAGS)
++
+ CFLAGS += $(DEF_FLAGS) -Ideps -Ideps/stb
+ 
+ libretro     =
  libretro_new =
  additional_libs =
  
@@ -73,7 +102,7 @@ index d97bfea..311940f 100644
     },
  
 diff --git a/emulatorjs/build-emulatorjs.sh b/emulatorjs/build-emulatorjs.sh
-index 3c05ecf..b2714ae 100755
+index 3c05ecf..00b7710 100755
 --- a/emulatorjs/build-emulatorjs.sh
 +++ b/emulatorjs/build-emulatorjs.sh
 @@ -63,13 +63,13 @@ lastGles=0
@@ -82,18 +111,67 @@ index 3c05ecf..b2714ae 100755
  useOpenAL=()
 -largeHeap=("mupen64plus_next" "picodrive" "pcsx_rearmed" "genesis_plus_gx" "genesis_plus_gx_wide" "mednafen_psx" "mednafen_psx_hw" "parallel_n64" "ppsspp" "azahar")
 -needsGles3=("ppsspp" "azahar")
-+largeHeap=("flycast" "mupen64plus_next" "picodrive" "pcsx_rearmed" "swanstation" "genesis_plus_gx" "genesis_plus_gx_wide" "mednafen_psx" "mednafen_psx_hw" "parallel_n64" "ppsspp" "azahar")
-+needsGles3=("ppsspp" "azahar" "flycast")
- needsThreads=("ppsspp" "azahar")
- largeThreads=("ppsspp" "azahar")
+-needsThreads=("ppsspp" "azahar")
+-largeThreads=("ppsspp" "azahar")
 -noCHD=("mame2003" "mame2003_plus" "pcsx_rearmed" "genesis_plus_gx" "genesis_plus_gx_wide" "azahar")
++largeHeap=("flycast" "mupen64plus_next" "picodrive" "pcsx_rearmed" "swanstation" "genesis_plus_gx" "genesis_plus_gx_wide" "mednafen_psx" "mednafen_psx_hw" "parallel_n64" "ppsspp" "azahar" "xemu")
++needsGles3=("ppsspp" "azahar" "flycast")
++needsThreads=("ppsspp" "azahar" "xemu")
++largeThreads=("ppsspp" "azahar" "xemu")
 +noCHD=("mame2003" "mame2003_plus" "pcsx_rearmed" "swanstation" "genesis_plus_gx" "genesis_plus_gx_wide" "azahar" "geartowns" "virtualjaguar" "emir" "flycast" "ppsspp")
  no7Zip=("bsnes")
 -needsAsync=("mupen64plus_next" "dosbox_pure" "ppsspp" "azahar" "bsnes" "bluemsx" "scummvm")
-+needsAsync=("mupen64plus_next" "dosbox_pure" "azahar" "bsnes" "bluemsx" "scummvm")
++needsAsync=("mupen64plus_next" "dosbox_pure" "azahar" "bsnes" "bluemsx" "scummvm" "xemu")
  
  for f in $(ls -v *_emscripten.bc); do
    name=`echo "$f" | sed "s/\(_libretro_emscripten\|\).bc$//"`
+@@ -84,6 +84,7 @@ for f in $(ls -v *_emscripten.bc); do
+   threads=0
+   have_al=0
+   have_rwebaudio=1
++  core_ldflags=""
+ 
+   if [ "$LEGACY" = "YES" ]; then
+     gles3=0
+@@ -120,6 +121,13 @@ for f in $(ls -v *_emscripten.bc); do
+   if [[ $(containsElement $name "${needsAsync[@]}") = 1 ]]; then
+     async=1
+   fi
++  # xemu's coroutines suspend through xemu_co_suspend and its JIT adds compiled
++  # blocks to the table. Only code running inside a coroutine is ever unwound,
++  # so the CPU, GPU, audio and device hot paths are left uninstrumented.
++  if [ $name = "xemu" ]; then
++    xemu_asyncify_remove="cpu_exec*,cpu_tb_exec,cpu_loop_*,tcg_*,tci_*,tb_*,tlb_*,helper_*,x86_*,gen_*,disas_*,i386_*,translator_*,float16_*,float32_*,float64_*,floatx80_*,float128_*,parts64_*,parts128_*,softfloat_*,round_*,memory_region_*,address_space_*,flatview_*,io_readx,io_writex,probe_access*,get_page_addr_code*,mmu_*,pgraph_*,nv2a_*,pfifo_*,pcrtc_*,pramdac_*,pvideo_*,ptimer_*,pmc_*,pbus_*,prmcio_*,vga_*,gl*,xemu_gl*,mcpx_*,dsp_*,vp_*,voice_*,se_*,fe_*,hrtf_*,usb_*,ohci_*,xid_*,pci_*,apic_*,pic_*,ioapic_*,smbus_*,lpc_*,xbox_*,unswizzle_*,swizzle_*,s3tc_*,mstring_*,lru_*,fast_hash*,XXH*"
++    core_ldflags="-sASYNCIFY_IMPORTS=ffi_call_js,xemu_co_suspend -sALLOW_TABLE_GROWTH=1 -sASYNCIFY_REMOVE='$xemu_asyncify_remove'"
++  fi
+   if [[ $(containsElement $name "${needsGles3[@]}") = 1 && $gles3 = 0 ]]; then
+     echo "$name"' does not support gles2 (legacy)! Please build without --legacy! Exiting...'
+     exit 1
+@@ -151,8 +159,8 @@ for f in $(ls -v *_emscripten.bc); do
+   fi
+ 
+   # Compile core
+-  echo "BUILD COMMAND: make -C ../ -f Makefile.emulatorjs HAVE_7ZIP=$sevenZip HAVE_CHD=$chd HAVE_THREADS=$threads PTHREAD_POOL_SIZE=$pthread ASYNC=$async HAVE_OPENGLES3=$gles3 STACK_SIZE=$stack_mem INITIAL_HEAP=$heap_mem HAVE_AL=$have_al HAVE_RWEBAUDIO=$have_rwebaudio LIGHT_DEBUG=$light_debug TARGET=${name}_libretro.js -j"$(nproc)
+-  make -C ../ -f Makefile.emulatorjs HAVE_7ZIP=$sevenZip HAVE_CHD=$chd HAVE_THREADS=$threads PTHREAD_POOL_SIZE=$pthread ASYNC=$async HAVE_OPENGLES3=$gles3 STACK_SIZE=$stack_mem INITIAL_HEAP=$heap_mem HAVE_AL=$have_al HAVE_RWEBAUDIO=$have_rwebaudio LIGHT_DEBUG=$light_debug TARGET=${name}_libretro.js -j$(nproc) || exit 1
++  echo "BUILD COMMAND: make -C ../ -f Makefile.emulatorjs HAVE_7ZIP=$sevenZip HAVE_CHD=$chd HAVE_THREADS=$threads PTHREAD_POOL_SIZE=$pthread ASYNC=$async HAVE_OPENGLES3=$gles3 STACK_SIZE=$stack_mem INITIAL_HEAP=$heap_mem HAVE_AL=$have_al HAVE_RWEBAUDIO=$have_rwebaudio LIGHT_DEBUG=$light_debug CORE_LDFLAGS=\"$core_ldflags\" TARGET=${name}_libretro.js -j"$(nproc)
++  make -C ../ -f Makefile.emulatorjs HAVE_7ZIP=$sevenZip HAVE_CHD=$chd HAVE_THREADS=$threads PTHREAD_POOL_SIZE=$pthread ASYNC=$async HAVE_OPENGLES3=$gles3 STACK_SIZE=$stack_mem INITIAL_HEAP=$heap_mem HAVE_AL=$have_al HAVE_RWEBAUDIO=$have_rwebaudio LIGHT_DEBUG=$light_debug CORE_LDFLAGS="$core_ldflags" TARGET=${name}_libretro.js -j$(nproc) || exit 1
+ 
+   # Move executable files
+   out_dir="../../EmulatorJS/data/cores"
+diff --git a/gfx/video_driver.c b/gfx/video_driver.c
+index 7917922..4c28f46 100644
+--- a/gfx/video_driver.c
++++ b/gfx/video_driver.c
+@@ -2952,7 +2952,8 @@ void video_driver_build_info(video_frame_info_t *video_info)
+    video_info->memory_show                 = settings->bools.video_memory_show;
+    video_info->statistics_show             = settings->bools.video_statistics_show;
+    video_info->framecount_show             = settings->bools.video_framecount_show;
+-   video_info->core_status_msg_show        = runloop_st->core_status_msg.set;
++   video_info->core_status_msg_show        = runloop_st->core_status_msg.set
++                                           && settings->bools.video_fps_show;
+    video_info->aspect_ratio_idx            = settings->uints.video_aspect_ratio_idx;
+    video_info->post_filter_record          = settings->bools.video_post_filter_record;
+    video_info->input_menu_swap_ok_cancel_buttons
 diff --git a/libretro-common/compat/compat_strcasestr.c b/libretro-common/compat/compat_strcasestr.c
 index c5db669..34ecef6 100644
 --- a/libretro-common/compat/compat_strcasestr.c

@@ -14,6 +14,7 @@
 #   - custom: a boolean to indicate if the build command is custom
 #   - build_command: the custom build command
 #   - build_retroarch_command: the custom build retroarch command
+#   - submodules: false to skip fetching the core's git submodules
 # - options: an object with the following properties:
 #   - threads: a boolean to indicate if the core should be built with threads
 #   - legacy: a boolean to indicate if the core should be built with legacy
@@ -195,9 +196,16 @@ compileProject() {
     requireThreads="$9"
 
     if [ ! -d "$name" ]; then
-        git clone "$repo" "$name" --depth 1
+        # a shallow clone fetches one branch, so ask for the core's
+        if [ "$branch" != "null" ]; then
+            git clone "$repo" "$name" --depth 1 --branch "$branch"
+        else
+            git clone "$repo" "$name" --depth 1
+        fi
         cd "$name"
-        git submodule update --init --recursive
+        if [ "$submodules" != "false" ]; then
+            git submodule update --init --recursive
+        fi
         cd ../
     fi
     cd "$name"
@@ -291,6 +299,7 @@ for row in $(jq -r '.[] | @base64' ../cores.json); do
     build_command=`echo $(_jq '.') | jq -r '.makeoptions.build_command'`
     build_retroarch_command=`echo $(_jq '.') | jq -r '.makeoptions.build_retroarch_command'`
     builder=`echo $(_jq '.') | jq -r '.makeoptions.builder // "make"'`
+    submodules=`echo $(_jq '.') | jq -r '.makeoptions.submodules != false'`
     cmakeBuildDir=`echo $(_jq '.') | jq -r '.makeoptions.cmake_build_dir // "build-emscripten"'`
     outputArchive=`echo $(_jq '.') | jq -r '.makeoptions.output_archive // ""'`
     cmake_args=`echo $(_jq '.') | jq -r '.makeoptions.cmake_args[]? | @base64'`
