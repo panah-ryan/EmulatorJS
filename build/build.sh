@@ -483,6 +483,16 @@ for row in $(jq -r '.[] | @base64' ../cores.json); do
             cd "$compileStartPath"
         fi
 
+        # PPSSPP reads its fonts and system dialog assets from PPSSPP/ in the system directory,
+        # which the frontend fills from ppsspp-assets.zip; leave out the standalone app's UI files
+        if [ "$name" = "ppsspp" ]; then
+            echo "Packing PPSSPP assets..."
+            rm -f "$outputPath/$name-assets.zip"
+            cd "$compileStartPath/$name/assets"
+            zip -r -q "$outputPath/$name-assets.zip" . -x 'debugger/*' 'ui_images/*' 'sfx_*' 'gamecontrollerdb.txt'
+            cd "$compileStartPath"
+        fi
+
         # create zip file containing the core data files
         cd EmulatorJS/data/cores
         zip $outputPath/$name.zip $name-thread*wasm.data
@@ -510,6 +520,9 @@ for row in $(jq -r '.[] | @base64' ../cores.json); do
             rm -f "$deployPath/$name-"*wasm.data
             cp "$builtCores/$name-"*wasm.data "$deployPath/"
             cp "$outputPath/$name.zip" "$deployPath/"
+            if [ -f "$outputPath/$name-assets.zip" ]; then
+                cp "$outputPath/$name-assets.zip" "$deployPath/"
+            fi
             cp "$buildReportFile" "$deployPath/reports/"
         else
             echo "Core $name failed to build, not deploying"

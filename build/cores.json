@@ -1111,5 +1111,29 @@
         "save": "srm",
         "license": "LICENSE",
         "repo": "https://github.com/JesseTG/melonds-ds"
+    },
+    {
+        "name": "ppsspp",
+        "extensions": [
+            "elf",
+            "iso",
+            "cso",
+            "prx",
+            "pbp",
+            "chd"
+        ],
+        "makeoptions": {
+            "buildpath": "libretro",
+            "makescript": "Makefile",
+            "arguments": []
+        },
+        "options": {
+            "requireThreads": true,
+            "requiresWebgl2": true,
+            "defaultWebGL2": true
+        },
+        "save": false,
+        "license": "LICENSE.TXT",
+        "repo": "https://github.com/hrydgard/ppsspp"
     }
 ]

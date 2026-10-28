@@ -1,0 +1,444 @@
+diff --git a/Common/CommonFuncs.h b/Common/CommonFuncs.h
+index b9153ba0f3..31e3a38a9c 100644
+--- a/Common/CommonFuncs.h
++++ b/Common/CommonFuncs.h
+@@ -71,7 +71,7 @@
+ 
+ #if defined(_MSC_VER)
+ #include <cstdlib>
+-#elif (PPSSPP_ARCH(X86) || PPSSPP_ARCH(AMD64))
++#elif (PPSSPP_ARCH(X86) || PPSSPP_ARCH(AMD64)) && !defined(__EMSCRIPTEN__)
+ #include <x86intrin.h>
+ #endif
+ 
+@@ -90,7 +90,7 @@
+ inline u32 __rotl(u32 x, int shift) {
+ #if defined(_MSC_VER)
+ 	return _rotl(x, shift);
+-#elif (PPSSPP_ARCH(X86) || PPSSPP_ARCH(AMD64))
++#elif (PPSSPP_ARCH(X86) || PPSSPP_ARCH(AMD64)) && !defined(__EMSCRIPTEN__)
+ 	return __rold(x, shift);
+ #else
+ 	shift &= 31;
+@@ -113,7 +113,7 @@ inline u64 __rotl64(u64 x, unsigned int shift){
+ inline u32 __rotr(u32 x, int shift) {
+ #if defined(_MSC_VER)
+ 	return _rotr(x, shift);
+-#elif (PPSSPP_ARCH(X86) || PPSSPP_ARCH(AMD64))
++#elif (PPSSPP_ARCH(X86) || PPSSPP_ARCH(AMD64)) && !defined(__EMSCRIPTEN__)
+ 	return __rord(x, shift);
+ #else
+     shift &= 31;
+diff --git a/Common/GPU/OpenGL/gl3stub.h b/Common/GPU/OpenGL/gl3stub.h
+index 70f0217f77..0cc79cefe8 100644
+--- a/Common/GPU/OpenGL/gl3stub.h
++++ b/Common/GPU/OpenGL/gl3stub.h
+@@ -48,6 +48,123 @@ extern "C" {
+ GLboolean gl3stubInit();
+ 
+ #if !PPSSPP_PLATFORM(IOS)
++
++#ifdef __EMSCRIPTEN__
++// The GL library links real functions under these names, so give the pointers our own.
++#define glBeginQuery ppsspp_glBeginQuery
++#define glBeginTransformFeedback ppsspp_glBeginTransformFeedback
++#define glBindBufferBase ppsspp_glBindBufferBase
++#define glBindBufferRange ppsspp_glBindBufferRange
++#define glBindFragDataLocationEXT ppsspp_glBindFragDataLocationEXT
++#define glBindFragDataLocationIndexedEXT ppsspp_glBindFragDataLocationIndexedEXT
++#define glBindSampler ppsspp_glBindSampler
++#define glBindTransformFeedback ppsspp_glBindTransformFeedback
++#define glBindVertexArray ppsspp_glBindVertexArray
++#define glBlitFramebuffer ppsspp_glBlitFramebuffer
++#define glBufferStorageEXT ppsspp_glBufferStorageEXT
++#define glClearBufferfi ppsspp_glClearBufferfi
++#define glClearBufferfv ppsspp_glClearBufferfv
++#define glClearBufferiv ppsspp_glClearBufferiv
++#define glClearBufferuiv ppsspp_glClearBufferuiv
++#define glClientWaitSync ppsspp_glClientWaitSync
++#define glCompressedTexImage3D ppsspp_glCompressedTexImage3D
++#define glCompressedTexSubImage3D ppsspp_glCompressedTexSubImage3D
++#define glCopyBufferSubData ppsspp_glCopyBufferSubData
++#define glCopyImageSubDataOES ppsspp_glCopyImageSubDataOES
++#define glCopyTexSubImage3D ppsspp_glCopyTexSubImage3D
++#define glDeleteQueries ppsspp_glDeleteQueries
++#define glDeleteSamplers ppsspp_glDeleteSamplers
++#define glDeleteSync ppsspp_glDeleteSync
++#define glDeleteTransformFeedbacks ppsspp_glDeleteTransformFeedbacks
++#define glDeleteVertexArrays ppsspp_glDeleteVertexArrays
++#define glDrawArraysInstanced ppsspp_glDrawArraysInstanced
++#define glDrawBuffers ppsspp_glDrawBuffers
++#define glDrawElementsInstanced ppsspp_glDrawElementsInstanced
++#define glDrawRangeElements ppsspp_glDrawRangeElements
++#define glEndQuery ppsspp_glEndQuery
++#define glEndTransformFeedback ppsspp_glEndTransformFeedback
++#define glFenceSync ppsspp_glFenceSync
++#define glFlushMappedBufferRange ppsspp_glFlushMappedBufferRange
++#define glFramebufferTextureLayer ppsspp_glFramebufferTextureLayer
++#define glGenQueries ppsspp_glGenQueries
++#define glGenSamplers ppsspp_glGenSamplers
++#define glGenTransformFeedbacks ppsspp_glGenTransformFeedbacks
++#define glGenVertexArrays ppsspp_glGenVertexArrays
++#define glGetActiveUniformBlockName ppsspp_glGetActiveUniformBlockName
++#define glGetActiveUniformBlockiv ppsspp_glGetActiveUniformBlockiv
++#define glGetActiveUniformsiv ppsspp_glGetActiveUniformsiv
++#define glGetBufferParameteri64v ppsspp_glGetBufferParameteri64v
++#define glGetBufferPointerv ppsspp_glGetBufferPointerv
++#define glGetFragDataIndexEXT ppsspp_glGetFragDataIndexEXT
++#define glGetFragDataLocation ppsspp_glGetFragDataLocation
++#define glGetInteger64i_v ppsspp_glGetInteger64i_v
++#define glGetInteger64v ppsspp_glGetInteger64v
++#define glGetIntegeri_v ppsspp_glGetIntegeri_v
++#define glGetInternalformativ ppsspp_glGetInternalformativ
++#define glGetProgramBinary ppsspp_glGetProgramBinary
++#define glGetProgramResourceLocationIndexEXT ppsspp_glGetProgramResourceLocationIndexEXT
++#define glGetQueryObjecti64v ppsspp_glGetQueryObjecti64v
++#define glGetQueryObjectui64v ppsspp_glGetQueryObjectui64v
++#define glGetQueryObjectuiv ppsspp_glGetQueryObjectuiv
++#define glGetQueryiv ppsspp_glGetQueryiv
++#define glGetSamplerParameterfv ppsspp_glGetSamplerParameterfv
++#define glGetSamplerParameteriv ppsspp_glGetSamplerParameteriv
++#define glGetStringi ppsspp_glGetStringi
++#define glGetSynciv ppsspp_glGetSynciv
++#define glGetTransformFeedbackVarying ppsspp_glGetTransformFeedbackVarying
++#define glGetUniformBlockIndex ppsspp_glGetUniformBlockIndex
++#define glGetUniformIndices ppsspp_glGetUniformIndices
++#define glGetUniformuiv ppsspp_glGetUniformuiv
++#define glGetVertexAttribIiv ppsspp_glGetVertexAttribIiv
++#define glGetVertexAttribIuiv ppsspp_glGetVertexAttribIuiv
++#define glInvalidateFramebuffer ppsspp_glInvalidateFramebuffer
++#define glInvalidateSubFramebuffer ppsspp_glInvalidateSubFramebuffer
++#define glIsQuery ppsspp_glIsQuery
++#define glIsSampler ppsspp_glIsSampler
++#define glIsSync ppsspp_glIsSync
++#define glIsTransformFeedback ppsspp_glIsTransformFeedback
++#define glIsVertexArray ppsspp_glIsVertexArray
++#define glMapBufferRange ppsspp_glMapBufferRange
++#define glPauseTransformFeedback ppsspp_glPauseTransformFeedback
++#define glProgramBinary ppsspp_glProgramBinary
++#define glProgramParameteri ppsspp_glProgramParameteri
++#define glQueryCounter ppsspp_glQueryCounter
++#define glReadBuffer ppsspp_glReadBuffer
++#define glRenderbufferStorageMultisample ppsspp_glRenderbufferStorageMultisample
++#define glResumeTransformFeedback ppsspp_glResumeTransformFeedback
++#define glSamplerParameterf ppsspp_glSamplerParameterf
++#define glSamplerParameterfv ppsspp_glSamplerParameterfv
++#define glSamplerParameteri ppsspp_glSamplerParameteri
++#define glSamplerParameteriv ppsspp_glSamplerParameteriv
++#define glTexImage3D ppsspp_glTexImage3D
++#define glTexStorage2D ppsspp_glTexStorage2D
++#define glTexStorage3D ppsspp_glTexStorage3D
++#define glTexSubImage3D ppsspp_glTexSubImage3D
++#define glTransformFeedbackVaryings ppsspp_glTransformFeedbackVaryings
++#define glUniform1ui ppsspp_glUniform1ui
++#define glUniform1uiv ppsspp_glUniform1uiv
++#define glUniform2ui ppsspp_glUniform2ui
++#define glUniform2uiv ppsspp_glUniform2uiv
++#define glUniform3ui ppsspp_glUniform3ui
++#define glUniform3uiv ppsspp_glUniform3uiv
++#define glUniform4ui ppsspp_glUniform4ui
++#define glUniform4uiv ppsspp_glUniform4uiv
++#define glUniformBlockBinding ppsspp_glUniformBlockBinding
++#define glUniformMatrix2x3fv ppsspp_glUniformMatrix2x3fv
++#define glUniformMatrix2x4fv ppsspp_glUniformMatrix2x4fv
++#define glUniformMatrix3x2fv ppsspp_glUniformMatrix3x2fv
++#define glUniformMatrix3x4fv ppsspp_glUniformMatrix3x4fv
++#define glUniformMatrix4x2fv ppsspp_glUniformMatrix4x2fv
++#define glUniformMatrix4x3fv ppsspp_glUniformMatrix4x3fv
++#define glUnmapBuffer ppsspp_glUnmapBuffer
++#define glVertexAttribDivisor ppsspp_glVertexAttribDivisor
++#define glVertexAttribI4i ppsspp_glVertexAttribI4i
++#define glVertexAttribI4iv ppsspp_glVertexAttribI4iv
++#define glVertexAttribI4ui ppsspp_glVertexAttribI4ui
++#define glVertexAttribI4uiv ppsspp_glVertexAttribI4uiv
++#define glVertexAttribIPointer ppsspp_glVertexAttribIPointer
++#define glWaitSync ppsspp_glWaitSync
++#endif
+     
+ /*-------------------------------------------------------------------------
+  * Data type definitions
+diff --git a/Common/TimeUtil.cpp b/Common/TimeUtil.cpp
+index ec2f43126a..ceffaa5cf9 100644
+--- a/Common/TimeUtil.cpp
++++ b/Common/TimeUtil.cpp
+@@ -242,7 +242,7 @@ void sleep_ms(int ms, const char *reason) {
+ 	Sleep(ms);
+ #elif defined(HAVE_LIBNX)
+ 	svcSleepThread(ms * 1000000);
+-#elif defined(__EMSCRIPTEN__)
++#elif defined(__EMSCRIPTEN__) && !defined(__EMSCRIPTEN_PTHREADS__)
+ 	emscripten_sleep(ms);
+ #else
+ 	usleep(ms * 1000);
+@@ -260,7 +260,7 @@ void sleep_us(int us, const char *reason) {
+ 	Sleep(us / 1000);
+ #elif defined(HAVE_LIBNX)
+ 	svcSleepThread(us * 1000);
+-#elif defined(__EMSCRIPTEN__)
++#elif defined(__EMSCRIPTEN__) && !defined(__EMSCRIPTEN_PTHREADS__)
+ 	emscripten_sleep(us / 1000);
+ #else
+ 	usleep(us);
+@@ -317,7 +317,7 @@ void sleep_precise(double seconds, const char *reason) {
+ 	// On other platforms, we just do a conversion with more input precision than in sleep_ms which is restricted to whole milliseconds.
+ #elif defined(HAVE_LIBNX)
+ 	svcSleepThread((int64_t)(seconds * 1000000000.0));
+-#elif defined(__EMSCRIPTEN__)
++#elif defined(__EMSCRIPTEN__) && !defined(__EMSCRIPTEN_PTHREADS__)
+ 	emscripten_sleep(seconds * 1000.0);
+ #else
+ 	usleep(seconds * 1000000.0);
+diff --git a/Core/MIPS/JitCommon/JitCommon.cpp b/Core/MIPS/JitCommon/JitCommon.cpp
+index 1361480ec4..b5865b3075 100644
+--- a/Core/MIPS/JitCommon/JitCommon.cpp
++++ b/Core/MIPS/JitCommon/JitCommon.cpp
+@@ -42,7 +42,7 @@
+ #include "../ARM/ArmIRJit.h"
+ #elif PPSSPP_ARCH(ARM64)
+ #include "../ARM64/Arm64IRJit.h"
+-#elif PPSSPP_ARCH(X86) || PPSSPP_ARCH(AMD64)
++#elif (PPSSPP_ARCH(X86) || PPSSPP_ARCH(AMD64)) && !defined(__EMSCRIPTEN__)
+ #include "../x86/X64IRJit.h"
+ #elif PPSSPP_ARCH(RISCV64)
+ #include "../RiscV/RiscVJit.h"
+@@ -112,7 +112,7 @@ namespace MIPSComp {
+ 		return new MIPSComp::ArmIRJit(mipsState);
+ #elif PPSSPP_ARCH(ARM64)
+ 		return new MIPSComp::Arm64IRJit(mipsState);
+-#elif PPSSPP_ARCH(X86) || PPSSPP_ARCH(AMD64)
++#elif (PPSSPP_ARCH(X86) || PPSSPP_ARCH(AMD64)) && !defined(__EMSCRIPTEN__)
+ 		return new MIPSComp::X64IRJit(mipsState);
+ #elif PPSSPP_ARCH(RISCV64)
+ 		return new MIPSComp::RiscVJit(mipsState);
+diff --git a/Core/MIPS/MIPS.cpp b/Core/MIPS/MIPS.cpp
+index 05c319e1dc..979343079b 100644
+--- a/Core/MIPS/MIPS.cpp
++++ b/Core/MIPS/MIPS.cpp
+@@ -96,7 +96,7 @@ static inline void ARM32WriteFPSCR(u32 fpscr) {
+ // to read the register. Our bits are cleared in it, in case a JIT's asm stub had already set them.
+ // Only the CPU thread calls these.
+ static bool g_hostModeSaved = false;
+-#if PPSSPP_ARCH(SSE2)
++#if PPSSPP_ARCH(SSE2) && !defined(__EMSCRIPTEN__)
+ static u32 g_savedHostMode;
+ #elif PPSSPP_ARCH(ARM64)
+ static u64 g_savedHostMode;
+@@ -113,7 +113,7 @@ void ApplyHostRoundingMode(const MIPSState *mips) {
+ 	}
+ 	int rmode = fcr1Bits & 3;
+ 	bool ftz = (fcr1Bits & 0x01000000) != 0;
+-#if PPSSPP_ARCH(SSE2)
++#if PPSSPP_ARCH(SSE2) && !defined(__EMSCRIPTEN__)
+ 	if (!g_hostModeSaved) {
+ 		g_savedHostMode = _mm_getcsr() & ~0xE040;
+ 		g_hostModeSaved = true;
+@@ -163,7 +163,7 @@ void ApplyHostRoundingMode(const MIPSState *mips) {
+ void RestoreHostRoundingMode(bool force) {
+ 	if (!g_hostModeSaved) {
+ 		if (force) {
+-#if PPSSPP_ARCH(SSE2)
++#if PPSSPP_ARCH(SSE2) && !defined(__EMSCRIPTEN__)
+ 			_mm_setcsr(_mm_getcsr() & ~0xE040);
+ #elif PPSSPP_ARCH(ARM64)
+ 			ARM64WriteFPCR(ARM64ReadFPCR() & ~(7 << 22));
+@@ -176,7 +176,7 @@ void RestoreHostRoundingMode(bool force) {
+ 		return;
+ 	}
+ 	g_hostModeSaved = false;
+-#if PPSSPP_ARCH(SSE2)
++#if PPSSPP_ARCH(SSE2) && !defined(__EMSCRIPTEN__)
+ 	_mm_setcsr(g_savedHostMode);
+ #elif PPSSPP_ARCH(ARM64)
+ 	ARM64WriteFPCR(g_savedHostMode);
+diff --git a/GPU/Common/VertexDecoderCommon.h b/GPU/Common/VertexDecoderCommon.h
+index 4d42c79f6c..4afeb90aa1 100644
+--- a/GPU/Common/VertexDecoderCommon.h
++++ b/GPU/Common/VertexDecoderCommon.h
+@@ -35,7 +35,7 @@
+ #include "Common/ArmEmitter.h"
+ #elif PPSSPP_ARCH(ARM64)
+ #include "Common/Arm64Emitter.h"
+-#elif PPSSPP_ARCH(X86) || PPSSPP_ARCH(AMD64)
++#elif (PPSSPP_ARCH(X86) || PPSSPP_ARCH(AMD64)) && !defined(__EMSCRIPTEN__)
+ #include "Common/x64Emitter.h"
+ #elif PPSSPP_ARCH(RISCV64)
+ #include "Common/RiscVEmitter.h"
+@@ -338,7 +338,7 @@ const char *GetStepFunctionName(StepFunction func);
+ #define VERTEXDECODER_JIT_BACKEND ArmGen::ARMXCodeBlock
+ #elif PPSSPP_ARCH(ARM64)
+ #define VERTEXDECODER_JIT_BACKEND Arm64Gen::ARM64CodeBlock
+-#elif PPSSPP_ARCH(X86) || PPSSPP_ARCH(AMD64)
++#elif (PPSSPP_ARCH(X86) || PPSSPP_ARCH(AMD64)) && !defined(__EMSCRIPTEN__)
+ #define VERTEXDECODER_JIT_BACKEND Gen::XCodeBlock
+ #elif PPSSPP_ARCH(RISCV64)
+ #define VERTEXDECODER_JIT_BACKEND RiscVGen::RiscVCodeBlock
+@@ -456,5 +456,6 @@ class VertexDecoderJitCache {
+ 	}
+ 	void Clear() {}
+ 	bool IsInSpace(const u8 *ptr) const { return false; }
++	size_t GetSpaceLeft() const { return 0; }
+ };
+ #endif
+diff --git a/ext/xxhash.h b/ext/xxhash.h
+index 79ead5f898..577dd579fb 100644
+--- a/ext/xxhash.h
++++ b/ext/xxhash.h
+@@ -3878,7 +3878,7 @@ XXH_PUBLIC_API XXH64_hash_t XXH64_hashFromCanonical(XXH_NOESCAPE const XXH64_can
+ #  if defined(__ARM_NEON__) || defined(__ARM_NEON) \
+    || (defined(_M_ARM) && _M_ARM >= 7) \
+    || defined(_M_ARM64) || defined(_M_ARM64EC) \
+-   || (defined(__wasm_simd128__) && XXH_HAS_INCLUDE(<arm_neon.h>)) /* WASM SIMD128 via SIMDe */
++   || (defined(__wasm_simd128__) && !defined(__SSE2__) && XXH_HAS_INCLUDE(<arm_neon.h>)) /* WASM SIMD128 via SIMDe, unless SSE2 is emulated */
+ #    define inline __inline__  /* circumvent a clang bug */
+ #    include <arm_neon.h>
+ #    undef inline
+@@ -4009,7 +4009,7 @@ XXH_PUBLIC_API XXH64_hash_t XXH64_hashFromCanonical(XXH_NOESCAPE const XXH64_can
+ #  if ( \
+         defined(__ARM_NEON__) || defined(__ARM_NEON) /* gcc */ \
+      || defined(_M_ARM) || defined(_M_ARM64) || defined(_M_ARM64EC) /* msvc */ \
+-     || (defined(__wasm_simd128__) && XXH_HAS_INCLUDE(<arm_neon.h>)) /* wasm simd128 via SIMDe */ \
++     || (defined(__wasm_simd128__) && !defined(__SSE2__) && XXH_HAS_INCLUDE(<arm_neon.h>)) /* wasm simd128 via SIMDe, unless SSE2 is emulated */ \
+    ) && ( \
+         defined(_WIN32) || defined(__LITTLE_ENDIAN__) /* little endian only */ \
+     || (defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__) \
+diff --git a/libretro/Makefile b/libretro/Makefile
+index 3408ad1cee..59dc074204 100644
+--- a/libretro/Makefile
++++ b/libretro/Makefile
+@@ -281,6 +281,63 @@ else ifeq ($(platform), emscripten)
+ 	PLATCFLAGS += -msimd128 -msse3 -mssse3 -msse4.1 -pthread -D__EMSCRIPTEN__ -DNO_MMAP
+ 	PLATFORM_EXT = emscripten
+ 	STATIC_LINKING = 1
++	# No JIT backend for wasm, so it runs the IR interpreter
++	WITH_DYNAREC = 0
++	# RetroArch links its own, older libretro-common into the same wasm module,
++	# so give this copy's globals a ppsspp_ prefix to keep the two apart.
++	LRCOMMON_SYMS := \
++		filestream_atomic_temp_name filestream_close filestream_cmp filestream_commit_atomic \
++		filestream_copy filestream_copy_begin filestream_copy_close filestream_copy_step \
++		filestream_delete filestream_eof filestream_error filestream_exists \
++		filestream_finish_atomic filestream_flush filestream_getc filestream_getline \
++		filestream_get_mapped_ptr filestream_get_path filestream_gets filestream_get_size \
++		filestream_get_sparse_granularity filestream_get_vfs_handle filestream_matches_buf \
++		filestream_open filestream_open_atomic filestream_prefetch filestream_printf \
++		filestream_punch_hole filestream_putc filestream_read filestream_read_file \
++		filestream_rename filestream_rewind filestream_scanf filestream_seek \
++		filestream_set_mapped_ptr_cb filestream_tell filestream_truncate filestream_vfs_init \
++		filestream_vprintf filestream_vscanf filestream_write filestream_write_file \
++		filestream_write_file_atomic fill_dated_filename fill_pathname \
++		fill_pathname_abbreviated_or_relative fill_pathname_abbreviate_special fill_pathname_base \
++		fill_pathname_basedir fill_pathname_dir fill_pathname_expand_special fill_pathname_join \
++		fill_pathname_join_delim fill_pathname_join_special_ext fill_pathname_parent_dir \
++		fill_pathname_parent_dir_name fill_pathname_resolve_relative fill_pathname_slash \
++		fill_str_dated_filename find_last_slash is_path_accessible_using_standard_io \
++		local_to_utf8_string local_to_utf8_string_alloc lr_char_props path_basedir \
++		path_basedir_wrapper path_basename path_basename_nocompression path_get_archive_delim \
++		path_get_extension path_get_extension_mutable path_get_mtime path_get_size \
++		path_is_absolute path_is_character_special path_is_compressed_file path_is_directory \
++		path_is_readonly path_is_valid path_linked_list_add_path path_linked_list_free \
++		path_linked_list_new path_mkdir pathname_conform_slashes_to_os \
++		pathname_make_slashes_portable path_parent_dir path_relative_to path_remove_extension \
++		path_resolve_realpath path_rmdir path_set_mtime path_set_private path_set_readonly \
++		path_stat path_vfs_init retro_vfs_closedir_impl retro_vfs_copy_begin_impl \
++		retro_vfs_copy_close_impl retro_vfs_copy_step_impl retro_vfs_dirent_get_name_impl \
++		retro_vfs_dirent_is_dir_impl retro_vfs_dirent_stat_impl retro_vfs_file_close_impl \
++		retro_vfs_file_error_impl retro_vfs_file_flush_impl retro_vfs_file_get_mapped_ptr_impl \
++		retro_vfs_file_get_path_impl retro_vfs_file_get_sparse_granularity_impl \
++		retro_vfs_file_open_impl retro_vfs_file_prefetch_impl retro_vfs_file_punch_hole_impl \
++		retro_vfs_file_read_impl retro_vfs_file_remove_impl retro_vfs_file_rename_impl \
++		retro_vfs_file_seek_impl retro_vfs_file_seek_internal retro_vfs_file_size_impl \
++		retro_vfs_file_tell_impl retro_vfs_file_truncate_impl retro_vfs_file_write_impl \
++		retro_vfs_get_mtime_impl retro_vfs_mkdir_impl retro_vfs_opendir_impl \
++		retro_vfs_readdir_impl retro_vfs_restrict_permissions_impl retro_vfs_rmdir_impl \
++		retro_vfs_set_mtime_impl retro_vfs_set_readonly_impl retro_vfs_stat_64_impl \
++		retro_vfs_stat_impl rfclose rfeof rferror rfflush rfgetc rfgets rfopen rfprintf rfputc \
++		rfread rfscanf rfseek rftell rfwrite rstrtod rstrtod_len rstrtof rstrtof_len rtime_deinit \
++		rtime_init rtime_localtime sanitize_path_part strftime_am_pm string_copy_only_ascii \
++		string_count_occurrences_single_character string_ext_list_append_dedup \
++		string_ext_list_find string_ext_list_merge_dedup string_find_index_substring_string \
++		string_hex_to_unsigned string_index_last_occurance string_percent_decode \
++		string_remove_all_chars string_remove_all_whitespace string_replace_all_chars \
++		string_replace_multi_space_with_single_space string_replace_substring \
++		string_replace_whitespace_with_single_character string_tokenize string_to_lower \
++		string_to_unsigned string_to_upper string_trim_whitespace string_trim_whitespace_left \
++		string_trim_whitespace_right string_ucwords strlcat_retro__ strlcpy_append strlcpy_retro__ \
++		utf16_conv_utf8 utf16_to_char_string utf16_to_utf8_string_alloc utf8_conv_utf32 utf8cpy \
++		utf8len utf8skip utf8_to_local_string_alloc utf8_to_utf16_string_alloc utf8_walk word_wrap \
++		word_wrap_wideglyph
++	PLATCFLAGS += $(foreach sym,$(LRCOMMON_SYMS),-D$(sym)=ppsspp_$(sym))
+ 
+ # Windows MSVC all architectures
+ else ifneq (,$(findstring windows_msvc2019,$(platform)))
+@@ -395,11 +452,8 @@ else
+ endif
+ 
+ COREFLAGS += -D__LIBRETRO__ -DPPSSPP -DWITH_UPNP -DGLEW_STATIC -DGLEW_NO_GLU -DMINIUPNP_STATICLIB
+-ifneq ($(platform), emscripten)
+-	# ffmpeg does not work with emscripten
+-	COREFLAGS += -DUSE_FFMPEG
+-	BUILD_FFMPEG := 1
+-endif
++COREFLAGS += -DUSE_FFMPEG
++BUILD_FFMPEG := 1
+ 
+ # FFmpeg, from the sources in ext/ffmpeg (see its README.md). Its own include directories go first,
+ # so its config.h wins over the other config.h files on the include path.
+diff --git a/libretro/Makefile.common b/libretro/Makefile.common
+index b7d05a816b..57639e771e 100644
+--- a/libretro/Makefile.common
++++ b/libretro/Makefile.common
+@@ -363,7 +363,7 @@ SOURCES_CXX += \
+ 
+ ifeq ($(PLATFORM_EXT), android)
+ COREFLAGS += -DHAVE_DLFCN_H
+-else ifneq ($(PLATFORM_EXT), win32)
++else ifeq (,$(filter win32 emscripten,$(PLATFORM_EXT)))
+ COREFLAGS += -DHAVE_STRONG_GETAUXVAL
+ endif
+ ifneq (,$(findstring osx,$(platform)))
+@@ -387,7 +387,7 @@ SOURCES_C += \
+ 	$(EXTDIR)/cpu_features/src/stack_line_reader.c \
+ 	$(EXTDIR)/cpu_features/src/string_view.c
+ 
+-ifneq ($(PLATFORM_EXT), win32)
++ifeq (,$(filter win32 emscripten,$(PLATFORM_EXT)))
+ SOURCES_C += \
+ 	$(EXTDIR)/cpu_features/src/hwcaps.c
+ endif
+diff --git a/ext/aemu_postoffice/client/sock_impl_linux.c b/ext/aemu_postoffice/client/sock_impl_linux.c
+index 6ea3123..fe7b337 100644
+--- a/ext/aemu_postoffice/client/sock_impl_linux.c
++++ b/ext/aemu_postoffice/client/sock_impl_linux.c
+@@ -154,7 +154,7 @@ int native_connect_tcp_sock(const struct aemu_postoffice_sock_addr *addr4, const
+ 	setsockopt(sock, SOL_SOCKET, SO_SNDBUF, &sockopt, sizeof(sockopt));
+ 	setsockopt(sock, SOL_SOCKET, SO_RCVBUF, &sockopt, sizeof(sockopt));
+ 
+-	#ifndef __linux__
++	#if !defined(__linux__) && defined(SO_NOSIGPIPE)
+ 	sockopt = 1;
+ 	setsockopt(sock, SOL_SOCKET, SO_NOSIGPIPE, &sockopt, sizeof(sockopt));
+ 	#endif
+diff --git a/libretro/LibretroGLContext.cpp b/libretro/LibretroGLContext.cpp
+index 06acbadf46..fe0f92ec0a 100644
+--- a/libretro/LibretroGLContext.cpp
++++ b/libretro/LibretroGLContext.cpp
+@@ -145,6 +145,11 @@ static bool ValidEye(const retro_vr_eye_state &eye) {
+ }
+ 
+ static bool PublishVRViews(bool tracked) {
++	static bool viewsPublished = false;
++	// Nothing to clear if no map is in effect
++	if (!vrActive && !viewsPublished) {
++		return true;
++	}
+ 	retro_video_view eyes[2]{};
+ 	for (int eye = 0; eye < 2; ++eye) {
+ 		eyes[eye] = {eye * vrWidth, 0, vrWidth, vrHeight, 0,
+@@ -157,6 +162,7 @@ static bool PublishVRViews(bool tracked) {
+ 	views.flags = tracked ? RETRO_VIDEO_VIEWS_FLAG_TRACKED : 0;
+ 	views.reference_space = RETRO_VR_REFERENCE_SPACE_LOCAL;
+ 	bool accepted = environ_cb(RETRO_ENVIRONMENT_SET_VIDEO_VIEWS, &views);
++	viewsPublished = accepted && vrActive;
+ 	if (views.recommended_view_width && views.recommended_view_height) {
+ 		vrCanvasAspect = 2.0f * views.recommended_view_width / views.recommended_view_height;
+ 	}

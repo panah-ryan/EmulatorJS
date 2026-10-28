@@ -1,5 +1,5 @@
 diff --git a/Makefile.emulatorjs b/Makefile.emulatorjs
-index b5862b3..7ecaba2 100644
+index b5862b3..c215624 100644
 --- a/Makefile.emulatorjs
 +++ b/Makefile.emulatorjs
 @@ -129,7 +129,7 @@ EXPORTED_FUNCTIONS = _main,_malloc,_free,_load_state, \
@@ -19,6 +19,17 @@ index b5862b3..7ecaba2 100644
             -lidbfs.js \
             -s MODULARIZE=1 -s EXPORT_NAME="EJS_Runtime" \
             -s ENVIRONMENT=web,worker -s WASM_BIGINT=1 \
+@@ -283,10 +284,6 @@ libretro     =
+ libretro_new =
+ additional_libs =
+ 
+-ifneq (,$(findstring ppsspp,$(TARGET)))
+-  additional_libs = ffmpeg/libavcodec.a ffmpeg/libavformat.a ffmpeg/libavutil.a ffmpeg/libswresample.a ffmpeg/libswscale.a
+-endif
+-
+ ifeq ($(HAVE_STATIC_DUMMY),1)
+   DEFINES += -DHAVE_STATIC_DUMMY
+ else
 diff --git a/emscripten/library_rwebaudio.js b/emscripten/library_rwebaudio.js
 index d97bfea..311940f 100644
 --- a/emscripten/library_rwebaudio.js
@@ -62,10 +73,10 @@ index d97bfea..311940f 100644
     },
  
 diff --git a/emulatorjs/build-emulatorjs.sh b/emulatorjs/build-emulatorjs.sh
-index 3c05ecf..77ab925 100755
+index 3c05ecf..b2714ae 100755
 --- a/emulatorjs/build-emulatorjs.sh
 +++ b/emulatorjs/build-emulatorjs.sh
-@@ -63,11 +63,11 @@ lastGles=0
+@@ -63,13 +63,13 @@ lastGles=0
  
  largeStack=("mupen64plus_next" "azahar")
  useOpenAL=()
@@ -76,10 +87,13 @@ index 3c05ecf..77ab925 100755
  needsThreads=("ppsspp" "azahar")
  largeThreads=("ppsspp" "azahar")
 -noCHD=("mame2003" "mame2003_plus" "pcsx_rearmed" "genesis_plus_gx" "genesis_plus_gx_wide" "azahar")
-+noCHD=("mame2003" "mame2003_plus" "pcsx_rearmed" "swanstation" "genesis_plus_gx" "genesis_plus_gx_wide" "azahar" "geartowns" "virtualjaguar" "emir" "flycast")
++noCHD=("mame2003" "mame2003_plus" "pcsx_rearmed" "swanstation" "genesis_plus_gx" "genesis_plus_gx_wide" "azahar" "geartowns" "virtualjaguar" "emir" "flycast" "ppsspp")
  no7Zip=("bsnes")
- needsAsync=("mupen64plus_next" "dosbox_pure" "ppsspp" "azahar" "bsnes" "bluemsx" "scummvm")
+-needsAsync=("mupen64plus_next" "dosbox_pure" "ppsspp" "azahar" "bsnes" "bluemsx" "scummvm")
++needsAsync=("mupen64plus_next" "dosbox_pure" "azahar" "bsnes" "bluemsx" "scummvm")
  
+ for f in $(ls -v *_emscripten.bc); do
+   name=`echo "$f" | sed "s/\(_libretro_emscripten\|\).bc$//"`
 diff --git a/libretro-common/compat/compat_strcasestr.c b/libretro-common/compat/compat_strcasestr.c
 index c5db669..34ecef6 100644
 --- a/libretro-common/compat/compat_strcasestr.c
