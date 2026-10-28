@@ -260,6 +260,13 @@ class EmulatorJS {
         this.cheats = [];
         this.started = false;
         this.volume = (typeof this.config.volume === "number") ? this.config.volume : 0.5;
+        // Xbox face buttons go by position: the pad's A (bottom) is RetroPad B
+        if (this.getControlScheme() === "xbox") {
+            this.defaultControllers[0][0].value2 = "BUTTON_1";
+            this.defaultControllers[0][8].value2 = "BUTTON_2";
+            this.defaultControllers[0][1].value2 = "BUTTON_3";
+            this.defaultControllers[0][9].value2 = "BUTTON_4";
+        }
         if (this.config.defaultControllers) {
             // Merge user config with defaults instead of replacing
             for (const [player, buttons] of Object.entries(this.config.defaultControllers)) {
@@ -1006,13 +1013,56 @@ class EmulatorJS {
     }
 
     /**
+     * For cores that stream their content (CONSTS.streamingCores): write a stub
+     * naming the content instead of downloading it. The core reads the stub's
+     * three lines, "EJS-STREAM 1", the size and the URL, then fetches byte
+     * ranges as it needs them, so the content never has to fit in memory.
+     */
+    async streamContent(url) {
+        let name, href, size;
+        if (url instanceof File) {
+            name = url.name;
+            href = URL.createObjectURL(url);
+            size = url.size;
+            this.config.gameUrl = name;
+        } else {
+            href = new URL(url, window.location.href).href;
+            name = decodeURIComponent(new URL(href).pathname.split("/").pop()) || "game";
+            size = await this.getContentSize(href);
+        }
+        if (!size) {
+            this.startGameError("Network Error");
+            throw new Error("Could not get the size of " + href);
+        }
+        if (this.debug) console.log("[EJS ROM] Streaming " + href + " (" + size + " bytes)");
+        this.gameManager.FS.writeFile("/" + name, `EJS-STREAM 1\n${size}\n${href}\n`);
+        return { files: [{ filename: name }] };
+    }
+
+    async getContentSize(href) {
+        try {
+            const head = await fetch(href, { method: "HEAD" });
+            const length = parseInt(head.headers.get("Content-Length"));
+            if (head.ok && length > 0) return length;
+        } catch (e) {}
+        try {
+            const probe = await fetch(href, { headers: { Range: "bytes=0-0" } });
+            const total = /\/(\d+)$/.exec(probe.headers.get("Content-Range") || "");
+            if (probe.status === 206 && total) return parseInt(total[1]);
+        } catch (e) {}
+        return 0;
+    }
+
+    /**
      * Download all necessary files and start the game
      */
     downloadFiles() {
         (async () => {
             await this.initializeGameManager();
-            
-            const romData = await this.download(this.config.gameUrl, this.downloadType.rom);
+
+            const romData = CONSTS.streamingCores.includes(this.getCore())
+                ? await this.streamContent(this.config.gameUrl)
+                : await this.download(this.config.gameUrl, this.downloadType.rom);
             await this.download(this.config.biosUrl, this.downloadType.bios);
             await this.downloadStartState();
             await this.download(this.config.gameParentUrl, this.downloadType.parent);
