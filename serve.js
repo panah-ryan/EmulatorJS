@@ -65,6 +65,24 @@ const handler = (req, res) => {
             return;
         }
         headers["Content-Type"] = types[path.extname(file).toLowerCase()] || "application/octet-stream";
+        headers["Accept-Ranges"] = "bytes";
+        // a single byte range, as cores that stream large discs request them
+        const range = /^bytes=(\d*)-(\d*)$/.exec(req.headers.range || "");
+        if (range && (range[1] || range[2])) {
+            let start = range[1] ? parseInt(range[1]) : Math.max(0, stat.size - parseInt(range[2]));
+            let end = range[1] && range[2] ? Math.min(parseInt(range[2]), stat.size - 1) : stat.size - 1;
+            if (start > end || start >= stat.size) {
+                headers["Content-Range"] = `bytes */${stat.size}`;
+                res.writeHead(416, headers).end();
+                return;
+            }
+            headers["Content-Range"] = `bytes ${start}-${end}/${stat.size}`;
+            headers["Content-Length"] = end - start + 1;
+            res.writeHead(206, headers);
+            if (req.method === "HEAD") return res.end();
+            fs.createReadStream(file, { start, end }).pipe(res);
+            return;
+        }
         headers["Content-Length"] = stat.size;
         res.writeHead(200, headers);
         if (req.method === "HEAD") return res.end();
