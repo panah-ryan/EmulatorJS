@@ -2884,6 +2884,20 @@ class EJS_Frontend {
                 { "type": "button", "text": "R", "id": "r", "location": "right", "right": 3, "top": -100, "bold": true, "block": true, "input_value": 13 }
             ];
             info.push(...speedControlButtons);
+        } else if ("psp" === this.ejs.getControlScheme()) {
+            info = [
+                { "type": "button", "text": "△", "id": "triangle", "location": "right", "left": 40, "input_value": 9 },
+                { "type": "button", "text": "□", "id": "square", "location": "right", "top": 40, "input_value": 1 },
+                { "type": "button", "text": "○", "id": "circle", "location": "right", "left": 81, "top": 40, "input_value": 8 },
+                { "type": "button", "text": "✕", "id": "cross", "location": "right", "left": 40, "top": 80, "input_value": 0 },
+                { "type": "zone", "id": "stick", "location": "left", "left": "50%", "top": "100%", "joystickInput": true, "inputValues": [16, 17, 18, 19] },
+                { "type": "zone", "id": "dpad", "location": "left", "left": "50%", "top": "0%", "joystickInput": false, "inputValues": [4, 5, 6, 7] },
+                { "type": "button", "text": "Start", "id": "start", "location": "center", "left": 60, "fontSize": 15, "block": true, "input_value": 3 },
+                { "type": "button", "text": "Select", "id": "select", "location": "center", "left": -5, "fontSize": 15, "block": true, "input_value": 2 },
+                { "type": "button", "text": "L", "id": "l", "location": "left", "left": 3, "top": -100, "bold": true, "block": true, "input_value": 10 },
+                { "type": "button", "text": "R", "id": "r", "location": "right", "right": 3, "top": -100, "bold": true, "block": true, "input_value": 11 }
+            ];
+            info.push(...speedControlButtons);
         } else if ("psx" === this.ejs.getControlScheme()) {
             info = [
                 { "type": "button", "text": "△", "id": "triangle", "location": "right", "left": 40, "input_value": 9 },

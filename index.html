@@ -333,6 +333,9 @@
                     if (["nds", "dsi", "ids"].includes(ext))
                         return "nds"
 
+                    if (["cso", "pbp", "prx"].includes(ext) && enableThreads)
+                        return "psp"
+
                     if (["a26"].includes(ext))
                         return "atari2600"
 
@@ -471,6 +474,7 @@
                             coreValues["Acorn Electron"] = "electron";
                             coreValues["Sega SG-1000"] = "sg1000";
                             coreValues["Sega Saturn"] = "segaSaturn";
+                            coreValues["Sony PSP"] = "psp";
                             coreValues["Commodore Amiga CD32"] = "amigacd32";
                         }
 
