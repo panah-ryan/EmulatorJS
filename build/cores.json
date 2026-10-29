@@ -1157,5 +1157,32 @@
         "license": "LICENSE",
         "repo": "/home/ryan/dockers/libretro-wasm-cores/xemu-libretro",
         "branch": "wasm"
+    },
+    {
+        "name": "tabstationtoo",
+        "extensions": [
+            "iso",
+            "bin",
+            "img",
+            "chd",
+            "cso",
+            "zso",
+            "gz",
+            "elf"
+        ],
+        "makeoptions": {
+            "custom": true,
+            "build_command": "bash pcsx2-libretro/build.sh \"$buildPath/$tempPath/threads/tabstationtoo_libretro_emscripten.bc\" || exit 1",
+            "submodules": false
+        },
+        "options": {
+            "requireThreads": true,
+            "requiresWebgl2": true,
+            "defaultWebGL2": true
+        },
+        "save": false,
+        "license": "COPYING.GPLv3",
+        "repo": "/home/ryan/dockers/libretro-wasm-cores/tabstationtoo-libretro",
+        "branch": "libretro"
     }
 ]
