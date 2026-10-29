@@ -2351,7 +2351,7 @@ class EJS_Frontend {
                 { id: 21, label: this.localization("R STICK LEFT") },
                 { id: 20, label: this.localization("R STICK RIGHT") },
             ];
-        } else if ("psx" === this.ejs.getControlScheme()) {
+        } else if (["psx", "ps2"].includes(this.ejs.getControlScheme())) {
             buttons = [
                 { id: 9, label: this.localization("\u25B3") }, // △
                 { id: 1, label: this.localization("\u25A1") }, // □
@@ -2941,7 +2941,7 @@ class EJS_Frontend {
                 { "type": "button", "text": "RT", "id": "rt", "location": "right", "right": 3, "top": -130, "fontSize": 20, "bold": true, "block": true, "input_value": 13 }
             ];
             info.push(...speedControlButtons);
-        } else if ("psx" === this.ejs.getControlScheme()) {
+        } else if (["psx", "ps2"].includes(this.ejs.getControlScheme())) {
             info = [
                 { "type": "button", "text": "△", "id": "triangle", "location": "right", "left": 40, "input_value": 9 },
                 { "type": "button", "text": "□", "id": "square", "location": "right", "top": 40, "input_value": 1 },

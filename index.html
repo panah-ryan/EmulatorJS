@@ -339,6 +339,9 @@
                     if (["xiso"].includes(ext) && enableThreads)
                         return "xbox"
 
+                    if (["zso"].includes(ext) && enableThreads)
+                        return "ps2"
+
                     if (["a26"].includes(ext))
                         return "atari2600"
 
@@ -478,6 +481,7 @@
                             coreValues["Sega SG-1000"] = "sg1000";
                             coreValues["Sega Saturn"] = "segaSaturn";
                             coreValues["Sony PSP"] = "psp";
+                            coreValues["Sony PlayStation 2"] = "ps2";
                             coreValues["Microsoft Xbox"] = "xbox";
                             coreValues["Commodore Amiga CD32"] = "amigacd32";
                         }
