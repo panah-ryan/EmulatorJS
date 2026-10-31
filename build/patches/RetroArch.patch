@@ -105,7 +105,7 @@ index d97bfea..311940f 100644
     },
  
 diff --git a/emulatorjs/build-emulatorjs.sh b/emulatorjs/build-emulatorjs.sh
-index 3c05ecf..67570e2 100755
+index 3c05ecf..77cb193 100755
 --- a/emulatorjs/build-emulatorjs.sh
 +++ b/emulatorjs/build-emulatorjs.sh
 @@ -63,13 +63,13 @@ lastGles=0
@@ -119,12 +119,12 @@ index 3c05ecf..67570e2 100755
 -noCHD=("mame2003" "mame2003_plus" "pcsx_rearmed" "genesis_plus_gx" "genesis_plus_gx_wide" "azahar")
 -no7Zip=("bsnes")
 -needsAsync=("mupen64plus_next" "dosbox_pure" "ppsspp" "azahar" "bsnes" "bluemsx" "scummvm")
-+largeHeap=("flycast" "mupen64plus_next" "picodrive" "pcsx_rearmed" "swanstation" "genesis_plus_gx" "genesis_plus_gx_wide" "mednafen_psx" "mednafen_psx_hw" "parallel_n64" "ppsspp" "azahar" "xemu" "tabstationtoo")
++largeHeap=("flycast" "mupen64plus_next" "picodrive" "pcsx_rearmed" "swanstation" "genesis_plus_gx" "genesis_plus_gx_wide" "mednafen_psx" "mednafen_psx_hw" "parallel_n64" "ppsspp" "azahar" "xemu" "tabstationtoo" "dolphin")
 +needsGles3=("ppsspp" "azahar" "flycast")
-+needsThreads=("ppsspp" "azahar" "xemu" "tabstationtoo")
-+largeThreads=("ppsspp" "azahar" "xemu" "tabstationtoo")
-+noCHD=("mame2003" "mame2003_plus" "pcsx_rearmed" "swanstation" "genesis_plus_gx" "genesis_plus_gx_wide" "azahar" "geartowns" "virtualjaguar" "emir" "flycast" "ppsspp" "tabstationtoo")
-+no7Zip=("bsnes" "tabstationtoo")
++needsThreads=("ppsspp" "azahar" "xemu" "tabstationtoo" "dolphin")
++largeThreads=("ppsspp" "azahar" "xemu" "tabstationtoo" "dolphin")
++noCHD=("mame2003" "mame2003_plus" "pcsx_rearmed" "swanstation" "genesis_plus_gx" "genesis_plus_gx_wide" "azahar" "geartowns" "virtualjaguar" "emir" "flycast" "ppsspp" "tabstationtoo" "dolphin")
++no7Zip=("bsnes" "tabstationtoo" "dolphin")
 +needsAsync=("mupen64plus_next" "dosbox_pure" "azahar" "bsnes" "bluemsx" "scummvm" "xemu")
  
  for f in $(ls -v *_emscripten.bc); do
@@ -138,7 +138,7 @@ index 3c05ecf..67570e2 100755
  
    if [ "$LEGACY" = "YES" ]; then
      gles3=0
-@@ -120,6 +122,23 @@ for f in $(ls -v *_emscripten.bc); do
+@@ -120,6 +122,41 @@ for f in $(ls -v *_emscripten.bc); do
    if [[ $(containsElement $name "${needsAsync[@]}") = 1 ]]; then
      async=1
    fi
@@ -159,10 +159,28 @@ index 3c05ecf..67570e2 100755
 +    core_cflags="-sSUPPORT_LONGJMP=wasm"
 +    core_ldflags="-sSUPPORT_LONGJMP=wasm -sMAXIMUM_MEMORY=2GB -sALLOW_TABLE_GROWTH=1 -sDEFAULT_PTHREAD_STACK_SIZE=2MB -sJSPI --pre-js=../tabstationtoo/pcsx2-wasm/jspi-fallback.js --use-port=emdawnwebgpu --js-library=../tabstationtoo/pcsx2/wasm/WasmJitRuntime.js --js-library=../tabstationtoo/pcsx2/GS/Renderers/WebGPU/webgpu_host.js"
 +  fi
++  # Dolphin (GameCube): its PowerPC->WebAssembly JIT adds compiled blocks to the table, declares the
++  # memory's maximum in each block (4 GB, as the core is built for) and calls back into four of its
++  # counters from JS, which are exported; its threads need the 5 MB stacks wasm-dolphin gives them.
++  if [ $name = "dolphin" ]; then
++    core_ldflags="-flto -sALLOW_TABLE_GROWTH=1 -sMAXIMUM_MEMORY=4GB -sDEFAULT_PTHREAD_STACK_SIZE=5MB --use-port=emdawnwebgpu"
++    for counter in RecordModuleUs RecordInstanceUs RecordCacheHit RecordCacheMiss; do
++      core_ldflags+=" -Wl,--export=DolphinWeb_$counter"
++    done
++    # The region driver (aot_driver.js, kept verbatim by --extern-pre-js) calls
++    # the core's translator, assembler inputs, region queue and block dump.
++    for fn in DolphinWeb_AotTranslate DolphinWeb_AotKeyParts DolphinWeb_JitHelperName DolphinWeb_JitHelperSignature DolphinWeb_JitStateLayout DolphinWeb_AotRegionHeapBases DolphinWeb_AotQueueRegion DolphinWeb_JitDumpBlocksRequest DolphinWeb_JitDumpBlocksDone DolphinWeb_JitDumpBlocksBuffer DolphinWeb_JitDumpBlocksCount DolphinWeb_JitRegionStats; do
++      core_ldflags+=" -Wl,--export=$fn"
++    done
++    core_ldflags+=" --extern-pre-js=../dolphin/core/libretro/aot_driver.js"
++    # The hardware renderer's bridge: per-pthread WebGPU devices, the command-ring
++    # consumer, and the present capture into the frontend's frame buffers.
++    core_ldflags+=" --extern-pre-js=../dolphin/core/libretro/wgpu_bridge.js"
++  fi
    if [[ $(containsElement $name "${needsGles3[@]}") = 1 && $gles3 = 0 ]]; then
      echo "$name"' does not support gles2 (legacy)! Please build without --legacy! Exiting...'
      exit 1
-@@ -151,8 +170,8 @@ for f in $(ls -v *_emscripten.bc); do
+@@ -151,8 +188,8 @@ for f in $(ls -v *_emscripten.bc); do
    fi
  
    # Compile core
