@@ -342,6 +342,9 @@
                     if (["zso"].includes(ext) && enableThreads)
                         return "ps2"
 
+                    if (["gcm", "tgc", "gcz", "rvz", "wia"].includes(ext) && enableThreads)
+                        return "gamecube"
+
                     if (["a26"].includes(ext))
                         return "atari2600"
 
@@ -482,6 +485,7 @@
                             coreValues["Sega Saturn"] = "segaSaturn";
                             coreValues["Sony PSP"] = "psp";
                             coreValues["Sony PlayStation 2"] = "ps2";
+                            coreValues["Nintendo GameCube"] = "gamecube";
                             coreValues["Microsoft Xbox"] = "xbox";
                             coreValues["Commodore Amiga CD32"] = "amigacd32";
                         }

@@ -33,6 +33,7 @@ export const cores = {
     "psp": ["ppsspp"],
     "ps2": ["tabstationtoo"],
     "xbox": ["xemu"],
+    "gamecube": ["dolphin"],
     "dreamcast": ["flycast"],
     "3do": ["opera"],
     "pc88": ["quasi88"],
@@ -54,13 +55,13 @@ export const cores = {
 };
 
 // cores, or systems sharing a core, that only run with threads
-export const requiresThreads = ["xemu", "tabstationtoo", "ppsspp", "applewin", "emir", "dosbox_pure", "mame_x1", "mame_electron", "mame_sg1000", "amigacd32"];
+export const requiresThreads = ["xemu", "tabstationtoo", "dolphin", "ppsspp", "applewin", "emir", "dosbox_pure", "mame_x1", "mame_electron", "mame_sg1000", "amigacd32"];
 
-export const requiresWebGL2 = ["flycast", "ppsspp", "xemu", "tabstationtoo"];
+export const requiresWebGL2 = ["flycast", "ppsspp", "xemu", "tabstationtoo", "dolphin"];
 
 // cores that read their content over HTTP range requests rather than from memory:
 // the frontend writes a stub naming the content's size and URL (see streamContent)
-export const streamingCores = ["xemu", "tabstationtoo"];
+export const streamingCores = ["xemu", "tabstationtoo", "dolphin"];
 
 // systems that get the on-screen keyboard on touch devices
 export const keyboardSystems = ["vic20", "c64", "c128", "plus4", "amiga", "cpc", "mac", "zxspectrum", "dos", "x1", "electron", "sg1000", "pc88", "atari800", "pc98", "fmtowns", "msx", "atarist", "x68000", "apple2"];

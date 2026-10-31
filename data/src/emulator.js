@@ -260,8 +260,8 @@ class EmulatorJS {
         this.cheats = [];
         this.started = false;
         this.volume = (typeof this.config.volume === "number") ? this.config.volume : 0.5;
-        // Xbox face buttons go by position: the pad's A (bottom) is RetroPad B
-        if (this.getControlScheme() === "xbox") {
+        // Xbox and GameCube face buttons go by position: the pad's A (bottom) is RetroPad B
+        if (["xbox", "gamecube"].includes(this.getControlScheme())) {
             this.defaultControllers[0][0].value2 = "BUTTON_1";
             this.defaultControllers[0][8].value2 = "BUTTON_2";
             this.defaultControllers[0][1].value2 = "BUTTON_3";
