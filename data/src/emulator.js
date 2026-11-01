@@ -661,6 +661,7 @@ class EmulatorJS {
                     threads = this.config.threads;
                 }
             }
+            this.threadsEnabled = !!threads;
 
             const legacy = (this.supportsWebgl2 && this.webgl2Enabled ? "" : "-legacy");
             const filename = this.getCore() + (threads ? "-thread" : "") + legacy + "-wasm.data";
@@ -2076,6 +2077,10 @@ class EmulatorJS {
     handleSpecialOptions(option, value) {
         if (option === "webgl2Enabled") {
             if (this.started && (value === "enabled") !== !!this.webgl2Enabled) {
+                this.restartEmulator();
+            }
+        } else if (option === "ejs_threads") {
+            if (this.started && (value === "enabled") !== this.threadsEnabled) {
                 this.restartEmulator();
             }
         } else if (option === "shader") {

@@ -4327,7 +4327,7 @@ class EJS_Frontend {
             addToMenu(this.localization("Threads"), "ejs_threads", {
                 "enabled": this.localization("Enabled"),
                 "disabled": this.localization("Disabled")
-            }, this.ejs.config.threads ? "enabled" : "disabled", home);
+            }, this.ejs.threadsEnabled ? "enabled" : "disabled", home);
         }
 
         const graphicsOptions = createSettingParent(true, "Graphics Settings", home);
