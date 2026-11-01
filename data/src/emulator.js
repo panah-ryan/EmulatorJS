@@ -98,7 +98,9 @@ class EmulatorJS {
                     if (opts.method === "HEAD") {
                         resolve({ headers: {} });
                     } else {
-                        resolve({ headers: {}, data: game });
+                        const name = type.toLowerCase();
+                        const item = new EJS_CacheItem(null, [new EJS_FileItem(name, game)], Date.now(), type, "arraybuffer", name, name, null);
+                        resolve({ headers: {}, data: item });
                     }
                 });
                 return;
@@ -201,6 +203,13 @@ class EmulatorJS {
             }
             resolve();
         })
+    }
+    /**
+     * Wraps raw data (ArrayBuffer, Uint8Array, Blob) in a File. Anything else is returned as is.
+     */
+    rawDataToFile(data, name) {
+        if (data instanceof File || !this.toData(data, true)) return data;
+        return new File([data], name);
     }
     checkForUpdates() {
         // Update check against cdn.emulatorjs.org disabled
@@ -683,11 +692,21 @@ class EmulatorJS {
         });
         document.body.appendChild(script);
     }
+    /**
+     * @returns {string|null} The file name of the game's URL or File, or null if it has no stable name.
+     */
+    getGameSourceName() {
+        const gameUrl = this.config.gameUrl;
+        if (gameUrl instanceof File) return gameUrl.name;
+        if (typeof gameUrl !== "string" || gameUrl.startsWith("blob:")) return null;
+        return gameUrl.split("/").pop().split("#")[0].split("?")[0];
+    }
     getBaseFileName(force) {
         //Only once game and core is loaded
         if (!this.started && !force) return null;
-        if (force && this.config.gameUrl !== "game" && !this.config.gameUrl.startsWith("blob:")) {
-            return this.config.gameUrl.split("/").pop().split("#")[0].split("?")[0];
+        const sourceName = this.getGameSourceName();
+        if (force && this.config.gameUrl !== "game" && sourceName !== null) {
+            return sourceName;
         }
         if (typeof this.config.gameName === "string") {
             const invalidCharacters = /[#<$+%>!`&*'|{}/\\?"=@:^\r\n]/ig;
@@ -695,15 +714,13 @@ class EmulatorJS {
             if (name) return name;
         }
         if (!this.fileName) return "game";
-        const parts = this.fileName.split(".");
-        parts.splice(parts.length - 1, 1);
-        return parts.join(".");
+        return this.fileName.replace(/\.[^.]*$/, "") || "game";
     }
     getFileNameTimestamp(date) {
         return date.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z");
     }
     saveInBrowserSupported() {
-        return !!window.indexedDB && (typeof this.config.gameName === "string" || !this.config.gameUrl.startsWith("blob:"));
+        return !!window.indexedDB && (typeof this.config.gameName === "string" || this.getGameSourceName() !== null);
     }
     downloadStartState() {
         return new Promise((resolve, reject) => {
@@ -747,6 +764,8 @@ class EmulatorJS {
         if (!this.compression) {
             this.compression = new EJS_COMPRESSION(this);
         }
+
+        url = this.rawDataToFile(url, type.name.toLowerCase());
 
         let dontExtract = false;
         if (type.dontExtractIfCore?.includes(this.getCore())) {
@@ -845,8 +864,6 @@ class EmulatorJS {
                 // check for content type
                 if (this.config.gameUrl instanceof File) {
                     this.config.gameUrl = this.config.gameUrl.name;
-                } else if (this.toData(this.config.gameUrl, true)) {
-                    this.config.gameUrl = type.name.toLowerCase();
                 }
 
                 returnData = data.data;
@@ -1023,11 +1040,12 @@ class EmulatorJS {
      */
     async streamContent(url) {
         let name, href, size;
-        if (url instanceof File) {
-            name = url.name;
-            href = URL.createObjectURL(url);
-            size = url.size;
-            this.config.gameUrl = name;
+        const content = this.rawDataToFile(url, "rom");
+        if (content instanceof File) {
+            name = content.name;
+            href = URL.createObjectURL(content);
+            size = content.size;
+            if (url instanceof File) this.config.gameUrl = name;
         } else {
             href = new URL(url, window.location.href).href;
             name = decodeURIComponent(new URL(href).pathname.split("/").pop()) || "game";
