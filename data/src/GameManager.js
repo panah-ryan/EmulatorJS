@@ -44,24 +44,7 @@ class EJS_GameManager {
         this.initShaders();
         this.setupPreLoadSettings();
 
-        this.EJS.on("exit", () => {
-            if (!this.EJS.failedToStart) {
-                this.saveSaveFiles();
-                this.functions.restart();
-                this.saveSaveFiles();
-            }
-            this.toggleMainLoop(0);
-            // Unmount only once the saves above are persisted, or the sync finds an empty folder and wipes them
-            this.FS.syncfs(false, () => this.FS.unmount("/data/saves"));
-            setTimeout(() => {
-                // abort() always throws, this is the expected shutdown
-                try {
-                    this.Module.abort("EmulatorJS exited");
-                } catch(e) {
-                    if (this.EJS.debug) console.log(e);
-                };
-            }, 1000);
-        })
+        this.EJS.on("exit", () => this.shutdown());
     }
     setupPreLoadSettings() {
         this.Module.callbacks.setupCoreSettingFile = (filePath) => {
@@ -256,6 +239,40 @@ IF EXIST AUTORUN.BAT CALL AUTORUN.BAT
             clearTimeout(this.EJS.resetTimeout);
             delete this.EJS.resetTimeout;
         }
+    }
+    /**
+     * Saves and stops the core.
+     * @returns {Promise} Resolves once saves are persisted and the core has aborted.
+     */
+    shutdown() {
+        if (!this.EJS.failedToStart) {
+            this.saveSaveFiles();
+            this.functions.restart();
+            this.saveSaveFiles();
+        }
+        this.toggleMainLoop(0);
+        const synced = new Promise(resolve => {
+            // Unmount only once the saves above are persisted, or the sync finds an empty folder and wipes them
+            this.FS.syncfs(false, () => {
+                try {
+                    this.FS.unmount("/data/saves");
+                } finally {
+                    resolve();
+                }
+            });
+        });
+        const aborted = new Promise(resolve => {
+            setTimeout(() => {
+                // abort() always throws, this is the expected shutdown
+                try {
+                    this.Module.abort("EmulatorJS exited");
+                } catch(e) {
+                    if (this.EJS.debug) console.log(e);
+                };
+                resolve();
+            }, 1000);
+        });
+        return Promise.all([synced, aborted]);
     }
     restart() {
         this.clearEJSResetTimer();

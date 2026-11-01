@@ -239,7 +239,6 @@ async function prepareLanguage() {
         console.log("Language JSON loaded:", !!config.langJson);
     }
 
-    window.EJS_emulator = new EmulatorJS(EJS_player, config);
     window.EJS_adBlocked = (url, del) => window.EJS_emulator.frontend.adBlocked(url, del);
 
     const handlers = [
@@ -252,14 +251,22 @@ async function prepareLanguage() {
         ["exit", window.EJS_onExit]
     ];
 
-    handlers.forEach(([event, callback]) => {
-        if (typeof callback === "function") {
-            window.EJS_emulator.on(event, callback);
-        }
-    });
+    const startEmulator = (overrides) => {
+        // Each instance gets its own copy because the emulator rewrites parts of its config
+        const emulator = new EmulatorJS(EJS_player, { ...config, ...overrides, restart: startEmulator });
+        window.EJS_emulator = emulator;
 
-    if (typeof window.EJS_onSaveUpdate === "function") {
-        window.EJS_emulator.on("saveUpdate", window.EJS_onSaveUpdate);
-        window.EJS_emulator.enableSaveUpdateEvent();
-    }
+        handlers.forEach(([event, callback]) => {
+            if (typeof callback === "function") {
+                emulator.on(event, callback);
+            }
+        });
+
+        if (typeof window.EJS_onSaveUpdate === "function") {
+            emulator.on("saveUpdate", window.EJS_onSaveUpdate);
+            emulator.enableSaveUpdateEvent();
+        }
+        return emulator;
+    };
+    startEmulator();
 })();

@@ -63,6 +63,7 @@ class EmulatorJS {
         for (let i = 0; i < listeners.length; i++) {
             element.addEventListener(listeners[i], callback);
             const data = { cb: callback, elem: element, listener: listeners[i] };
+            this.eventListeners.add(data);
             rv.push(data);
         }
         return rv;
@@ -70,6 +71,7 @@ class EmulatorJS {
     removeEventListener(data) {
         for (let i = 0; i < data.length; i++) {
             data[i].elem.removeEventListener(data[i].listener, data[i].cb);
+            this.eventListeners.delete(data[i]);
         }
     }
     /**
@@ -233,6 +235,7 @@ class EmulatorJS {
     }
     constructor(element, config) {
         this.ejs_version = CONSTS.version;
+        this.eventListeners = new Set();
         this.extensions = [];
         this.allSettings = {};
         this.initControlVars();
@@ -1072,13 +1075,29 @@ class EmulatorJS {
             this.startGameFromDownload(romData);
         })();
     }
+    createCoreRuntime(options) {
+        // The runtime keeps its thread pool private, so collect the workers as it allocates them
+        const NativeWorker = window.Worker;
+        const coreWorkers = this.coreWorkers = [];
+        window.Worker = class extends NativeWorker {
+            constructor(...args) {
+                super(...args);
+                coreWorkers.push(this);
+            }
+        };
+        try {
+            return window.EJS_Runtime(options);
+        } finally {
+            window.Worker = NativeWorker;
+        }
+    }
     initModule(wasmData, threadData) {
         if (typeof window.EJS_Runtime !== "function") {
             console.warn("EJS_Runtime is not defined!");
             this.startGameError("Error loading EmulatorJS runtime");
             throw new Error("EJS_Runtime is not defined!");
         }
-        window.EJS_Runtime({
+        this.createCoreRuntime({
             noInitialRun: true,
             onRuntimeInitialized: null,
             arguments: [],
@@ -2005,7 +2024,11 @@ class EmulatorJS {
         }
     }
     handleSpecialOptions(option, value) {
-        if (option === "shader") {
+        if (option === "webgl2Enabled") {
+            if (this.started && (value === "enabled") !== !!this.webgl2Enabled) {
+                this.restartEmulator();
+            }
+        } else if (option === "shader") {
             this.enableShader(value);
         } else if (option === "disk") {
             this.gameManager.setCurrentDisk(value);
@@ -2104,6 +2127,53 @@ class EmulatorJS {
         this.handleSpecialOptions(option, value);
         this.gameManager.setVariable(option, value);
         this.saveSettings();
+    }
+    /**
+     * Stops the running game and boots a new instance on the same element,
+     * which loads whichever core build the saved settings now select.
+     */
+    async restartEmulator() {
+        if (this.restarting || typeof this.config.restart !== "function") return;
+        this.restarting = true;
+        this.frontend.createPopup("Restarting...", {});
+        // Let the option change that triggered this finish saving first
+        await new Promise(resolve => setTimeout(resolve));
+
+        const parent = this.frontend.elements.parent;
+        const inFullscreen = document.fullscreenElement === parent;
+        this.startSaveInterval(0);
+        clearTimeout(this.resetTimeout);
+        this.stopAllAutofire();
+        if (this.isNetplay) this.netplay.leaveRoom();
+        this.gamepad.terminate();
+        this.removeEventListener([...this.eventListeners]);
+
+        await this.gameManager.shutdown();
+        this.started = false;
+        this.releaseModuleResources();
+
+        const next = this.config.restart({
+            startOnLoad: true,
+            fullscreenOnLoad: false,
+            volume: this.volume,
+            // Keeps this session's settings when localStorage is unavailable
+            defaultOptions: Object.assign({}, this.config.defaultOptions, this.frontend.settings)
+        });
+        next.touch = this.touch;
+        if (inFullscreen) {
+            next.on("start", () => next.frontend.updateFullscreenButtons(true));
+        }
+    }
+    releaseModuleResources() {
+        const audioContext = (this.Module.RWA && this.Module.RWA.context) || (this.Module.AL && this.Module.AL.currentCtx && this.Module.AL.currentCtx.audioCtx);
+        if (audioContext && audioContext.state !== "closed") {
+            audioContext.close().catch(e => console.warn("Could not close audio", e));
+        }
+        const loseContext = this.Module.ctx && this.Module.ctx.getExtension("WEBGL_lose_context");
+        if (loseContext) loseContext.loseContext();
+        this.coreWorkers.forEach(worker => worker.terminate());
+        // The runtime's resize handlers outlive it; they need an element but only act when it matches the observed one
+        Object.defineProperty(this.Module, "canvas", { get: () => document.createElement("canvas") });
     }
     getSettingValue(id) {
         return this.allSettings[id] || this.frontend.settings[id] || null;

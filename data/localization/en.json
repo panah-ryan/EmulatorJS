@@ -329,6 +329,7 @@
     "Mix frames": "Mix frames",
     "WebGL2": "WebGL2",
     "Requires restart": "Requires restart",
+    "Restarting...": "Restarting...",
     "VSync": "VSync",
     "Video Rotation": "Video Rotation",
     "Rewind Enabled (Requires restart)": "Rewind Enabled (Requires restart)",
