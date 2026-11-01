@@ -169,7 +169,7 @@ index 3c05ecf..77cb193 100755
 +    done
 +    # The region driver (aot_driver.js, kept verbatim by --extern-pre-js) calls
 +    # the core's translator, assembler inputs, region queue and block dump.
-+    for fn in DolphinWeb_AotTranslate DolphinWeb_AotKeyParts DolphinWeb_JitHelperName DolphinWeb_JitHelperSignature DolphinWeb_JitStateLayout DolphinWeb_AotRegionHeapBases DolphinWeb_AotQueueRegion DolphinWeb_JitDumpBlocksRequest DolphinWeb_JitDumpBlocksDone DolphinWeb_JitDumpBlocksBuffer DolphinWeb_JitDumpBlocksCount DolphinWeb_JitRegionStats; do
++    for fn in DolphinWeb_AotTakeLostRegions DolphinWeb_AotTranslate DolphinWeb_AotKeyParts DolphinWeb_JitHelperName DolphinWeb_JitHelperSignature DolphinWeb_JitStateLayout DolphinWeb_AotRegionHeapBases DolphinWeb_AotQueueRegion DolphinWeb_JitDumpBlocksRequest DolphinWeb_JitDumpBlocksDone DolphinWeb_JitDumpBlocksBuffer DolphinWeb_JitDumpBlocksCount DolphinWeb_JitRegionStats; do
 +      core_ldflags+=" -Wl,--export=$fn"
 +    done
 +    core_ldflags+=" --extern-pre-js=../dolphin/core/libretro/aot_driver.js"
