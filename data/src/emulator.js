@@ -1192,7 +1192,7 @@ class EmulatorJS {
             if (!await this.contentLoaded()) {
                 this.reportLoadFailure();
                 this.startGameError(this.getGameSourceName() === null ? "Could not load the game. It may need a file name." : "Could not load the game");
-                this.callEvent("exit");
+                this.gameManager.shutdown();
                 return;
             }
             if (typeof this.config.softLoad === "number" && this.config.softLoad > 0) {
@@ -1241,7 +1241,7 @@ class EmulatorJS {
             console.warn("Failed to start game", e);
             this.reportLoadFailure();
             this.startGameError("Failed to start game");
-            this.callEvent("exit");
+            this.gameManager.shutdown();
             return;
         }
         this.callEvent("start");
