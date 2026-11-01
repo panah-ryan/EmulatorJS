@@ -1093,6 +1093,9 @@ class EmulatorJS {
             this.startGameFromDownload(romData);
         })();
     }
+    reportLoadFailure() {
+        console.error("The core could not load " + this.fileName + (this.debug ? ". The reason should be in the log above." : ". Set EJS_DEBUG_XX to true to log the reason."));
+    }
     createCoreRuntime(options) {
         // The runtime keeps its thread pool private, so collect the workers as it allocates them
         const NativeWorker = window.Worker;
@@ -1160,19 +1163,43 @@ class EmulatorJS {
             this.startGameError("Failed to start game");
         });
     }
-    startGame() {
+    /**
+     * Asks RetroArch whether content is loaded. It answers from its main loop, so this polls for
+     * the reply, and assumes success if there is none in time so a slow start is never rejected.
+     * @returns {Promise<boolean>} False if RetroArch has no content, which means the core refused it.
+     */
+    async contentLoaded(timeout = 10000) {
+        const module = this.Module;
+        if (!module.EmscriptenSendCommand || !module.EmscriptenReceiveCommandReply) return true;
+        module.EmscriptenSendCommand("GET_STATUS");
+        const deadline = Date.now() + timeout;
+        while (Date.now() < deadline) {
+            const reply = module.EmscriptenReceiveCommandReply();
+            if (reply) return !reply.includes("CONTENTLESS");
+            await new Promise(resolve => setTimeout(resolve, 10));
+        }
+        console.warn("RetroArch did not report its status, assuming the game loaded");
+        return true;
+    }
+    async startGame() {
         try {
             const args = [];
             if (this.debug) args.push("-v");
             args.push("/" + this.fileName);
             if (this.debug) console.log(args);
             this.Module.callMain(args);
+            this.Module.resumeMainLoop();
+            if (!await this.contentLoaded()) {
+                this.reportLoadFailure();
+                this.startGameError(this.getGameSourceName() === null ? "Could not load the game. It may need a file name." : "Could not load the game");
+                this.callEvent("exit");
+                return;
+            }
             if (typeof this.config.softLoad === "number" && this.config.softLoad > 0) {
                 this.resetTimeout = setTimeout(() => {
                     this.gameManager.restart();
                 }, this.config.softLoad * 1000);
             }
-            this.Module.resumeMainLoop();
             this.frontend.gameStarted();
             // hide the disks menu if the disk count is not greater than 1
             if (!(this.gameManager.getDiskCount() > 1)) {
@@ -1212,6 +1239,7 @@ class EmulatorJS {
             }
         } catch(e) {
             console.warn("Failed to start game", e);
+            this.reportLoadFailure();
             this.startGameError("Failed to start game");
             this.callEvent("exit");
             return;

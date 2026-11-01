@@ -328,6 +328,8 @@
     "Bicubic": "Bicubic",
     "Mix frames": "Mix frames",
     "WebGL2": "WebGL2",
+    "Could not load the game": "Could not load the game",
+    "Could not load the game. It may need a file name.": "Could not load the game. It may need a file name.",
     "Requires restart": "Requires restart",
     "Restarting...": "Restarting...",
     "VSync": "VSync",
