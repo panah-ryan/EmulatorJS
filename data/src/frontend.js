@@ -4629,7 +4629,7 @@ class EJS_Frontend {
         if (coreOptsJSON) {
             const coreOptions = createSettingParent(true, "Core Options", home);
             coreOptsJSON.options.forEach(option => {
-                if (option.visible === false || option.values.length <= 1) return;
+                if (option.visible === false || option.values.length <= 1 || this.ejs.isHiddenCoreOption(option.key)) return;
                 const availableOptions = {};
                 option.values.forEach(value => {
                     availableOptions[value.value] = this.localization(value.label, this.ejs.config.settingsLanguage);

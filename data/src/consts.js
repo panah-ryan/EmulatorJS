@@ -63,6 +63,22 @@ export const requiresWebGL2 = ["flycast", "ppsspp", "xemu", "tabstationtoo", "do
 // the frontend writes a stub naming the content's size and URL (see streamContent)
 export const streamingCores = ["xemu", "tabstationtoo", "dolphin"];
 
+// core options left out of the settings menu
+export const hiddenCoreOptions = {
+    "mame2003_plus": [
+        "mame2003-plus_display_setup",
+        "mame2003-plus_mame_remapping",
+        "mame2003-plus_cheat_input_ports",
+        "mame2003-plus_autosave_hiscore",
+        "mame2003-plus_input_toggle",
+        "mame2003-plus_input_interface",
+        "mame2003-plus_core_sys_subfolder",
+        "mame2003-plus_core_save_subfolder",
+        "mame2003-plus_use_samples",
+        "mame2003-plus_use_alt_sound"
+    ]
+};
+
 // systems that get the on-screen keyboard on touch devices
 export const keyboardSystems = ["vic20", "c64", "c128", "plus4", "amiga", "cpc", "mac", "zxspectrum", "dos", "x1", "electron", "sg1000", "pc88", "atari800", "pc98", "fmtowns", "msx", "atarist", "x68000", "apple2"];
 

@@ -22,6 +22,9 @@ class EmulatorJS {
     requiresThreads(core) {
         return CONSTS.requiresThreads.includes(core);
     }
+    isHiddenCoreOption(key) {
+        return (CONSTS.hiddenCoreOptions[this.getCore()] || []).includes(key);
+    }
     requiresWebGL2(core) {
         return CONSTS.requiresWebGL2.includes(core);
     }
@@ -2017,7 +2020,9 @@ class EmulatorJS {
                 try {
                     coreSpecific = JSON.parse(coreSpecific);
                     if (!(coreSpecific.settings instanceof Object)) throw new Error("Not a JSON object");
-                    Object.assign(settings, coreSpecific.settings);
+                    for (const k in coreSpecific.settings) {
+                        if (!this.isHiddenCoreOption(k)) settings[k] = coreSpecific.settings[k];
+                    }
                 } catch(e) {
                     console.warn("Could not load previous settings", e);
                 }
@@ -2042,7 +2047,7 @@ class EmulatorJS {
                 this.controls = coreSpecific.controlSettings;
                 this.frontend.checkGamepadInputs();
                 for (const k in coreSpecific.settings) {
-                    this.frontend.changeSettingOption(k, coreSpecific.settings[k]);
+                    if (!this.isHiddenCoreOption(k)) this.frontend.changeSettingOption(k, coreSpecific.settings[k]);
                 }
                 for (let i = 0; i < coreSpecific.cheats.length; i++) {
                     const cheat = coreSpecific.cheats[i];
