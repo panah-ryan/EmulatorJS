@@ -4664,33 +4664,6 @@ class EJS_Frontend {
             checkForEmptyMenu(coreOptions);
         }
 
-        /*
-        this.ejs.retroarchOpts = [
-            {
-                title: "Audio Latency", // String
-                name: "audio_latency", // String - value to be set in retroarch.cfg
-                // options should ALWAYS be strings here...
-                options: ["8", "16", "32", "64", "128"], // values
-                options: {"8": "eight", "16": "sixteen", "32": "thirty-two", "64": "sixty-four", "128": "one hundred-twenty-eight"}, // This also works
-                default: "128", // Default
-                isString: false // Surround value with quotes in retroarch.cfg file?
-            }
-        ];*/
-
-        if (this.ejs.retroarchOpts && Array.isArray(this.ejs.retroarchOpts)) {
-            const retroarchOptsMenu = createSettingParent(true, "RetroArch Options" + " (" + this.localization("Requires restart") + ")", home);
-            this.ejs.retroarchOpts.forEach((option) => {
-                if (!option || !option.title || !option.options) return;
-                addToMenu(this.localization(option.title, this.ejs.config.settingsLanguage),
-                    option.name,
-                    option.options,
-                    option.default,
-                    retroarchOptsMenu,
-                    true);
-            });
-            checkForEmptyMenu(retroarchOptsMenu);
-        }
-
         checkForEmptyMenu(graphicsOptions);
         checkForEmptyMenu(speedOptions);
 
