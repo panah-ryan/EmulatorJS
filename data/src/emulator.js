@@ -2084,6 +2084,10 @@ class EmulatorJS {
             if (this.started && (value === "enabled") !== !!this.webgl2Enabled) {
                 this.restartEmulator();
             }
+        } else if (option === "rewindEnabled") {
+            if (this.started && (value === "enabled") !== this.rewindEnabled) {
+                this.restartEmulator();
+            }
         } else if (option === "ejs_threads") {
             if (this.started && (value === "enabled") !== this.threadsEnabled) {
                 this.restartEmulator();
