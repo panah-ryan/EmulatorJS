@@ -701,6 +701,10 @@ class EmulatorJS {
         if (typeof gameUrl !== "string" || gameUrl.startsWith("blob:")) return null;
         return gameUrl.split("/").pop().split("#")[0].split("?")[0];
     }
+    getBlobUrlId() {
+        const gameUrl = this.config.gameUrl;
+        return typeof gameUrl === "string" && gameUrl.startsWith("blob:") ? gameUrl.split("/").pop() : null;
+    }
     getBaseFileName(force) {
         //Only once game and core is loaded
         if (!this.started && !force) return null;
@@ -713,7 +717,7 @@ class EmulatorJS {
             const name = this.config.gameName.replace(invalidCharacters, "").trim();
             if (name) return name;
         }
-        if (!this.fileName) return "game";
+        if (!this.fileName || this.fileName === this.getBlobUrlId()) return "game";
         return this.fileName.replace(/\.[^.]*$/, "") || "game";
     }
     getFileNameTimestamp(date) {
