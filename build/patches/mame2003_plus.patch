@@ -1,0 +1,197 @@
+diff --git a/src/mame.c b/src/mame.c
+index 8534f64..43b4737 100644
+--- a/src/mame.c
++++ b/src/mame.c
+@@ -355,6 +355,10 @@ static int init_machine(void)
+ 
+ 	/* load input ports settings (keys, dip switches, and so on) */
+ 	settingsloaded = load_input_port_settings();
++	{
++		extern void apply_dip_switch_options(void);
++		apply_dip_switch_options();
++	}
+ 
+ 	/* multi-session safety - set spriteram size to zero before memory map is set up */
+ 	spriteram_size = spriteram_2_size = 0;
+diff --git a/src/mame2003/core_options.c b/src/mame2003/core_options.c
+index 8bb01bb..1378d20 100644
+--- a/src/mame2003/core_options.c
++++ b/src/mame2003/core_options.c
+@@ -29,6 +29,15 @@ static char cpu_clock_scale_keys[CPU_CLOCK_SCALE_SLOTS][64];
+ static char cpu_clock_scale_labels[CPU_CLOCK_SCALE_SLOTS][80];
+ static char cpu_clock_scale_info[CPU_CLOCK_SCALE_SLOTS][128];
+ 
++/* one core option per DIP switch of the loaded game, keyed by romset like the clock scale */
++static char dip_switch_keys[DIP_SWITCH_SLOTS][64];
++static char dip_switch_labels[DIP_SWITCH_SLOTS][80];
++static char dip_switch_values[DIP_SWITCH_SLOTS][RETRO_NUM_CORE_OPTION_VALUES_MAX][12];
++static struct retro_core_option_v2_definition dip_switch_options[DIP_SWITCH_SLOTS];
++static int dip_switch_entries[DIP_SWITCH_SLOTS];    /* index in Machine->input_ports */
++static UINT16 dip_switch_masks[DIP_SWITCH_SLOTS];
++static int dip_switch_count;
++
+ /******************************************************************************
+ 
+   private function prototypes
+@@ -40,6 +49,8 @@ static void   determine_core_options_version(struct retro_core_options_v2 *core_
+ static void   format_cpu_clock(char *buf, int hz);
+ static void   describe_cpu(char *buf, int cpu);
+ static void   set_cpu_clock_scale_labels(void);
++static void   build_dip_switch_options(void);
++static void   apply_dip_switch(int slot, const char *value);
+ 
+ 
+ /******************************************************************************
+@@ -1025,6 +1036,9 @@ void init_core_options(void)
+   default_options[OPT_TX1_SCREENS]               = option_def_tx1_screens;
+   default_options[OPT_SH2_DYNAREC]               = option_def_sh2_dynarec;
+   default_options[OPT_STV_VIDEO_THREADS]         = option_def_stv_video_threads;
++  build_dip_switch_options();
++  for(cpu = 0; cpu < DIP_SWITCH_SLOTS; cpu++)
++    default_options[OPT_DIP_SWITCH + cpu]        = dip_switch_options[cpu];
+   default_options[OPT_OVERRIDE_AD_STICK]         = option_def_override_ad_stick;
+   default_options[OPT_INPUT_TOGGLE]              = option_def_input_toggle;
+ #if (HAS_CYCLONE || HAS_DRZ80)
+@@ -1079,6 +1093,11 @@ static void set_variables(void)
+          if(!options.content_flags[CONTENT_TX1_SCREENS])
+            continue;
+          break;
++      default:
++         if(option_index >= OPT_DIP_SWITCH && option_index <= OPT_DIP_SWITCH_LAST
++          && option_index - OPT_DIP_SWITCH >= dip_switch_count)
++           continue;
++         break;
+       case OPT_SH3_DYNAREC:
+          if(!options.content_flags[CONTENT_SH3_DYNAREC])
+            continue; /* only offered for the games that use the recompiler */
+@@ -1146,6 +1165,18 @@ void update_variables(bool first_time)
+ 
+   for(index = 0; index < OPT_end; index++)
+   {
++    if(index >= OPT_DIP_SWITCH && index <= OPT_DIP_SWITCH_LAST)
++    {
++      if(index - OPT_DIP_SWITCH < dip_switch_count)
++      {
++        var.value = NULL;
++        var.key = default_options[index].key;
++        if(environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && !string_is_empty(var.value))
++          apply_dip_switch(index - OPT_DIP_SWITCH, var.value);
++      }
++      continue;
++    }
++
+     var.value = NULL;
+     var.key = default_options[index].key;
+     if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && !string_is_empty(var.value)) /* the frontend sends a value for this core option */
+@@ -1530,6 +1561,90 @@ void update_variables(bool first_time)
+ }
+ 
+ 
++/* describes each DIP switch of the driver's input ports as a core option */
++static void build_dip_switch_options(void)
++{
++  struct InputPort *base, *in;
++
++  dip_switch_count = 0;
++  memset(dip_switch_options, 0, sizeof(dip_switch_options));
++  if(!game_driver->input_ports)
++    return;
++
++  base = input_port_allocate(game_driver->input_ports);
++  for(in = base; in->type != IPT_END && dip_switch_count < DIP_SWITCH_SLOTS; in++)
++  {
++    struct retro_core_option_v2_definition *option = &dip_switch_options[dip_switch_count];
++    const struct InputPort *setting;
++    const char *name;
++    int count = 0;
++
++    if((in->type & ~IPF_MASK) != IPT_DIPSWITCH_NAME || (in->type & (IPF_UNUSED | IPF_CHEAT)))
++      continue;
++    name = input_port_name(in);
++    if(!name || !name[0])
++      continue;
++
++    for(setting = in + 1; (setting->type & ~IPF_MASK) == IPT_DIPSWITCH_SETTING && count < RETRO_NUM_CORE_OPTION_VALUES_MAX - 1; setting++)
++    {
++      char value[12];
++      int i, duplicate = 0;
++
++      if(setting->type & (IPF_UNUSED | IPF_CHEAT))
++        continue;
++      sprintf(value, "dip%u", setting->default_value & in->mask);
++      for(i = 0; i < count; i++)
++        duplicate |= !strcmp(dip_switch_values[dip_switch_count][i], value);
++      if(duplicate)
++        continue;
++      strcpy(dip_switch_values[dip_switch_count][count], value);
++      option->values[count].value = dip_switch_values[dip_switch_count][count];
++      option->values[count].label = input_port_name(setting);
++      count++;
++    }
++    if(count < 2)
++      continue;
++
++    snprintf(dip_switch_keys[dip_switch_count], sizeof(dip_switch_keys[0]), APPNAME"_%.16s_dip_%d", game_driver->name, dip_switch_count + 1);
++    snprintf(dip_switch_labels[dip_switch_count], sizeof(dip_switch_labels[0]), "DIP: %s", name);
++    sprintf(dip_switch_values[dip_switch_count][RETRO_NUM_CORE_OPTION_VALUES_MAX - 1], "dip%u", in->default_value & in->mask);
++    option->key = dip_switch_keys[dip_switch_count];
++    option->desc = dip_switch_labels[dip_switch_count];
++    option->info = "Changes one of the game's DIP switches. Some only take effect after a restart.";
++    option->default_value = dip_switch_values[dip_switch_count][RETRO_NUM_CORE_OPTION_VALUES_MAX - 1];
++    dip_switch_entries[dip_switch_count] = in - base;
++    dip_switch_masks[dip_switch_count] = in->mask;
++    dip_switch_count++;
++  }
++  input_port_free(base);
++}
++
++static void apply_dip_switch(int slot, const char *value)
++{
++  struct InputPort *in;
++
++  if(!Machine->input_ports || strncmp(value, "dip", 3))
++    return;
++  in = &Machine->input_ports[dip_switch_entries[slot]];
++  in->default_value = (in->default_value & ~dip_switch_masks[slot]) | (atoi(value + 3) & dip_switch_masks[slot]);
++}
++
++/* the saved settings of the core options override the machine's own config */
++void apply_dip_switch_options(void)
++{
++  struct retro_variable var;
++  int slot;
++
++  for(slot = 0; slot < dip_switch_count; slot++)
++  {
++    var.value = NULL;
++    var.key = default_options[OPT_DIP_SWITCH + slot].key;
++    if(environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && !string_is_empty(var.value))
++      apply_dip_switch(slot, var.value);
++  }
++}
++
++
+ /* a clock in Hz as "8 MHz", "3.072 MHz" or "756 kHz" */
+ static void format_cpu_clock(char *buf, int hz)
+ {
+diff --git a/src/mame2003/mame2003.h b/src/mame2003/mame2003.h
+index 570e850..f0e76cd 100644
+--- a/src/mame2003/mame2003.h
++++ b/src/mame2003/mame2003.h
+@@ -104,6 +104,7 @@ enum /* the "display numbers" for each player, as opposed to their array index *
+ 
+ #define MAX_PLAYER_COUNT  DISP_PLAYER8   /* We currently support a maximum of eight simultaneous players */
+ 
++#define DIP_SWITCH_SLOTS  64   /* one core option per DIP switch of the loaded game */
+ #define CPU_CLOCK_SCALE_SLOTS  8   /* one CPU clock scale core option per CPU, up to MAX_CPU in driver.h */
+ 
+ /******************************************************************************
+@@ -249,6 +250,8 @@ enum CORE_OPTIONS  /* controls the order in which core options appear. common, i
+   OPT_TX1_SCREENS,
+   OPT_SH2_DYNAREC,
+   OPT_STV_VIDEO_THREADS,
++  OPT_DIP_SWITCH,
++  OPT_DIP_SWITCH_LAST = OPT_DIP_SWITCH + DIP_SWITCH_SLOTS - 1,
+ #if (HAS_CYCLONE || HAS_DRZ80)
+   OPT_CYCLONE_MODE,
+ #endif
