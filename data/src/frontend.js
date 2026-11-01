@@ -35,7 +35,7 @@ class EJS_Frontend {
         }
     }
     localization(text, log) {
-        if (typeof text === "undefined" || text.length === 0) return;
+        if (typeof text === "undefined" || text.length === 0) return text;
         text = text.toString();
         if (text.includes("EmulatorJS v")) return text;
         if (this.ejs.config.langJson) {
