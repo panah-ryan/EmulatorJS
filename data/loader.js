@@ -199,7 +199,8 @@ const config = {
     disableBatchBootup: window.EJS_disableBatchBootup,
     askBeforeExit: window.EJS_askBeforeExit,
     retroarchOpts: window.EJS_retroarchOpts,
-    coreOpts: window.EJS_coreOpts
+    coreOpts: window.EJS_coreOpts,
+    reload: window.EJS_reload
 };
 
 async function prepareLanguage() {

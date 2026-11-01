@@ -305,19 +305,72 @@
                 browserModeAuto.checked = true;
             }
 
-            if (urlParams.get("rom")) {
-                console.log(`Loading ROM from URL: roms/${urlParams.get("rom")}`);
-                run(false, urlParams.get("rom"));
+            loadResumeGame().then((resume) => {
+                if (resume) {
+                    enableDebug = resume.debug;
+                    enableThreads = resume.threads;
+                    browserMode = resume.browserMode;
+                    window.EJS_cacheConfig.enabled = resume.cache;
+                    run(false, null, resume);
+                } else if (urlParams.get("rom")) {
+                    console.log(`Loading ROM from URL: roms/${urlParams.get("rom")}`);
+                    run(false, urlParams.get("rom"));
+                }
+            });
+
+            function openResumeDatabase() {
+                return new Promise((resolve, reject) => {
+                    const request = indexedDB.open("EmulatorJS-Demo-Resume", 1);
+                    request.onupgradeneeded = () => request.result.createObjectStore("game");
+                    request.onsuccess = () => resolve(request.result);
+                    request.onerror = () => reject(request.error);
+                });
             }
 
-            async function run(upload, file) {
-                const url = upload ? input.files[0] : `roms/${file}`;
-                const parts = upload ? input.files[0].name.split(".") : file.split(".");
+            async function saveResumeGame(game) {
+                const db = await openResumeDatabase();
+                await new Promise((resolve, reject) => {
+                    const transaction = db.transaction("game", "readwrite");
+                    transaction.objectStore("game").put(game, "current");
+                    transaction.oncomplete = resolve;
+                    transaction.onerror = () => reject(transaction.error);
+                    transaction.onabort = () => reject(transaction.error);
+                });
+                db.close();
+                sessionStorage.setItem("ejs-demo-resume", "true");
+            }
 
-                const biosUrl = biosFileInput.files.length > 0 ? biosFileInput.files[0] : "";
-                const mameDriver = document.getElementById("mameDriverInput").value.trim();
+            // Returns the saved game after a settings reload; any other load discards it
+            async function loadResumeGame() {
+                try {
+                    const resuming = sessionStorage.getItem("ejs-demo-resume") === "true";
+                    sessionStorage.removeItem("ejs-demo-resume");
+                    if (!resuming) {
+                        indexedDB.deleteDatabase("EmulatorJS-Demo-Resume");
+                        return null;
+                    }
+                    const db = await openResumeDatabase();
+                    const game = await new Promise((resolve, reject) => {
+                        const request = db.transaction("game").objectStore("game").get("current");
+                        request.onsuccess = () => resolve(request.result);
+                        request.onerror = () => reject(request.error);
+                    });
+                    db.close();
+                    return game || null;
+                } catch (e) {
+                    console.warn("Could not restore the game", e);
+                    return null;
+                }
+            }
 
-                const core = await (async (ext) => {
+            async function run(upload, file, resume) {
+                const url = resume ? resume.rom : upload ? input.files[0] : `roms/${file}`;
+                const parts = resume ? [resume.gameName] : upload ? input.files[0].name.split(".") : file.split(".");
+
+                const biosUrl = resume ? resume.bios : biosFileInput.files.length > 0 ? biosFileInput.files[0] : "";
+                const mameDriver = resume ? resume.mameDriver : document.getElementById("mameDriverInput").value.trim();
+
+                const core = resume ? resume.core : await (async (ext) => {
                     if (["nes", "fds", "unf", "unif", "nsf"].includes(ext))
                         return "nes"
 
@@ -538,8 +591,24 @@
                 advanced.remove();
                 document.body.appendChild(div)
 
+                const gameName = parts.shift();
+                window.EJS_reload = () => saveResumeGame({
+                    rom: url,
+                    bios: biosUrl,
+                    core,
+                    gameName,
+                    mameDriver,
+                    debug: enableDebug,
+                    threads: enableThreads,
+                    browserMode,
+                    cache: window.EJS_cacheConfig.enabled
+                }).catch((e) => {
+                    console.warn("Could not save the game for the reload", e);
+                    return false;
+                });
+
                 window.EJS_player = "#game";
-                window.EJS_gameName = parts.shift();
+                window.EJS_gameName = gameName;
                 window.EJS_biosUrl = biosUrl;
                 window.EJS_gameUrl = url;
                 window.EJS_core = core;

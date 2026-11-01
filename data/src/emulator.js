@@ -2234,6 +2234,10 @@ class EmulatorJS {
 
         await this.gameManager.shutdown();
         this.started = false;
+        if (await this.prepareReload()) {
+            window.location.reload();
+            return;
+        }
         this.releaseModuleResources();
 
         const next = this.config.restart({
@@ -2246,6 +2250,21 @@ class EmulatorJS {
         next.touch = this.touch;
         if (inFullscreen) {
             next.on("start", () => next.frontend.updateFullscreenButtons(true));
+        }
+    }
+    /**
+     * iOS soon kills a tab that restarts its core in place, so restarts there reload the page if
+     * the page can bring its game back. EJS_reload prepares for that, and returning false declines it.
+     * @returns {Promise<boolean>} True if the page should reload.
+     */
+    async prepareReload() {
+        const isIOS = this.isSafari && (this.isMobile || this.hasTouchScreen);
+        if (!isIOS || this.config.disableLocalStorage || typeof this.config.reload !== "function") return false;
+        try {
+            return await this.config.reload() !== false;
+        } catch(e) {
+            console.warn("Could not prepare to reload", e);
+            return false;
         }
     }
     releaseModuleResources() {
