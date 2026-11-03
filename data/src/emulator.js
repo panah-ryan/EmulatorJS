@@ -1114,14 +1114,14 @@ class EmulatorJS {
                 coreWorkers.push(this);
             }
         };
-        // iOS may not reserve the full shared memory limit, so retry with lower ones (in 64KB pages)
+        // iOS may not reserve the full shared memory limit, so retry with halved ones down to the initial size
         const NativeMemory = WebAssembly.Memory;
-        const fallbackMaximums = [32768, 16384, 8192];
         WebAssembly.Memory = class extends NativeMemory {
             constructor(descriptor) {
                 const maximums = [descriptor.maximum];
-                if (descriptor.shared) {
-                    maximums.push(...fallbackMaximums.filter(m => m < descriptor.maximum && m >= descriptor.initial));
+                if (descriptor.shared && descriptor.maximum > descriptor.initial) {
+                    for (let m = descriptor.maximum >> 1; m > descriptor.initial; m >>= 1) maximums.push(m);
+                    maximums.push(descriptor.initial);
                 }
                 for (let i = 0; i < maximums.length; i++) {
                     try {
