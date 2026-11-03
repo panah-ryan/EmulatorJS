@@ -54,18 +54,6 @@ export const cores = {
     "segaSaturn": ["emir"]
 };
 
-// cores, or systems sharing a core, that only run with threads
-export const requiresThreads = ["xemu", "tabstationtoo", "dolphin", "ppsspp", "emir", "dosbox_pure", "mame_x1", "mame_electron", "mame_sg1000", "amigacd32"];
-
-export const requiresWebGL2 = ["flycast", "ppsspp", "xemu", "tabstationtoo", "dolphin"];
-
-// cores built without threaded or WebGL2 versions (noThreads / noWebgl2 in build/cores.json)
-export const noThreads = ["mame2003_plus"];
-export const noWebGL2 = ["mame2003_plus"];
-
-// cores that read their content over HTTP range requests rather than from memory:
-// the frontend writes a stub naming the content's size and URL (see streamContent)
-export const streamingCores = ["xemu", "tabstationtoo", "dolphin"];
 
 // core options left out of the settings menu
 export const hiddenCoreOptions = {

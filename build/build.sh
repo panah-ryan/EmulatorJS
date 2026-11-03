@@ -17,9 +17,11 @@
 #   - submodules: false to skip fetching the core's git submodules
 # - options: an object with the following properties:
 #   - requireThreads: true to build only the threaded versions
+#   - requireThreadsFor: systems on this core that the frontend only starts with threads (e.g. ["amigacd32"])
 #   - noThreads: true to build only the unthreaded versions
 #   - requiresWebgl2: true to build only the WebGL2 versions
 #   - noWebgl2: true to build only the legacy (WebGL1) versions
+#   - streamContent: true if the core reads its content over HTTP range requests (the frontend streams it)
 # - makefile: the makefile to use
 # - makefileArg: the argument to pass to the makefile
 

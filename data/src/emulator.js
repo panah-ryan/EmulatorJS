@@ -19,20 +19,25 @@ class EmulatorJS {
         }
         return rv;
     }
-    requiresThreads(core) {
-        return CONSTS.requiresThreads.includes(core);
+    // Build options come from build/cores.json through the core's report (cores/reports/<core>.json)
+    requiresThreads() {
+        const opts = this.buildOptions || {};
+        return opts.requireThreads === true || (Array.isArray(opts.requireThreadsFor) && opts.requireThreadsFor.includes(this.getCore(true)));
     }
     isHiddenCoreOption(key) {
         return (CONSTS.hiddenCoreOptions[this.getCore()] || []).includes(key);
     }
-    requiresWebGL2(core) {
-        return CONSTS.requiresWebGL2.includes(core);
+    requiresWebGL2() {
+        return (this.buildOptions || {}).requiresWebgl2 === true;
     }
-    hasThreadsBuild(core) {
-        return !CONSTS.noThreads.includes(core);
+    hasThreadsBuild() {
+        return (this.buildOptions || {}).noThreads !== true;
     }
-    hasWebGL2Build(core) {
-        return !CONSTS.noWebGL2.includes(core);
+    hasWebGL2Build() {
+        return (this.buildOptions || {}).noWebgl2 !== true;
+    }
+    streamsContent() {
+        return (this.buildOptions || {}).streamContent === true;
     }
     hasKeyboard(system) {
         return CONSTS.keyboardSystems.includes(system);
@@ -527,15 +532,6 @@ class EmulatorJS {
     }
     downloadGameCore() {
         this.frontend.setLoadingText("Download Game Core");
-        if (!this.config.threads && (this.requiresThreads(this.getCore()) || this.requiresThreads(this.getCore(true)))) {
-            this.startGameError(["Error for site owner", "Check console"]);
-            console.warn("This core requires threads, but EJS_threads is not set!");
-            return;
-        }
-        if (!this.supportsWebgl2 && this.requiresWebGL2(this.getCore())) {
-            this.startGameError("Outdated graphics driver");
-            return;
-        }
         if (this.config.threads && typeof window.SharedArrayBuffer !== "function") {
             this.startGameError(["Error for site owner", "Check console"]);
             console.warn("Threads is set to true, but the SharedArrayBuffer function is not exposed. Threads requires 2 headers to be set when sending you html page. See https://stackoverflow.com/a/68630724");
@@ -655,17 +651,27 @@ class EmulatorJS {
                 console.warn("Could not fetch core report JSON at " + reportUrl + "! Core caching will be disabled!");
                 rep.buildStart = Math.random() * 100;
             }
-            if (this.webgl2Enabled === null) {
-                this.webgl2Enabled = rep.options ? rep.options.defaultWebGL2 : false;
+            this.buildOptions = rep.options || {};
+            if (!this.config.threads && this.requiresThreads()) {
+                this.startGameError(["Error for site owner", "Check console"]);
+                console.warn("This core requires threads, but EJS_threads is not set!");
+                return;
             }
-            if (this.requiresWebGL2(this.getCore())) {
+            if (!this.supportsWebgl2 && this.requiresWebGL2()) {
+                this.startGameError("Outdated graphics driver");
+                return;
+            }
+            if (this.webgl2Enabled === null) {
+                this.webgl2Enabled = this.buildOptions.defaultWebGL2 === true;
+            }
+            if (this.requiresWebGL2()) {
                 this.webgl2Enabled = true;
             }
-            if (!this.hasWebGL2Build(this.getCore())) {
+            if (!this.hasWebGL2Build()) {
                 this.webgl2Enabled = false;
             }
             let threads = false;
-            if (typeof window.SharedArrayBuffer === "function" && this.hasThreadsBuild(this.getCore())) {
+            if (typeof window.SharedArrayBuffer === "function" && this.hasThreadsBuild()) {
                 const opt = this.preGetSetting("ejs_threads");
                 if (opt) {
                     threads = (opt === "enabled");
@@ -1050,7 +1056,7 @@ class EmulatorJS {
     }
 
     /**
-     * For cores that stream their content (CONSTS.streamingCores): write a stub
+     * For cores that stream their content (streamContent in build/cores.json): write a stub
      * naming the content instead of downloading it. The core reads the stub's
      * three lines, "EJS-STREAM 1", the size and the URL, then fetches byte
      * ranges as it needs them, so the content never has to fit in memory.
@@ -1098,7 +1104,7 @@ class EmulatorJS {
         (async () => {
             await this.initializeGameManager();
 
-            const romData = CONSTS.streamingCores.includes(this.getCore())
+            const romData = this.streamsContent()
                 ? await this.streamContent(this.config.gameUrl)
                 : await this.download(this.config.gameUrl, this.downloadType.rom);
             await this.download(this.config.biosUrl, this.downloadType.bios);

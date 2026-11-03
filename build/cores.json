@@ -656,7 +656,10 @@
             "makescript": "Makefile"
         },
         "options": {
-            "supportsMouse": true
+            "supportsMouse": true,
+            "requireThreadsFor": [
+                "amigacd32"
+            ]
         },
         "save": "nvr",
         "license": "COPYING",
@@ -1151,6 +1154,7 @@
             "submodules": false
         },
         "options": {
+            "streamContent": true,
             "requireThreads": true,
             "requiresWebgl2": true,
             "defaultWebGL2": true
@@ -1178,6 +1182,7 @@
             "submodules": false
         },
         "options": {
+            "streamContent": true,
             "requireThreads": true,
             "requiresWebgl2": true,
             "defaultWebGL2": true
@@ -1207,6 +1212,7 @@
             "submodules": false
         },
         "options": {
+            "streamContent": true,
             "requireThreads": true,
             "requiresWebgl2": true,
             "defaultWebGL2": true
