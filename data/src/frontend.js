@@ -1005,14 +1005,22 @@ class EJS_Frontend {
             }
         }
 
+        // iOS follows each tap with mouse events that report pointerType "mouse"
+        let lastTouch = 0;
+        this.ejs.addEventListener(this.elements.parent, "touchstart touchend", () => {
+            lastTouch = performance.now();
+        });
+        const fromTouch = (e) => e.pointerType === "touch" || performance.now() - lastTouch < 1000;
+
         this.createBottomMenuBarListeners = () => {
             const clickListener = (e) => {
-                if (e.pointerType === "touch") return;
+                if (fromTouch(e)) return;
                 if (!this.ejs.started || ignoreEvents || document.pointerLockElement === this.canvas) return;
                 if (this.isPopupOpen()) return;
                 show();
             }
             const mouseListener = (e) => {
+                if (fromTouch(e)) return;
                 if (!this.ejs.started || ignoreEvents || document.pointerLockElement === this.canvas) return;
                 if (this.isPopupOpen()) return;
                 const deltaX = e.movementX;
