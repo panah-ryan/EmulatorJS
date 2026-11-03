@@ -64,7 +64,6 @@
             ]
         },
         "options": {
-            "requireThreads": true,
             "useKeyboard": true
         },
         "save": false,

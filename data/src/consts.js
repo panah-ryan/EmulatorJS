@@ -55,7 +55,7 @@ export const cores = {
 };
 
 // cores, or systems sharing a core, that only run with threads
-export const requiresThreads = ["xemu", "tabstationtoo", "dolphin", "ppsspp", "applewin", "emir", "dosbox_pure", "mame_x1", "mame_electron", "mame_sg1000", "amigacd32"];
+export const requiresThreads = ["xemu", "tabstationtoo", "dolphin", "ppsspp", "emir", "dosbox_pure", "mame_x1", "mame_electron", "mame_sg1000", "amigacd32"];
 
 export const requiresWebGL2 = ["flycast", "ppsspp", "xemu", "tabstationtoo", "dolphin"];
 
