@@ -1,0 +1,42 @@
+diff --git a/Makefile.common b/Makefile.common
+index 42384bb..596e12b 100644
+--- a/Makefile.common
++++ b/Makefile.common
+@@ -19,6 +19,12 @@ SOURCES_C :=
+ # does not export the libretro-common symbols this core needs, so leaving
+ # it out produces undefined references to memstream_* at link time.
+ SOURCES_C += $(LIBRETRO_COMM_DIR)/streams/memory_stream.c
++# RetroArch links its own memstream_* with a different memstream_open
++# signature, so give the core's copy its own names
++MEMSTREAM_SYMBOLS := memstream_open memstream_close memstream_get_ptr \
++	memstream_get_size memstream_read memstream_write memstream_seek \
++	memstream_rewind memstream_pos memstream_gets memstream_getc memstream_putc
++INCFLAGS += $(foreach sym,$(MEMSTREAM_SYMBOLS),-D$(sym)=atari800_$(sym))
+ 
+ # The remaining libretro-common helpers below are only built for the
+ # normal shared-core case; under STATIC_LINKING the frontend provides
+diff --git a/libretro/libretro-core.c b/libretro/libretro-core.c
+index 98dc5e6..c3aad51 100644
+--- a/libretro/libretro-core.c
++++ b/libretro/libretro-core.c
+@@ -29,6 +29,7 @@ static dc_storage* dc;
+ #include "statesav.h"
+ #include "pokeysnd.h"
+ #include "sound.h"
++#include "cartridge.h"
+ #include "cartridge_info.h"
+ 
+ #include "carts_hash.h"
+@@ -1585,6 +1586,12 @@ void retro_reset(void) {
+         CASSETTE_hold_start = hold;
+         Atari800_Coldstart();
+     }
++    /* A raw cartridge image has no type in the file, so keep the inserted
++     * cartridge and its type rather than reading the image again */
++    else if (CARTRIDGE_main.type != CARTRIDGE_NONE)
++    {
++        Atari800_Coldstart();
++    }
+     else
+     {
+         AFILE_OpenFile(RPATH, 1, 1, 0);
