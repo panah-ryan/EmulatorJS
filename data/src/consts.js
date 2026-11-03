@@ -81,6 +81,10 @@ export const hiddenCoreOptions = {
         "atari800_pdevice",
         "atari800_rdevice",
         "atari800_cfg"
+    ],
+    "vice_xvic": [
+        "vice_printer",
+        "vice_read_vicerc"
     ]
 };
 
