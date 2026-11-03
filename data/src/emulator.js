@@ -28,6 +28,12 @@ class EmulatorJS {
     requiresWebGL2(core) {
         return CONSTS.requiresWebGL2.includes(core);
     }
+    hasThreadsBuild(core) {
+        return !CONSTS.noThreads.includes(core);
+    }
+    hasWebGL2Build(core) {
+        return !CONSTS.noWebGL2.includes(core);
+    }
     hasKeyboard(system) {
         return CONSTS.keyboardSystems.includes(system);
     }
@@ -655,8 +661,11 @@ class EmulatorJS {
             if (this.requiresWebGL2(this.getCore())) {
                 this.webgl2Enabled = true;
             }
+            if (!this.hasWebGL2Build(this.getCore())) {
+                this.webgl2Enabled = false;
+            }
             let threads = false;
-            if (typeof window.SharedArrayBuffer === "function") {
+            if (typeof window.SharedArrayBuffer === "function" && this.hasThreadsBuild(this.getCore())) {
                 const opt = this.preGetSetting("ejs_threads");
                 if (opt) {
                     threads = (opt === "enabled");

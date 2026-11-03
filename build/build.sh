@@ -16,9 +16,10 @@
 #   - build_retroarch_command: the custom build retroarch command
 #   - submodules: false to skip fetching the core's git submodules
 # - options: an object with the following properties:
-#   - threads: a boolean to indicate if the core should be built with threads
-#   - legacy: a boolean to indicate if the core should be built with legacy
-#   - threads_legacy: a boolean to indicate if the core should be built with threads and legacy
+#   - requireThreads: true to build only the threaded versions
+#   - noThreads: true to build only the unthreaded versions
+#   - requiresWebgl2: true to build only the WebGL2 versions
+#   - noWebgl2: true to build only the legacy (WebGL1) versions
 # - makefile: the makefile to use
 # - makefileArg: the argument to pass to the makefile
 
@@ -241,7 +242,9 @@ compileProject() {
         if [ "$requireThreads" = false ]; then
             cmakeBuild normal
         fi
-        cmakeBuild threads
+        if [ "$noThreads" = false ]; then
+            cmakeBuild threads
+        fi
     elif [[ "$custom" = "true" ]]; then
         eval "$build_command"
     else
@@ -249,16 +252,22 @@ compileProject() {
 
         # only build the unthreaded version if requireThreads is false
         if [ "$requireThreads" = false ]; then
-            build
+            if [ "$noWebgl2" = false ]; then
+                build
+            fi
             if [ "$requiresWebgl2" = false ]; then
                 buildLegacy
             fi
         fi
 
-        # build the threaded version
-        buildThreads
-        if [ "$requiresWebgl2" = false ]; then
-            buildThreadsLegacy
+        # build the threaded version unless noThreads is set
+        if [ "$noThreads" = false ]; then
+            if [ "$noWebgl2" = false ]; then
+                buildThreads
+            fi
+            if [ "$requiresWebgl2" = false ]; then
+                buildThreadsLegacy
+            fi
         fi
     fi
 
@@ -295,6 +304,8 @@ for row in $(jq -r '.[] | @base64' ../cores.json); do
     options=`echo $(_jq '.') | jq -r '.options'`
     optRequireThreads=`echo $(_jq '.') | jq -r '.options.requireThreads'`
     optRequiresWebgl2=`echo $(_jq '.') | jq -r '.options.requiresWebgl2'`
+    optNoThreads=`echo $(_jq '.') | jq -r '.options.noThreads'`
+    optNoWebgl2=`echo $(_jq '.') | jq -r '.options.noWebgl2'`
     custom=`echo $(_jq '.') | jq -r '.makeoptions.custom'`
     build_command=`echo $(_jq '.') | jq -r '.makeoptions.build_command'`
     build_retroarch_command=`echo $(_jq '.') | jq -r '.makeoptions.build_retroarch_command'`
@@ -359,6 +370,16 @@ for row in $(jq -r '.[] | @base64' ../cores.json); do
         requiresWebgl2=false
     else
         requiresWebgl2=true
+    fi
+
+    # noThreads skips the threaded builds, noWebgl2 skips the WebGL2 builds (only the legacy ones are made)
+    [ "$optNoThreads" = "true" ] && noThreads=true || noThreads=false
+    [ "$optNoWebgl2" = "true" ] && noWebgl2=true || noWebgl2=false
+    if [ "$noThreads" = true ] && [ "$requireThreads" = true ]; then
+        echo "Core $name sets both requireThreads and noThreads" && exit 1
+    fi
+    if [ "$noWebgl2" = true ] && [ "$requiresWebgl2" = true ]; then
+        echo "Core $name sets both requiresWebgl2 and noWebgl2" && exit 1
     fi
 
     if [ "$listCoreNames" = false ]; then
@@ -429,9 +450,11 @@ for row in $(jq -r '.[] | @base64' ../cores.json); do
             eval "$build_retroarch_command" >> "$logPath/$name-emake.log"
         else
             if [ "$requireThreads" = false ]; then
-                mv core-temp/normal/*.bc ./
-                emmake ./build-emulatorjs.sh --clean >> "$logPath/$name-emake.log"
-                rm -f *.bc
+                if [ "$noWebgl2" = false ]; then
+                    mv core-temp/normal/*.bc ./
+                    emmake ./build-emulatorjs.sh --clean >> "$logPath/$name-emake.log"
+                    rm -f *.bc
+                fi
 
                 if [ "$requiresWebgl2" = false ]; then
                     mv core-temp/legacy/*.bc ./
@@ -440,14 +463,18 @@ for row in $(jq -r '.[] | @base64' ../cores.json); do
                 fi
             fi
 
-            mv core-temp/threads/*.bc ./
-            emmake ./build-emulatorjs.sh --clean --threads >> "$logPath/$name-emake.log"
-            rm -f *.bc
+            if [ "$noThreads" = false ]; then
+                if [ "$noWebgl2" = false ]; then
+                    mv core-temp/threads/*.bc ./
+                    emmake ./build-emulatorjs.sh --clean --threads >> "$logPath/$name-emake.log"
+                    rm -f *.bc
+                fi
 
-            if [ "$requiresWebgl2" = false ]; then
-                mv core-temp/legacyThreads/*.bc ./
-                emmake ./build-emulatorjs.sh --clean --threads --legacy >> "$logPath/$name-emake.log"
-                rm -f *.bc
+                if [ "$requiresWebgl2" = false ]; then
+                    mv core-temp/legacyThreads/*.bc ./
+                    emmake ./build-emulatorjs.sh --clean --threads --legacy >> "$logPath/$name-emake.log"
+                    rm -f *.bc
+                fi
             fi
 
             rm -rf core-temp
@@ -523,7 +550,11 @@ for row in $(jq -r '.[] | @base64' ../cores.json); do
 
         # copy the finished core into data/cores, keeping the old one if the build failed
         builtCores="$compileStartPath/EmulatorJS/data/cores"
-        if [ -f "$builtCores/$name-thread-wasm.data" ]; then
+        # check for a version every core with these options gets
+        mainBuild="$name"
+        [ "$noThreads" = false ] && mainBuild="$mainBuild-thread"
+        [ "$noWebgl2" = true ] && mainBuild="$mainBuild-legacy"
+        if [ -f "$builtCores/$mainBuild-wasm.data" ]; then
             echo "Deploying core $name to $deployPath"
             mkdir -p "$deployPath/reports"
             rm -f "$deployPath/$name-"*wasm.data

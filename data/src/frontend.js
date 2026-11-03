@@ -4335,7 +4335,7 @@ class EJS_Frontend {
         if (core && core.length > 1) {
             addToMenu(this.localization("Core" + " (" + this.localization("Requires restart") + ")"), "retroarch_core", core, this.ejs.getCore(), home);
         }
-        if (typeof window.SharedArrayBuffer === "function" && !this.ejs.requiresThreads(this.ejs.getCore())) {
+        if (typeof window.SharedArrayBuffer === "function" && !this.ejs.requiresThreads(this.ejs.getCore()) && this.ejs.hasThreadsBuild(this.ejs.getCore())) {
             addToMenu(this.localization("Threads") + " (" + this.localization("Requires restart") + ")", "ejs_threads", {
                 "enabled": this.localization("Enabled"),
                 "disabled": this.localization("Disabled")
@@ -4374,7 +4374,7 @@ class EJS_Frontend {
             addToMenu(this.localization("Shaders"), "shader", shaderMenu, "disabled", graphicsOptions, true);
         }
 
-        if (this.ejs.supportsWebgl2 && !this.ejs.requiresWebGL2(this.ejs.getCore())) {
+        if (this.ejs.supportsWebgl2 && !this.ejs.requiresWebGL2(this.ejs.getCore()) && this.ejs.hasWebGL2Build(this.ejs.getCore())) {
             addToMenu(this.localization("WebGL2") + " (" + this.localization("Requires restart") + ")", "webgl2Enabled", {
                 "enabled": this.localization("Enabled"),
                 "disabled": this.localization("Disabled")
