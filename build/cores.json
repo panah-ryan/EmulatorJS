@@ -29,7 +29,10 @@
             "buildpath": "./",
             "makescript": "Makefile"
         },
-        "options": {},
+        "options": {
+            "noThreads": true,
+            "noWebgl2": true
+        },
         "save": false,
         "license": "",
         "repo": "https://github.com/libretro/stella2014-libretro"
@@ -67,7 +70,9 @@
             ]
         },
         "options": {
-            "useKeyboard": true
+            "useKeyboard": true,
+            "noThreads": true,
+            "noWebgl2": true
         },
         "save": false,
         "license": "LICENSE",
@@ -95,7 +100,10 @@
             "makescript": "Makefile",
             "arguments": []
         },
-        "options": {},
+        "options": {
+            "noThreads": true,
+            "noWebgl2": true
+        },
         "save": false,
         "license": "",
         "repo": "https://github.com/libretro/libretro-atari800"
@@ -150,7 +158,10 @@
             ]
         },
         "save": "nvr",
-        "options": {},
+        "options": {
+            "noThreads": true,
+            "noWebgl2": true
+        },
         "license": "COPYING",
         "repo": "https://github.com/libretro/vice-libretro"
     },
@@ -166,7 +177,10 @@
             "makescript": "Makefile",
             "arguments": []
         },
-        "options": {},
+        "options": {
+            "noThreads": true,
+            "noWebgl2": true
+        },
         "save": "srm",
         "license": "LICENSE",
         "repo": "https://github.com/libretro/quasi88-libretro"
