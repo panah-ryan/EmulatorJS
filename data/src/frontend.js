@@ -251,7 +251,7 @@ class EJS_Frontend {
         this.handleResize();
     }
     showVirtualGamepad() {
-        this.virtualGamepad.style.display = "";
+        this.toggleVirtualGamepad(true);
     }
     requestFullscreen() {
         if (this.elements.parent.requestFullscreen) {
@@ -2801,6 +2801,9 @@ class EJS_Frontend {
     setVirtualGamepad() {
         this.virtualGamepad = this.ejs.createElement("div");
         this.toggleVirtualGamepad = (show) => {
+            // Cancel a pending hide from handleResize so it can't undo this
+            clearTimeout(this.virtualGamepadHideTimer);
+            this.virtualGamepad.style.opacity = "";
             this.virtualGamepad.style.display = show ? "" : "none";
         }
         this.virtualGamepad.classList.add("ejs_virtualGamepad_parent");
@@ -3864,7 +3867,8 @@ class EJS_Frontend {
             if (this.virtualGamepad.style.display === "none") {
                 this.virtualGamepad.style.opacity = 0;
                 this.virtualGamepad.style.display = "";
-                setTimeout(() => {
+                clearTimeout(this.virtualGamepadHideTimer);
+                this.virtualGamepadHideTimer = setTimeout(() => {
                     this.virtualGamepad.style.display = "none";
                     this.virtualGamepad.style.opacity = "";
                 }, 250)
