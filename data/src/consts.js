@@ -85,6 +85,9 @@ export const hiddenCoreOptions = {
     "vice_xvic": [
         "vice_printer",
         "vice_read_vicerc"
+    ],
+    "quasi88": [
+        "q88_save_to_disk_image"
     ]
 };
 
