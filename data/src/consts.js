@@ -76,6 +76,11 @@ export const hiddenCoreOptions = {
         "mame2003-plus_core_save_subfolder",
         "mame2003-plus_use_samples",
         "mame2003-plus_use_alt_sound"
+    ],
+    "atari800": [
+        "atari800_pdevice",
+        "atari800_rdevice",
+        "atari800_cfg"
     ]
 };
 
