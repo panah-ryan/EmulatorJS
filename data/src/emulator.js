@@ -652,6 +652,9 @@ class EmulatorJS {
                 rep.buildStart = Math.random() * 100;
             }
             this.buildOptions = rep.options || {};
+            if (this.buildOptions.noSaveStates === true) {
+                this.rewindEnabled = false;
+            }
             if (!this.config.threads && this.requiresThreads()) {
                 this.startGameError(["Error for site owner", "Check console"]);
                 console.warn("This core requires threads, but EJS_threads is not set!");

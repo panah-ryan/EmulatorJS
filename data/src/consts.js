@@ -80,6 +80,24 @@ export const hiddenCoreOptions = {
     ],
     "quasi88": [
         "q88_save_to_disk_image"
+    ],
+    "mame_x1": [
+        "mame_thread_mode",
+        "mame_cheats_enable",
+        "mame_boot_to_osd",
+        "mame_boot_to_bios",
+        "mame_mame_paths_enable",
+        "mame_softlists_enable",
+        "mame_softlists_auto_media",
+        "mame_media_type",
+        "mame_cpu_overclock",
+        "mame_cpu_sound_overclock",
+        "mame_autoloadfastforward",
+        "mame_coin_limit",
+        "mame_mouse_enable",
+        "mame_lightgun_mode",
+        "mame_lightgun_offscreen_mode",
+        "mame_buttons_profiles"
     ]
 };
 

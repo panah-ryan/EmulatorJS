@@ -4171,7 +4171,8 @@ class EJS_Frontend {
 
         const checkForEmptyMenu = (element) => {
             if (element.firstChild === null) {
-                element.parentElement.remove(); // No point in keeping an empty menu
+                // Remove the whole submenu so its entry on the main page goes too
+                element.parentElement.parentElement.remove();
                 parentMenuCt--;
             }
         }
@@ -4514,10 +4515,12 @@ class EJS_Frontend {
             "1.5", "2.0", "2.5", "3.0", "3.5", "4.0", "4.5", "5.0", "5.5", "6.0", "6.5", "7.0", "7.5", "8.0", "8.5", "9.0", "9.5", "10.0"
         ], "3.0", speedOptions, true);
 
-        addToMenu(this.localization("Rewind Enabled" + " (" + this.localization("Requires restart") + ")"), "rewindEnabled", {
-            "enabled": this.localization("Enabled"),
-            "disabled": this.localization("Disabled")
-        }, "disabled", speedOptions, true);
+        if (this.ejs.gameManager.supportsStates()) {
+            addToMenu(this.localization("Rewind Enabled" + " (" + this.localization("Requires restart") + ")"), "rewindEnabled", {
+                "enabled": this.localization("Enabled"),
+                "disabled": this.localization("Disabled")
+            }, "disabled", speedOptions, true);
+        }
 
         if (this.ejs.rewindEnabled) {
             addToMenu(this.localization("Rewind Granularity"), "rewind-granularity", [
@@ -4592,12 +4595,14 @@ class EJS_Frontend {
 
         if (this.ejs.saveInBrowserSupported()) {
             const saveStateOpts = createSettingParent(true, "Save States", home);
-            addToMenu(this.localization("Save State Slot"), "save-state-slot", ["1", "2", "3", "4", "5", "6", "7", "8", "9"], "1", saveStateOpts, true);
-            addToMenu(this.localization("Save State Location"), "save-state-location", {
-                "download": this.localization("Download"),
-                "browser": this.localization("Keep in Browser")
-            }, "download", saveStateOpts, true);
-            if (!this.ejs.config.fixedSaveInterval) {
+            if (this.ejs.gameManager.supportsStates()) {
+                addToMenu(this.localization("Save State Slot"), "save-state-slot", ["1", "2", "3", "4", "5", "6", "7", "8", "9"], "1", saveStateOpts, true);
+                addToMenu(this.localization("Save State Location"), "save-state-location", {
+                    "download": this.localization("Download"),
+                    "browser": this.localization("Keep in Browser")
+                }, "download", saveStateOpts, true);
+            }
+            if (!this.ejs.config.fixedSaveInterval && this.ejs.saveFileExt !== false) {
                 addToMenu(this.localization("System Save interval"), "save-save-interval", {
                     "0": "Disabled",
                     "30": "30 seconds",

@@ -310,6 +310,7 @@ IF EXIST AUTORUN.BAT CALL AUTORUN.BAT
         })
     }
     quickSave(slot) {
+        if (!this.supportsStates()) return false;
         if (!slot) slot = 1;
         const name = slot + "-quick.state";
         try {
@@ -324,6 +325,7 @@ IF EXIST AUTORUN.BAT CALL AUTORUN.BAT
         return true;
     }
     quickLoad(slot) {
+        if (!this.supportsStates()) return;
         if (!slot) slot = 1;
         (async () => {
             const name = slot + "-quick.state";
@@ -514,6 +516,7 @@ IF EXIST AUTORUN.BAT CALL AUTORUN.BAT
         //this.FS.syncfs(false, () => {});
     }
     supportsStates() {
+        if ((this.EJS.buildOptions || {}).noSaveStates === true) return false;
         return !!this.functions.supportsStates();
     }
     setControllerPortDevice(port, device) {

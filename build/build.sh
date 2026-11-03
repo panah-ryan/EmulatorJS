@@ -22,6 +22,7 @@
 #   - requiresWebgl2: true to build only the WebGL2 versions
 #   - noWebgl2: true to build only the legacy (WebGL1) versions
 #   - streamContent: true if the core reads its content over HTTP range requests (the frontend streams it)
+#   - noSaveStates: true to hide save states and rewind in the frontend (the core's states don't restore correctly)
 # - makefile: the makefile to use
 # - makefileArg: the argument to pass to the makefile
 

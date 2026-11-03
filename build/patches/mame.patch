@@ -1,5 +1,5 @@
 diff --git a/scripts/genie.lua b/scripts/genie.lua
-index b2f8da65..962e3c87 100644
+index b2f8da6..962e3c8 100644
 --- a/scripts/genie.lua
 +++ b/scripts/genie.lua
 @@ -1167,17 +1167,23 @@ configuration { "asmjs" }
@@ -38,7 +38,7 @@ index b2f8da65..962e3c87 100644
  		if _OPTIONS["OPTIMIZE"]=="3" then
  			-- emcc's link-time -O3 is very slow, max out at -O2 for now
 diff --git a/src/emu/machine.cpp b/src/emu/machine.cpp
-index 8468b6d9..f1b3374a 100644
+index 8468b6d..f1b3374 100644
 --- a/src/emu/machine.cpp
 +++ b/src/emu/machine.cpp
 @@ -400,7 +400,7 @@ int running_machine::run(bool quiet)
@@ -50,8 +50,58 @@ index 8468b6d9..f1b3374a 100644
  		// break out to our async javascript loop and halt
  		emscripten_set_running_machine(this);
  #endif
+diff --git a/src/frontend/mame/ui/auditmenu.cpp b/src/frontend/mame/ui/auditmenu.cpp
+index 662cbf6..d46a509 100644
+--- a/src/frontend/mame/ui/auditmenu.cpp
++++ b/src/frontend/mame/ui/auditmenu.cpp
+@@ -163,9 +163,16 @@ bool menu_audit::handle(event const *ev)
+ 				m_phase = phase::AUDIT;
+ 				m_fast = ITEMREF_START_FAST == ev->itemref;
+ 				m_prompt = util::string_format(_("Press %1$s to cancel\n"), ui().get_general_input_setting(IPT_UI_BACK));
++#if defined(__EMSCRIPTEN__)
++				// there are no threads, so audit now on this one
++				m_future.resize(1);
++				m_future[0] = std::async(std::launch::deferred, [this] () { return do_audit(); });
++				m_future[0].wait();
++#else
+ 				m_future.resize(std::thread::hardware_concurrency());
+ 				for (auto &future : m_future)
+ 					future = std::async(std::launch::async, [this] () { return do_audit(); });
++#endif
+ 				return true;
+ 			}
+ 		}
+diff --git a/src/frontend/mame/ui/selsoft.cpp b/src/frontend/mame/ui/selsoft.cpp
+index 471ffb4..e3f2330 100644
+--- a/src/frontend/mame/ui/selsoft.cpp
++++ b/src/frontend/mame/ui/selsoft.cpp
+@@ -274,8 +274,7 @@ public:
+ 				});
+ 
+ 		// start populating search info in background
+-		m_search_thread = std::make_unique<std::thread>(
+-				[this] ()
++		auto populate = [this] ()
+ 				{
+ 					m_searchlist.reserve(m_swinfo.size());
+ 					for (ui_software_info const &sw : m_swinfo)
+@@ -283,7 +282,13 @@ public:
+ 						if (!sw.startempty)
+ 							m_searchlist.emplace_back(sw);
+ 					}
+-				});
++				};
++#if defined(__EMSCRIPTEN__)
++		// runs inline, there are no threads
++		populate();
++#else
++		m_search_thread = std::make_unique<std::thread>(std::move(populate));
++#endif
+ 
+ 		// build derivative filter data
+ 		m_filter_data.finalise();
 diff --git a/src/frontend/mame/ui/systemlist.cpp b/src/frontend/mame/ui/systemlist.cpp
-index d7450aac..78a5988f 100644
+index d7450aa..78a5988 100644
 --- a/src/frontend/mame/ui/systemlist.cpp
 +++ b/src/frontend/mame/ui/systemlist.cpp
 @@ -34,15 +34,17 @@ void system_list::cache_data(ui_options const &options)
@@ -79,7 +129,7 @@ index d7450aac..78a5988f 100644
  }
  
 diff --git a/src/osd/modules/lib/osdlib_retro.cpp b/src/osd/modules/lib/osdlib_retro.cpp
-index 7c208e5a..9218ea92 100644
+index 7c208e5..9218ea9 100644
 --- a/src/osd/modules/lib/osdlib_retro.cpp
 +++ b/src/osd/modules/lib/osdlib_retro.cpp
 @@ -324,7 +324,7 @@ bool invalidate_instruction_cache(void const *start, std::size_t size) noexcept
@@ -92,7 +142,7 @@ index 7c208e5a..9218ea92 100644
  	char const *const end(begin + size);
  	__builtin___clear_cache(const_cast<char *>(begin), const_cast<char *>(end));
 diff --git a/src/osd/osdsync.cpp b/src/osd/osdsync.cpp
-index b943ca82..fdcc13e0 100644
+index b943ca8..fdcc13e 100644
 --- a/src/osd/osdsync.cpp
 +++ b/src/osd/osdsync.cpp
 @@ -97,7 +97,7 @@ int osd_get_num_processors(bool heavy_mt)

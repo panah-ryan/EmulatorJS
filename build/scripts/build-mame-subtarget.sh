@@ -24,7 +24,7 @@ emmake make -j$(nproc) \
     REGENIE=1 VERBOSE=1 NOWERROR=1 NO_USE_MIDI=1 NO_USE_PORTAUDIO=1 DONT_USE_NETWORK=1 \
     PYTHON_EXECUTABLE=python3 \
     TARGET=mame SUBTARGET="$subtarget" SOURCES="$sources" \
-    ARCHOPTS="-pthread -fwasm-exceptions"
+    ARCHOPTS="-fwasm-exceptions"
 
 objdir="build/libretro/obj/libretro"
 bindir="build/libretro/bin"

@@ -416,13 +416,13 @@
                     if (["tzx", "z80", "rzx", "scl", "trd", "dck", "sna", "szx"].includes(ext))
                         return "zxspectrum"
 
-                    if (["2d"].includes(ext) && enableThreads)
+                    if (["2d"].includes(ext))
                         return "x1"
 
-                    if (["uef", "ssd", "dsd", "adl"].includes(ext) && enableThreads)
+                    if (["uef", "ssd", "dsd", "adl"].includes(ext))
                         return "electron"
 
-                    if (["sg", "sc"].includes(ext) && enableThreads)
+                    if (["sg", "sc"].includes(ext))
                         return "sg1000"
 
                     if (["sms"].includes(ext))
@@ -527,14 +527,14 @@
                             "NEC PC-FX": "pcfx",
                             "Fujitsu FM Towns": "fmtowns",
                             "MSX": "msx",
-                            "Sharp X68000": "x68000"
+                            "Sharp X68000": "x68000",
+                            "Sharp X1": "x1",
+                            "Acorn Electron": "electron",
+                            "Sega SG-1000": "sg1000"
                         }
 
                         if (enableThreads) {
                             coreValues["DOS"] = "dos";
-                            coreValues["Sharp X1"] = "x1";
-                            coreValues["Acorn Electron"] = "electron";
-                            coreValues["Sega SG-1000"] = "sg1000";
                             coreValues["Sega Saturn"] = "segaSaturn";
                             coreValues["Sony PSP"] = "psp";
                             coreValues["Sony PlayStation 2"] = "ps2";
