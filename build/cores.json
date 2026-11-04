@@ -493,7 +493,10 @@
                 "EMUTYPE=xplus4"
             ]
         },
-        "options": {},
+        "options": {
+            "noThreads": true,
+            "noWebgl2": true
+        },
         "save": "nvr",
         "license": "COPYING",
         "repo": "https://github.com/libretro/vice-libretro"
