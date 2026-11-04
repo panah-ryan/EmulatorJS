@@ -44,7 +44,7 @@ export const cores = {
     "lynx": ["mednafen_lynx"],
     "ngp": ["mednafen_ngp"],
     "ws": ["mednafen_wswan"],
-    "pc98": ["nekop2"],
+    "pc98": ["np2kai"],
     "pcfx": ["mednafen_pcfx"],
     "fmtowns": ["geartowns"],
     "msx": ["bluemsx"],

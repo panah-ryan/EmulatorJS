@@ -387,7 +387,7 @@
         "repo": "https://github.com/libretro/nestopia"
     },
     {
-        "name": "nekop2",
+        "name": "np2kai",
         "extensions": [
             "d98",
             "zip",
@@ -408,14 +408,19 @@
             "hdd"
         ],
         "makeoptions": {
-            "buildpath": "./libretro",
+            "buildpath": "./sdl",
             "makescript": "Makefile.libretro",
-            "arguments": []
+            "arguments": [
+                "NP2KAI_VERSION=rev.22"
+            ]
         },
-        "options": {},
+        "options": {
+            "noThreads": true,
+            "noWebgl2": true
+        },
         "save": false,
         "license": "LICENSE",
-        "repo": "https://github.com/libretro/libretro-meowPC98"
+        "repo": "https://github.com/AZO234/NP2kai"
     },
     {
         "name": "bluemsx",

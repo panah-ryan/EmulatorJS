@@ -1,0 +1,72 @@
+diff --git a/sdl/Makefile.common b/sdl/Makefile.common
+index d667b73..ef5d082 100644
+--- a/sdl/Makefile.common
++++ b/sdl/Makefile.common
+@@ -104,6 +104,8 @@ SOURCES_C :=	$(NP2_PATH)/calendar.c \
+ 	$(NP2_PATH)/sound/soundrom.c \
+ 	$(NP2_PATH)/sound/tms3631c.c \
+ 	$(NP2_PATH)/sound/tms3631g.c \
++	$(NP2_PATH)/sound/ymzadpcmc.c \
++	$(NP2_PATH)/sound/ymzadpcmg.c \
+ 	$(wildcard $(NP2_PATH)/sound/getsnd/*.c) \
+ 	$(wildcard $(NP2_PATH)/sound/mame/*.c) \
+ 	$(wildcard $(NP2_PATH)/sound/vermouth/*.c) \
+diff --git a/sdl/libretro/libretro.c b/sdl/libretro/libretro.c
+index d93cc28..7ed558f 100755
+--- a/sdl/libretro/libretro.c
++++ b/sdl/libretro/libretro.c
+@@ -16,6 +16,7 @@
+ #include "libretro_params.h"
+ #include "libretro_core_options.h"
+ #include "file_stream.h"
++#include <file/file_path.h>
+ 
+ #include <compiler.h>//required to prevent missing type errors
+ #include <sound/beep.h>
+@@ -1713,16 +1714,21 @@ extern  void playretro();
+ 
+ static int firstcall=1;
+ 
++static void start_machine(void)
++{
++   pre_main(RPATH);
++   update_variables();
++   pccore_cfgupdate();
++   pccore_reset();
++   firstcall=0;
++   printf("INIT done\n");
++}
++
+ void retro_run (void)
+ {
+    if(firstcall)
+    {
+-      pre_main(RPATH);
+-      update_variables();
+-      pccore_cfgupdate();
+-      pccore_reset();
+-      firstcall=0;
+-      printf("INIT done\n");
++      start_machine();
+       return;
+    }
+ 
+@@ -1802,6 +1808,8 @@ bool retro_load_game(const struct retro_game_info *game)
+ #else
+    milstr_ncat(np2path, OEMTEXT("/np2kai"), MAX_PATH);
+ #endif
++   /* save states and the config are written to this folder, so make sure it exists */
++   path_mkdir(np2path);
+ 
+    OEMSNPRINTF(tmppath, MAX_PATH, OEMTEXT("%s%c"), np2path, OEMPATHDIVC);
+ 
+@@ -1816,6 +1824,9 @@ bool retro_load_game(const struct retro_game_info *game)
+    else
+       strcpy(RPATH,"");
+ 
++   /* start now so save states, and with them rewind, work as soon as the game loads */
++   start_machine();
++
+    return true;
+ }
+ 
