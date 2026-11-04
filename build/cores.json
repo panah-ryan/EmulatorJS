@@ -443,7 +443,9 @@
         },
         "options": {
             "supportsMouse": true,
-            "useKeyboard": true
+            "useKeyboard": true,
+            "noThreads": true,
+            "noWebgl2": true
         },
         "save": false,
         "license": "license.txt",
