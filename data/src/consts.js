@@ -90,7 +90,6 @@ export const hiddenCoreOptions = {
     ],
     "fuse": [
         "fuse_uspeech",
-        "fuse_mouse_swap_buttons",
         "fuse_display_joystick_type",
         "fuse_display_emulation_speed"
     ],
