@@ -168,6 +168,12 @@ const electronShiftBreak = [
     "end)"
 ].join("\n");
 
+// rewind the tape and load its first program; this runs again after every reset
+const electronChainTape = [
+    "manager.machine.cassettes[\":cassette\"]:seek(0, \"set\")",
+    "emu.keypost('CHAIN\"\"\\n')"
+].join("\n");
+
 // systems run on a MAME core through a generated .cmd file: the MAME driver, which MAME device
 // each file extension is loaded into, optional extra arguments, and keys to type or a Lua
 // script to run once booted
@@ -183,7 +189,7 @@ export const mameSystems = {
         "driver": "electron",
         "media": [
             // without the default Plus 3 the Electron boots into the tape filing system
-            { "device": "cass", "count": 1, "extensions": ["uef", "csw", "wav"], "args": ["-exp", "\"\""], "autoboot": "CHAIN\"\"\\n" },
+            { "device": "cass", "count": 1, "extensions": ["uef", "csw", "wav"], "args": ["-exp", "\"\""], "autobootScript": electronChainTape },
             // the Plus 3's default ADFS ROM; the Plus 1 the driver adds behind it isn't needed
             { "device": "flop", "count": 1, "extensions": ["adf", "adl"], "args": ["-exp:plus3:exp", "\"\""], "autobootScript": electronShiftBreak },
             // DFS disks need the Plus 3's DFS ROM instead
