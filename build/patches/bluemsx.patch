@@ -27,3 +27,16 @@ index ed6d457..f2984f0 100644
  ifneq ($(STATIC_LINKING), 1)
  SOURCES_C += $(LIBRETRO_COMM_DIR)/file/retro_dirent.c \
  	     $(LIBRETRO_COMM_DIR)/file/file_path.c \
+diff --git a/Src/Board/Board.c b/Src/Board/Board.c
+index 3857b67..3969c68 100644
+--- a/Src/Board/Board.c
++++ b/Src/Board/Board.c
+@@ -1040,7 +1040,7 @@ void boardSaveState(const char* stateFile, int screenshot)
+     machineSaveState(boardMachine);
+ 
+     // Call board dependent save state
+-    boardInfo.saveState(stateFile);
++    boardInfo.saveState();
+ 
+     if (screenshot) {
+         bitmap = archScreenCapture(SC_SMALL, &size, 1);
