@@ -85,6 +85,11 @@ export const hiddenCoreOptions = {
         "vice_jiffydos",
         "vice_cartridge"
     ],
+    "vice_xplus4": [
+        "vice_printer",
+        "vice_read_vicerc",
+        "vice_cartridge"
+    ],
     "quasi88": [
         "q88_save_to_disk_image"
     ],
