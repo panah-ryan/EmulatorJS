@@ -90,6 +90,10 @@ export const hiddenCoreOptions = {
         "vice_read_vicerc",
         "vice_cartridge"
     ],
+    "cap32": [
+        "cap32_lightgun_input",
+        "cap32_lightgun_show"
+    ],
     "quasi88": [
         "q88_save_to_disk_image"
     ],
