@@ -284,7 +284,9 @@
             "arguments": []
         },
         "options": {
-            "useKeyboard": true
+            "useKeyboard": true,
+            "noThreads": true,
+            "noWebgl2": true
         },
         "save": false,
         "license": "LICENSE",
@@ -335,7 +337,9 @@
         },
         "save": "nvr",
         "options": {
-            "supportsMouse": true
+            "supportsMouse": true,
+            "noThreads": true,
+            "noWebgl2": true
         },
         "license": "COPYING",
         "repo": "https://github.com/libretro/vice-libretro"
