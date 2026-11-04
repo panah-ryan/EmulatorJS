@@ -518,7 +518,10 @@
             "makescript": "Makefile",
             "arguments": []
         },
-        "options": {},
+        "options": {
+            "noThreads": true,
+            "noWebgl2": true
+        },
         "save": "SNA",
         "license": "",
         "repo": "https://github.com/libretro/libretro-cap32"
