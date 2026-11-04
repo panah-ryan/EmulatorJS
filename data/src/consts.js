@@ -88,6 +88,9 @@ export const hiddenCoreOptions = {
     "quasi88": [
         "q88_save_to_disk_image"
     ],
+    "np2kai": [
+        "np2kai_uselasthddmount"
+    ],
     "fuse": [
         "fuse_uspeech",
         "fuse_display_joystick_type",
