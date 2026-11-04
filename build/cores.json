@@ -439,8 +439,7 @@
         "makeoptions": {
             "buildpath": "./",
             "makescript": "Makefile.libretro",
-            "arguments": [],
-            "initialmemory": 67108864
+            "arguments": []
         },
         "options": {
             "supportsMouse": true,
