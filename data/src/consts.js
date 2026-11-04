@@ -91,6 +91,9 @@ export const hiddenCoreOptions = {
     "np2kai": [
         "np2kai_uselasthddmount"
     ],
+    "bluemsx": [
+        "hard_reset_f12"
+    ],
     "fuse": [
         "fuse_uspeech",
         "fuse_display_joystick_type",
