@@ -76,10 +76,23 @@ export const hiddenCoreOptions = {
     ],
     "vice_xvic": [
         "vice_printer",
-        "vice_read_vicerc"
+        "vice_read_vicerc",
+        "vice_cartridge"
+    ],
+    "vice_x64sc": [
+        "vice_printer",
+        "vice_read_vicerc",
+        "vice_jiffydos",
+        "vice_cartridge"
     ],
     "quasi88": [
         "q88_save_to_disk_image"
+    ],
+    "fuse": [
+        "fuse_uspeech",
+        "fuse_mouse_swap_buttons",
+        "fuse_display_joystick_type",
+        "fuse_display_emulation_speed"
     ],
     "mame_x1": [
         "mame_thread_mode",
@@ -94,6 +107,29 @@ export const hiddenCoreOptions = {
         "mame_cpu_sound_overclock",
         "mame_autoloadfastforward",
         "mame_coin_limit",
+        "mame_mouse_enable",
+        "mame_lightgun_mode",
+        "mame_lightgun_offscreen_mode",
+        "mame_buttons_profiles"
+    ],
+    "mame_electron": [
+        "mame_thread_mode",
+        "mame_cheats_enable",
+        "mame_boot_to_osd",
+        "mame_boot_to_bios",
+        "mame_mame_paths_enable",
+        "mame_softlists_enable",
+        "mame_softlists_auto_media",
+        "mame_media_type",
+        "mame_cpu_overclock",
+        "mame_cpu_sound_overclock",
+        "mame_autoloadfastforward",
+        "mame_coin_limit",
+        "mame_joystick_deadzone",
+        "mame_joystick_saturation",
+        "mame_joystick_threshold",
+        "mame_mame_4way_enable",
+        "mame_rotation_mode",
         "mame_mouse_enable",
         "mame_lightgun_mode",
         "mame_lightgun_offscreen_mode",
