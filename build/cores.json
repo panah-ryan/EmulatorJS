@@ -893,7 +893,10 @@
             "makescript": "Makefile",
             "arguments": ["SUBSET=neogeo", "TARGET_NAME=fbneo", "REGEN_HEADERS=1"]
         },
-        "options": {},
+        "options": {
+            "noThreads": true,
+            "noWebgl2": true
+        },
         "save": false,
         "license": "LICENSE.md",
         "repo": "https://github.com/libretro/FBNeo"
