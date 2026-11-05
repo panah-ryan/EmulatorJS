@@ -776,7 +776,10 @@
             "makescript": "Makefile.libretro",
             "arguments": ["TARGET=px68k_libretro_emscripten.bc", "STATIC_LINKING=1", "C68K=0"]
         },
-        "options": {},
+        "options": {
+            "noThreads": true,
+            "noWebgl2": true
+        },
         "save": false,
         "license": "COPYING",
         "repo": "https://github.com/libretro/px68k-libretro"
