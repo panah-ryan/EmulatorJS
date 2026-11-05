@@ -105,6 +105,9 @@ export const hiddenCoreOptions = {
         "genesis_plus_gx_gun_cursor",
         "genesis_plus_gx_invert_mouse"
     ],
+    "geartowns": [
+        "geartowns_cdrom_fast_forward_notification"
+    ],
     "hatarib": [
         "hatarib_midi"
     ],
