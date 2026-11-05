@@ -108,6 +108,9 @@ export const hiddenCoreOptions = {
     "hatarib": [
         "hatarib_midi"
     ],
+    "mednafen_pce_fast": [
+        "pce_fast_mouse_sensitivity"
+    ],
     "quasi88": [
         "q88_save_to_disk_image"
     ],
