@@ -101,9 +101,7 @@ export const hiddenCoreOptions = {
         "cap32_lightgun_show"
     ],
     "genesis_plus_gx": [
-        "genesis_plus_gx_gun_input",
-        "genesis_plus_gx_gun_cursor",
-        "genesis_plus_gx_invert_mouse"
+        "genesis_plus_gx_gun_input"
     ],
     "geartowns": [
         "geartowns_cdrom_fast_forward_notification"

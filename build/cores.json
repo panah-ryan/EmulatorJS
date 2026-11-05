@@ -581,6 +581,9 @@
             "makescript": "Makefile.libretro"
         },
         "options": {
+            "settings": {
+                "genesis_plus_gx_gun_input": "touchscreen"
+            },
             "noThreads": true,
             "noWebgl2": true
         },
