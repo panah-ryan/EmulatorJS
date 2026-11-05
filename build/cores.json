@@ -869,6 +869,9 @@
             "arguments": []
         },
         "options": {
+            "settings": {
+                "snes9x_lightgun_mode": "Touchscreen"
+            },
             "noThreads": true,
             "noWebgl2": true
         },

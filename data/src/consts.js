@@ -124,6 +124,9 @@ export const hiddenCoreOptions = {
         "px68k_save_fdd_path",
         "px68k_save_hdd_path"
     ],
+    "snes9x": [
+        "snes9x_lightgun_mode"
+    ],
     "bluemsx": [
         "hard_reset_f12"
     ],
