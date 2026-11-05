@@ -1,0 +1,452 @@
+Save states kept in memory, for libretro's retro_serialize and retro_unserialize.
+A state holds the whole machine, and of each SCSI disk only the blocks written
+since load; restoring puts the other blocks back from the original image file.
+
+diff --git a/core/src/emulator/memstate.rs b/core/src/emulator/memstate.rs
+new file mode 100644
+index 0000000..6ab5b5a
+--- /dev/null
++++ b/core/src/emulator/memstate.rs
+@@ -0,0 +1,172 @@
++//! Save states kept in memory, for hosts that store them themselves
++//!
++//! A state holds the whole machine, but of each SCSI disk only the blocks
++//! written since the image was attached. Restoring puts every other block
++//! back from the original image file.
++
++use std::collections::BTreeSet;
++use std::fs::File;
++use std::io::{Read, Seek, SeekFrom};
++use std::sync::{Arc, Mutex};
++
++use anyhow::{Context, Result, bail};
++use serde::{Deserialize, Serialize};
++
++use super::{Emulator, EmulatorConfig};
++use crate::mac::scsi::bus::ScsiBus;
++use crate::mac::scsi::disk::DISK_BLOCKSIZE;
++use crate::mac::scsi::disk_image::DiskImage;
++use crate::renderer::channel::ChannelRenderer;
++use crate::renderer::{DisplayBuffer, Renderer};
++
++const MAGIC: &[u8; 8] = b"SNOWMEM1";
++const ZSTD_LEVEL: i32 = 1;
++
++/// Blocks of a SCSI disk written since its image was attached
++#[derive(Serialize, Deserialize)]
++struct DiskChanges {
++    id: u8,
++    /// Size of the whole image, to catch a state made with another image
++    len: u64,
++    blocks: Vec<(u32, Vec<u8>)>,
++}
++
++#[derive(Serialize)]
++struct StateRef<'a> {
++    config: &'a EmulatorConfig,
++    disks: Vec<DiskChanges>,
++}
++
++#[derive(Deserialize)]
++struct StateOwned {
++    config: EmulatorConfig,
++    disks: Vec<DiskChanges>,
++}
++
++/// Reads blocks of the image file as it was before any writes
++fn read_original_blocks(image: &dyn DiskImage, blocks: &BTreeSet<u32>) -> Result<Vec<(u32, Vec<u8>)>> {
++    if blocks.is_empty() {
++        return Ok(Vec::new());
++    }
++    let path = image.image_path().context("Disk image has no file to restore from")?;
++    let mut file = File::open(path).with_context(|| format!("Failed to open {}", path.display()))?;
++    blocks
++        .iter()
++        .map(|&block| {
++            let mut data = vec![0; DISK_BLOCKSIZE];
++            file.seek(SeekFrom::Start(u64::from(block) * DISK_BLOCKSIZE as u64))?;
++            file.read_exact(&mut data)?;
++            Ok((block, data))
++        })
++        .collect()
++}
++
++impl Emulator {
++    /// Saves the machine state to a compressed buffer
++    pub fn save_state_to_vec(&self) -> Result<Vec<u8>> {
++        let mut disks = Vec::new();
++        for (id, target) in self.config.scsi().targets.iter().enumerate() {
++            let Some(target) = target else {
++                continue;
++            };
++            let (Some(image), Some(written)) = (target.disk_image(), target.written_blocks()) else {
++                bail!("SCSI ID #{} cannot be saved in a state", id);
++            };
++            let blocks = written
++                .iter()
++                .map(|&b| (b, image.read_bytes(b as usize * DISK_BLOCKSIZE, DISK_BLOCKSIZE)))
++                .collect();
++            disks.push(DiskChanges {
++                id: id as u8,
++                len: image.byte_len() as u64,
++                blocks,
++            });
++        }
++
++        let state = postcard::to_stdvec(&StateRef {
++            config: &self.config,
++            disks,
++        })?;
++        let compressed = zstd::bulk::compress(&state, ZSTD_LEVEL)?;
++        let mut out = MAGIC.to_vec();
++        out.extend(u32::try_from(compressed.len())?.to_le_bytes());
++        out.extend(compressed);
++        Ok(out)
++    }
++
++    /// Restores a state made by [`Self::save_state_to_vec`] into this emulator,
++    /// returning the new frame receiver. Anything after the state in `data` is ignored.
++    pub fn restore_state_from_slice(
++        &mut self,
++        data: &[u8],
++    ) -> Result<Arc<Mutex<Option<DisplayBuffer>>>> {
++        let Some((len, rest)) = data
++            .strip_prefix(MAGIC.as_slice())
++            .and_then(|d| d.split_first_chunk::<4>())
++        else {
++            bail!("Not a Snow state");
++        };
++        let Some(compressed) = rest.get(..u32::from_le_bytes(*len) as usize) else {
++            bail!("State is truncated");
++        };
++        let state = zstd::stream::decode_all(compressed)?;
++        let StateOwned { mut config, disks } = postcard::from_bytes(&state)?;
++
++        if config.model() != self.config.model() {
++            bail!("State is for a {}, not a {}", config.model(), self.config.model());
++        }
++
++        // Check everything, and read what is needed, before changing the running machine
++        let mut restores = Vec::new();
++        let mut originals = Vec::new();
++        for id in 0..ScsiBus::MAX_TARGETS {
++            let running = self.config.scsi().targets[id].as_ref();
++            let saved = config.scsi().targets[id].is_some();
++            let changes = disks.iter().find(|d| usize::from(d.id) == id);
++            match (running, saved, changes) {
++                (None, false, None) => continue,
++                (Some(target), true, Some(changes)) => {
++                    let (Some(image), Some(written)) = (target.disk_image(), target.written_blocks())
++                    else {
++                        bail!("SCSI ID #{} cannot be restored from a state", id);
++                    };
++                    if image.byte_len() as u64 != changes.len {
++                        bail!("SCSI ID #{} holds another disk image than the state", id);
++                    }
++                    let saved_set: BTreeSet<u32> = changes.blocks.iter().map(|(b, _)| *b).collect();
++                    let revert: BTreeSet<u32> = written.difference(&saved_set).copied().collect();
++                    originals.push(read_original_blocks(image, &revert)?);
++                    restores.push(id);
++                }
++                _ => bail!("SCSI ID #{} differs from the state", id),
++            }
++        }
++        for (id, original) in restores.into_iter().zip(originals) {
++            let mut image = self.config.scsi_mut().targets[id]
++                .as_mut()
++                .unwrap()
++                .take_image()
++                .context("SCSI disk has no image")?;
++            let changes = disks.iter().find(|d| usize::from(d.id) == id).unwrap();
++            for (block, data) in original.iter().chain(&changes.blocks) {
++                image.write_bytes(*block as usize * DISK_BLOCKSIZE, data);
++            }
++            let written = changes.blocks.iter().map(|(b, _)| *b).collect();
++            config.scsi_mut().targets[id]
++                .as_mut()
++                .unwrap()
++                .restore_image(image, written)?;
++        }
++
++        let renderer = ChannelRenderer::new(0, 0)?;
++        let frame_recv = renderer.get_receiver();
++        config.after_deserialize(renderer);
++        config.input_release_all();
++        self.config = config;
++        if let Some(provider) = self.audio_provider.clone() {
++            self.set_audio_provider(provider)?;
++        }
++        self.status_update()?;
++        Ok(frame_recv)
++    }
++}
+diff --git a/core/src/emulator/mod.rs b/core/src/emulator/mod.rs
+index dbfc526..4e8e9b9 100644
+--- a/core/src/emulator/mod.rs
++++ b/core/src/emulator/mod.rs
+@@ -1,5 +1,7 @@
+ pub mod comm;
+ 
++#[cfg(feature = "savestates")]
++mod memstate;
+ #[cfg(feature = "savestates")]
+ pub mod save;
+ 
+diff --git a/core/src/emulator/save.rs b/core/src/emulator/save.rs
+index 69a102c..36d6322 100644
+--- a/core/src/emulator/save.rs
++++ b/core/src/emulator/save.rs
+@@ -8,7 +8,7 @@ use binrw::{BinRead, BinWrite, NullString, binrw};
+ use crate::emulator::EmulatorConfig;
+ use crate::mac::scsi::bus::ScsiBus;
+ 
+-#[cfg(not(feature = "mmap"))]
++#[cfg(all(not(feature = "mmap"), not(target_os = "emscripten")))]
+ compile_error!("feature \"savestates\" requires the \"mmap\" feature");
+ 
+ const HEADER_VERSION: u16 = 1;
+diff --git a/core/src/mac/scsi/disk.rs b/core/src/mac/scsi/disk.rs
+index c9eaba6..6687334 100644
+--- a/core/src/mac/scsi/disk.rs
++++ b/core/src/mac/scsi/disk.rs
+@@ -2,6 +2,8 @@
+ 
+ use anyhow::{Result, bail};
+ use serde::{Deserialize, Serialize};
++#[cfg(feature = "savestates")]
++use std::collections::BTreeSet;
+ use std::path::Path;
+ 
+ use crate::debuggable::Debuggable;
+@@ -22,6 +24,11 @@ pub(super) struct ScsiTargetDisk {
+ 
+     #[serde(skip)]
+     backend: Option<Box<dyn DiskImage>>,
++
++    /// Blocks written since the image was attached
++    #[cfg(feature = "savestates")]
++    #[serde(skip)]
++    written: BTreeSet<u32>,
+ }
+ 
+ impl ScsiTargetDisk {
+@@ -29,6 +36,8 @@ impl ScsiTargetDisk {
+         Self {
+             common: Default::default(),
+             backend: Some(backend),
++            #[cfg(feature = "savestates")]
++            written: BTreeSet::new(),
+         }
+     }
+ 
+@@ -220,6 +229,9 @@ impl ScsiTarget for ScsiTargetDisk {
+     fn write(&mut self, block_offset: usize, data: &[u8]) {
+         let offset = block_offset * DISK_BLOCKSIZE;
+         self.backend_mut().write_bytes(offset, data);
++        #[cfg(feature = "savestates")]
++        self.written
++            .extend((block_offset..block_offset + data.len().div_ceil(DISK_BLOCKSIZE)).map(|b| b as u32));
+     }
+ 
+     fn image_fn(&self) -> Option<&Path> {
+@@ -269,6 +281,28 @@ impl ScsiTarget for ScsiTargetDisk {
+         self.backend().media_bytes()
+     }
+ 
++    #[cfg(feature = "savestates")]
++    fn disk_image(&self) -> Option<&dyn DiskImage> {
++        self.backend.as_deref()
++    }
++
++    #[cfg(feature = "savestates")]
++    fn written_blocks(&self) -> Option<&BTreeSet<u32>> {
++        Some(&self.written)
++    }
++
++    #[cfg(feature = "savestates")]
++    fn take_image(&mut self) -> Option<Box<dyn DiskImage>> {
++        self.backend.take()
++    }
++
++    #[cfg(feature = "savestates")]
++    fn restore_image(&mut self, image: Box<dyn DiskImage>, written: BTreeSet<u32>) -> Result<()> {
++        self.backend = Some(image);
++        self.written = written;
++        Ok(())
++    }
++
+     fn branch_media(&mut self, path: &Path) -> Result<()> {
+         self.backend_mut().branch_media(path)
+     }
+diff --git a/core/src/mac/scsi/target.rs b/core/src/mac/scsi/target.rs
+index 847e718..a2eb0d3 100644
+--- a/core/src/mac/scsi/target.rs
++++ b/core/src/mac/scsi/target.rs
+@@ -1,5 +1,7 @@
+ //! SCSI target generic/shared code
+ 
++#[cfg(feature = "savestates")]
++use std::collections::BTreeSet;
+ use std::path::Path;
+ 
+ use anyhow::{Result, anyhow};
+@@ -86,6 +88,30 @@ pub(crate) trait ScsiTarget: Send + Debuggable {
+         None
+     }
+ 
++    /// The image of a block device
++    #[cfg(feature = "savestates")]
++    fn disk_image(&self) -> Option<&dyn DiskImage> {
++        None
++    }
++
++    /// Blocks written since the image was attached, or None if not tracked
++    #[cfg(feature = "savestates")]
++    fn written_blocks(&self) -> Option<&BTreeSet<u32>> {
++        None
++    }
++
++    /// Detaches the image of a block device
++    #[cfg(feature = "savestates")]
++    fn take_image(&mut self) -> Option<Box<dyn DiskImage>> {
++        None
++    }
++
++    /// Attaches an image taken from another target, with the blocks written to it
++    #[cfg(feature = "savestates")]
++    fn restore_image(&mut self, _image: Box<dyn DiskImage>, _written: BTreeSet<u32>) -> Result<()> {
++        Err(anyhow!("Not a block device"))
++    }
++
+     // fn set_cc(&mut self, code: u8, asc: u16);
+     fn set_blocksize(&mut self, blocksize: usize) -> bool;
+     fn take_event(&mut self) -> Option<ScsiTargetEvent>;
+diff --git a/libretro/Cargo.toml b/libretro/Cargo.toml
+index 9bd3b1b..c1ee30d 100644
+--- a/libretro/Cargo.toml
++++ b/libretro/Cargo.toml
+@@ -12,7 +12,7 @@ crate-type = ["staticlib"]
+ anyhow = "1.0.86"
+ log = "0.4.22"
+ sha2 = "0.10.8"
+-snow_core = { path = "../core", default-features = false }
++snow_core = { path = "../core", default-features = false, features = ["savestates"] }
+ strum = "0.26.3"
+ 
+ [lints]
+diff --git a/libretro/src/lib.rs b/libretro/src/lib.rs
+index e436239..56fddc1 100644
+--- a/libretro/src/lib.rs
++++ b/libretro/src/lib.rs
+@@ -170,6 +170,8 @@ struct Core {
+     reinsert_floppy: bool,
+     /// A floppy to insert, and the frames to wait before doing so
+     pending_floppy: Option<(u32, EmulatorCommand)>,
++    /// The state made for retro_serialize_size, kept for the retro_serialize that follows
++    state: Option<Vec<u8>>,
+ }
+ 
+ impl Core {
+@@ -269,10 +271,12 @@ impl Core {
+             // A Mac ejects a floppy it cannot start up from, then starts up from the hard disk
+             reinsert_floppy: floppy_game && system.boot_disk.is_some(),
+             pending_floppy: None,
++            state: None,
+         })
+     }
+ 
+     fn run_frame(&mut self) -> Result<Option<DisplayBuffer>> {
++        self.state = None;
+         self.frames = self.frames.saturating_add(1);
+         if let Some((delay, _)) = &mut self.pending_floppy {
+             if *delay > 0 {
+@@ -353,6 +357,28 @@ impl Core {
+         }
+     }
+ 
++    /// The current state, made once per frame however often it is asked for
++    fn state(&mut self) -> Result<&[u8]> {
++        if self.state.is_none() {
++            self.state = Some(self.emulator.save_state_to_vec()?);
++        }
++        Ok(self.state.as_deref().unwrap())
++    }
++
++    fn restore_state(&mut self, data: &[u8]) -> Result<()> {
++        self.frame_recv = self.emulator.restore_state_from_slice(data)?;
++        // Events and a pending floppy are from the machine that was replaced
++        while self.events.try_recv().is_ok() {}
++        self.pending_floppy = None;
++        self.state = None;
++        self.mouse_button = false;
++        let frame = self.frame_recv.lock().unwrap().take();
++        if let Some(frame) = frame {
++            self.present(&frame);
++        }
++        Ok(())
++    }
++
+     fn flush_audio(&mut self) {
+         let samples = std::mem::take(&mut *self.audio.0.lock().unwrap());
+         self.audio_buf.clear();
+@@ -711,17 +737,55 @@ pub extern "C" fn retro_get_region() -> u32 {
+ 
+ #[unsafe(no_mangle)]
+ pub extern "C" fn retro_serialize_size() -> usize {
+-    0
++    let Some(core) = CORE.get().as_mut() else {
++        return 0;
++    };
++    match core.state() {
++        Ok(state) => state.len(),
++        Err(e) => {
++            error!("Failed to save state: {:?}", e);
++            0
++        }
++    }
+ }
+ 
+ #[unsafe(no_mangle)]
+-pub extern "C" fn retro_serialize(_data: *mut c_void, _size: usize) -> bool {
+-    false
++pub unsafe extern "C" fn retro_serialize(data: *mut c_void, size: usize) -> bool {
++    let Some(core) = CORE.get().as_mut() else {
++        return false;
++    };
++    let state = match core.state() {
++        Ok(state) => state,
++        Err(e) => {
++            error!("Failed to save state: {:?}", e);
++            return false;
++        }
++    };
++    if data.is_null() || size < state.len() {
++        return false;
++    }
++    let out = unsafe { std::slice::from_raw_parts_mut(data.cast::<u8>(), size) };
++    out[..state.len()].copy_from_slice(state);
++    out[state.len()..].fill(0);
++    true
+ }
+ 
+ #[unsafe(no_mangle)]
+-pub extern "C" fn retro_unserialize(_data: *const c_void, _size: usize) -> bool {
+-    false
++pub unsafe extern "C" fn retro_unserialize(data: *const c_void, size: usize) -> bool {
++    let Some(core) = CORE.get().as_mut() else {
++        return false;
++    };
++    if data.is_null() {
++        return false;
++    }
++    let data = unsafe { std::slice::from_raw_parts(data.cast::<u8>(), size) };
++    match core.restore_state(data) {
++        Ok(()) => true,
++        Err(e) => {
++            error!("Failed to load state: {:?}", e);
++            false
++        }
++    }
+ }
+ 
+ #[unsafe(no_mangle)]
