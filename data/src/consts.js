@@ -85,6 +85,12 @@ export const hiddenCoreOptions = {
         "vice_jiffydos",
         "vice_cartridge"
     ],
+    "vice_x128": [
+        "vice_printer",
+        "vice_read_vicerc",
+        "vice_jiffydos",
+        "vice_cartridge"
+    ],
     "vice_xplus4": [
         "vice_printer",
         "vice_read_vicerc",
@@ -93,6 +99,11 @@ export const hiddenCoreOptions = {
     "cap32": [
         "cap32_lightgun_input",
         "cap32_lightgun_show"
+    ],
+    "genesis_plus_gx": [
+        "genesis_plus_gx_gun_input",
+        "genesis_plus_gx_gun_cursor",
+        "genesis_plus_gx_invert_mouse"
     ],
     "quasi88": [
         "q88_save_to_disk_image"
