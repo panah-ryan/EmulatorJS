@@ -117,6 +117,10 @@ export const hiddenCoreOptions = {
     "np2kai": [
         "np2kai_uselasthddmount"
     ],
+    "px68k": [
+        "px68k_save_fdd_path",
+        "px68k_save_hdd_path"
+    ],
     "bluemsx": [
         "hard_reset_f12"
     ],
