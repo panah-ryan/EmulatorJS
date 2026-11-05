@@ -3,40 +3,40 @@ per tick, so the core can stop closer to the end of a frame, and access to the
 PRAM contents so the host can save and restore them.
 
 diff --git a/core/src/emulator/mod.rs b/core/src/emulator/mod.rs
-index 5d9ffa5..1dfcbc9 100644
+index 3edba67..dbfc526 100644
 --- a/core/src/emulator/mod.rs
 +++ b/core/src/emulator/mod.rs
-@@ -285,8 +285,13 @@ pub struct Emulator {
-     /// Serial bridges for SCC channels (index 0 = Channel A, index 1 = Channel B)
-     serial_bridges: [Option<SccBridge>; 2],
-     audio_provider: Option<Arc<Mutex<dyn AudioProvider>>>,
+@@ -405,8 +405,13 @@ pub struct Emulator {
+     memory_map_state: Option<MemoryMapState>,
+     /// Last look at the memory notifiers
+     memory_notify_time: Instant,
 +    /// Number of steps run per tick
-+    step_batch: usize,
++    step_batch: u32,
  }
  
 +/// Default number of steps run per tick, batched for performance reasons
-+const DEFAULT_STEP_BATCH: usize = 10000;
++const DEFAULT_STEP_BATCH: u32 = 10000;
 +
  impl Emulator {
      pub fn new(
          rom: &[u8],
-@@ -557,6 +562,7 @@ impl Emulator {
+@@ -717,6 +722,7 @@ impl Emulator {
              replay_input: VecDeque::default(),
              peripheral_debug: false,
              serial_bridges: [None, None],
 +            step_batch: DEFAULT_STEP_BATCH,
              audio_provider: None,
-         };
-         emu.status_update()?;
-@@ -606,6 +612,7 @@ impl Emulator {
+             memory_notifiers: BTreeMap::new(),
+             memory_map_state: None,
+@@ -774,6 +780,7 @@ impl Emulator {
              replay_input: VecDeque::default(),
              peripheral_debug: false,
              serial_bridges: [None, None],
 +            step_batch: DEFAULT_STEP_BATCH,
              audio_provider: None,
-         };
-         emu.status_update()?;
-@@ -631,6 +638,11 @@ impl Emulator {
+             memory_notifiers: BTreeMap::new(),
+             memory_map_state: None,
+@@ -802,6 +809,11 @@ impl Emulator {
          self.config.rtc_mut().load_pram(pram_path);
      }
  
@@ -48,29 +48,29 @@ index 5d9ffa5..1dfcbc9 100644
      /// Sets the RTC to a specific date/time.
      /// This can be used to test date-dependent software behavior (e.g., easter eggs).
      pub fn set_datetime(&mut self, dt: chrono::NaiveDateTime) {
-@@ -951,6 +963,12 @@ impl Emulator {
-         }
+@@ -1364,6 +1376,12 @@ impl Emulator {
+         let _ = self.status_update();
      }
  
 +    /// Sets the number of steps run per tick. Smaller batches let a host that
 +    /// stops on every frame do so closer to where the frame ends.
-+    pub fn set_step_batch(&mut self, steps: usize) {
++    pub fn set_step_batch(&mut self, steps: u32) {
 +        self.step_batch = steps.max(1);
 +    }
 +
      pub fn get_cycles(&self) -> Ticks {
          self.config.cpu_cycles()
      }
-@@ -1525,8 +1543,7 @@ impl Tickable for Emulator {
+@@ -2131,8 +2149,7 @@ impl Tickable for Emulator {
                  self.replay_input.pop_front().unwrap();
              }
  
 -            // Batch 10000 steps for performance reasons
--            for _ in 0..10000 {
-+            for _ in 0..self.step_batch {
-                 if !self.run {
-                     break;
-                 }
+-            let mut steps = 10000;
++            let mut steps = self.step_batch;
+             while steps > 0 && self.run {
+                 match self.config.cpu_run_steps(steps) {
+                     Ok((done, reset)) => {
 diff --git a/core/src/mac/rtc.rs b/core/src/mac/rtc.rs
 index ca44712..40f35fe 100644
 --- a/core/src/mac/rtc.rs
