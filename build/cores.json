@@ -704,6 +704,7 @@
         },
         "options": {
             "supportsMouse": true,
+            "noWebgl2": true,
             "requireThreadsFor": [
                 "amigacd32"
             ]
