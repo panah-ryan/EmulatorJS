@@ -703,7 +703,8 @@
         "makeoptions": {
             "arguments": [],
             "buildpath": "./",
-            "makescript": "Makefile"
+            "makescript": "Makefile",
+            "emcc_flags": "-fwasm-exceptions"
         },
         "options": {
             "supportsMouse": true,
