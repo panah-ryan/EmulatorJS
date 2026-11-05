@@ -748,7 +748,10 @@
             "makescript": "Makefile",
             "arguments": []
         },
-        "options": {},
+        "options": {
+            "noThreads": true,
+            "noWebgl2": true
+        },
         "save": "srm",
         "license": "COPYING",
         "repo": "https://github.com/libretro/beetle-pce-fast-libretro"
