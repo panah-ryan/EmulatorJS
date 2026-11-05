@@ -797,7 +797,10 @@
                 "NEED_CRC32=0"
             ]
         },
-        "options": {},
+        "options": {
+            "noThreads": true,
+            "noWebgl2": true
+        },
         "save": false,
         "license": "COPYING",
         "repo": "https://github.com/libretro/beetle-lynx-libretro"
