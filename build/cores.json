@@ -632,7 +632,9 @@
             ]
         },
         "options": {
-            "supportsMouse": true
+            "supportsMouse": true,
+            "noThreads": true,
+            "noWebgl2": true
         },
         "save": "nvr",
         "license": "COPYING",
