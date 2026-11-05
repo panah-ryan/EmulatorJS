@@ -548,7 +548,9 @@
         },
         "options": {
             "supportsMouse": true,
-            "useKeyboard": true
+            "useKeyboard": true,
+            "noThreads": true,
+            "noWebgl2": true
         },
         "save": "srm",
         "license": "LICENSE",
