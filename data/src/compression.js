@@ -58,7 +58,161 @@ class EJS_COMPRESSION {
             }
             return new Promise(resolve => resolve({ "!!notCompressedData": data }));
         }
+        if (compressed === "zip") {
+            return this.extractZipNative(data, updateMsg, fileCbFunc).catch((e) => {
+                console.warn("Native zip extraction failed, using the zip worker:", e);
+                return this.decompressFile(compressed, data, updateMsg, fileCbFunc);
+            });
+        }
         return this.decompressFile(compressed, data, updateMsg, fileCbFunc);
+    }
+
+    /**
+     * Reads a zip's central directory and returns its file entries.
+     *
+     * @param {Uint8Array} data - The zip archive
+     * @returns {Array<Object>} Entries with name, method, compressed and uncompressed sizes and data offset
+     * @throws {Error} When the archive is malformed, encrypted or uses an unsupported method
+     */
+    readZipEntries(data) {
+        const view = new DataView(data.buffer, data.byteOffset, data.byteLength);
+        const u64 = (offset) => view.getUint32(offset, true) + view.getUint32(offset + 4, true) * 0x100000000;
+
+        // The end of central directory record sits within the last 64 KiB plus its own 22 bytes
+        let eocd = -1;
+        for (let i = data.length - 22; i >= Math.max(0, data.length - 65557); i--) {
+            if (view.getUint32(i, true) === 0x06054b50) {
+                eocd = i;
+                break;
+            }
+        }
+        if (eocd < 0) throw new Error("No end of central directory record");
+
+        let count = view.getUint16(eocd + 10, true);
+        let cdOffset = view.getUint32(eocd + 16, true);
+        if (count === 0xFFFF || cdOffset === 0xFFFFFFFF) {
+            const locator = eocd - 20;
+            if (locator < 0 || view.getUint32(locator, true) !== 0x07064b50) throw new Error("Missing zip64 locator");
+            const zip64Eocd = u64(locator + 8);
+            if (view.getUint32(zip64Eocd, true) !== 0x06064b50) throw new Error("Missing zip64 end record");
+            count = u64(zip64Eocd + 32);
+            cdOffset = u64(zip64Eocd + 48);
+        }
+
+        const decoder = new TextDecoder();
+        const entries = [];
+        let p = cdOffset;
+        for (let i = 0; i < count; i++) {
+            if (view.getUint32(p, true) !== 0x02014b50) throw new Error("Bad central directory entry");
+            const flags = view.getUint16(p + 8, true);
+            const method = view.getUint16(p + 10, true);
+            let compressedSize = view.getUint32(p + 20, true);
+            let size = view.getUint32(p + 24, true);
+            const nameLength = view.getUint16(p + 28, true);
+            const extraLength = view.getUint16(p + 30, true);
+            const commentLength = view.getUint16(p + 32, true);
+            let localOffset = view.getUint32(p + 42, true);
+            const name = decoder.decode(data.subarray(p + 46, p + 46 + nameLength));
+
+            // Sizes and offsets that don't fit in 32 bits are in the zip64 extra field, in this order
+            let extra = p + 46 + nameLength;
+            const extraEnd = extra + extraLength;
+            while (extra + 4 <= extraEnd) {
+                const id = view.getUint16(extra, true);
+                const length = view.getUint16(extra + 2, true);
+                if (id === 0x0001) {
+                    let field = extra + 4;
+                    if (size === 0xFFFFFFFF) { size = u64(field); field += 8; }
+                    if (compressedSize === 0xFFFFFFFF) { compressedSize = u64(field); field += 8; }
+                    if (localOffset === 0xFFFFFFFF) { localOffset = u64(field); }
+                }
+                extra += 4 + length;
+            }
+            p = extraEnd + commentLength;
+
+            if (name.endsWith("/")) continue;
+            if (flags & 1) throw new Error("Encrypted entry: " + name);
+            if (method !== 0 && method !== 8) throw new Error("Unsupported method " + method + ": " + name);
+            if (view.getUint32(localOffset, true) !== 0x04034b50) throw new Error("Bad local header: " + name);
+            const start = localOffset + 30 + view.getUint16(localOffset + 26, true) + view.getUint16(localOffset + 28, true);
+            if (start + compressedSize > data.length) throw new Error("Entry runs past the end: " + name);
+            entries.push({ name, method, compressedSize, size, start });
+        }
+        return entries;
+    }
+
+    /**
+     * Extracts a zip with the browser's DecompressionStream, writing each file into one buffer of its final size.
+     *
+     * @param {Uint8Array} data - The zip archive
+     * @param {Function} updateMsg - Callback function for progress updates (message, isProgress)
+     * @param {Function} fileCbFunc - Callback function called for each extracted file (filename, fileData)
+     * @returns {Promise<Object>} Promise that resolves to an object mapping filenames to file data
+     */
+    async extractZipNative(data, updateMsg, fileCbFunc) {
+        if (typeof DecompressionStream !== "function") throw new Error("DecompressionStream is unavailable");
+        if (!(data instanceof Uint8Array)) data = new Uint8Array(data);
+        const entries = this.readZipEntries(data);
+        const total = entries.reduce((sum, entry) => sum + entry.compressedSize, 0) || 1;
+        let done = 0;
+        let lastPercent = -1;
+        const progress = (bytes) => {
+            const percent = Math.floor((done + bytes) / total * 100);
+            if (percent !== lastPercent) {
+                lastPercent = percent;
+                updateMsg(" " + percent + "%", true);
+            }
+        };
+
+        const extracted = [];
+        for (const entry of entries) {
+            const end = entry.start + entry.compressedSize;
+            let out;
+            if (entry.method === 0) {
+                if (entry.compressedSize !== entry.size) throw new Error("Stored size mismatch: " + entry.name);
+                out = data.subarray(entry.start, end);
+            } else {
+                out = new Uint8Array(entry.size);
+                const chunkSize = 1024 * 1024;
+                let readPos = entry.start;
+                const source = new ReadableStream({
+                    pull(controller) {
+                        if (readPos >= end) {
+                            controller.close();
+                            return;
+                        }
+                        const next = Math.min(readPos + chunkSize, end);
+                        controller.enqueue(data.slice(readPos, next));
+                        readPos = next;
+                        progress(readPos - entry.start);
+                    }
+                });
+                const reader = source.pipeThrough(new DecompressionStream("deflate-raw")).getReader();
+                let written = 0;
+                while (true) {
+                    const { done: finished, value } = await reader.read();
+                    if (finished) break;
+                    if (written + value.length > out.length) throw new Error("Entry is larger than its header says: " + entry.name);
+                    out.set(value, written);
+                    written += value.length;
+                }
+                if (written !== out.length) throw new Error("Entry is smaller than its header says: " + entry.name);
+            }
+            done += entry.compressedSize;
+            progress(0);
+            extracted.push([entry.name, out]);
+        }
+
+        const files = {};
+        for (const [name, out] of extracted) {
+            if (typeof fileCbFunc === "function") {
+                fileCbFunc(name, out);
+                files[name] = true;
+            } else {
+                files[name] = out;
+            }
+        }
+        return files;
     }
 
     /**
@@ -202,6 +356,7 @@ class EJS_COMPRESSION {
                     }
                 }
                 if (data.data.t === 1) {
+                    worker.terminate();
                     callback(files);
                 }
             }

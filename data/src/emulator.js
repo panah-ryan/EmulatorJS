@@ -915,7 +915,8 @@ class EmulatorJS {
                     }
                     return null;
                 }
-                this.gameManager.FS.writeFile(`/${fileName}`, fileData);
+                // canOwn lets the file system keep this buffer instead of copying it
+                this.gameManager.FS.writeFile(`/${fileName}`, fileData, { canOwn: true });
                 return fileName;
             };
 
