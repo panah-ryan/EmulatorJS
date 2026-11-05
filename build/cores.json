@@ -724,7 +724,10 @@
             "buildpath": "./",
             "makescript": "Makefile"
         },
-        "options": {},
+        "options": {
+            "noThreads": true,
+            "noWebgl2": true
+        },
         "save": false,
         "license": "License.txt",
         "repo": "https://github.com/libretro/prosystem-libretro"
