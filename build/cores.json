@@ -868,7 +868,10 @@
             "makescript": "Makefile",
             "arguments": []
         },
-        "options": {},
+        "options": {
+            "noThreads": true,
+            "noWebgl2": true
+        },
         "save": "srm",
         "license": "LICENSE",
         "repo": "https://github.com/libretro/snes9x"
