@@ -665,7 +665,10 @@
             "makescript": "makefile.libretro",
             "arguments": []
         },
-        "options": {},
+        "options": {
+            "noThreads": true,
+            "noWebgl2": true
+        },
         "save": false,
         "license": "LICENSE",
         "repo": "https://github.com/bbbradsmith/hatariB"
