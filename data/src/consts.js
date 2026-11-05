@@ -105,6 +105,9 @@ export const hiddenCoreOptions = {
         "genesis_plus_gx_gun_cursor",
         "genesis_plus_gx_invert_mouse"
     ],
+    "hatarib": [
+        "hatarib_midi"
+    ],
     "quasi88": [
         "q88_save_to_disk_image"
     ],
