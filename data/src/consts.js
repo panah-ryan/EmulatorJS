@@ -103,6 +103,12 @@ export const hiddenCoreOptions = {
     "genesis_plus_gx": [
         "genesis_plus_gx_gun_input"
     ],
+    "fbneo": [
+        "fbneo-allow-patched-romsets",
+        "fbneo-hiscores",
+        "fbneo-lightgun-crosshair-emulation",
+        "fbneo-resolution"
+    ],
     "geartowns": [
         "geartowns_cdrom_fast_forward_notification"
     ],
