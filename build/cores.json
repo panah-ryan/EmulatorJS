@@ -580,7 +580,10 @@
             "buildpath": "./",
             "makescript": "Makefile.libretro"
         },
-        "options": {},
+        "options": {
+            "noThreads": true,
+            "noWebgl2": true
+        },
         "save": "srm",
         "license": "LICENSE.txt",
         "repo": "https://github.com/libretro/Genesis-Plus-GX"
