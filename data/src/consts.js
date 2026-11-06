@@ -115,6 +115,32 @@ export const hiddenCoreOptions = {
     "hatarib": [
         "hatarib_midi"
     ],
+    "opera": [
+        "opera_kprint"
+    ],
+    "virtualjaguar": [
+        "virtualjaguar_netlink",
+        "virtualjaguar_uart_device",
+        "virtualjaguar_netlink_host",
+        "virtualjaguar_netlink_port",
+        "virtualjaguar_netlink_wait",
+        "virtualjaguar_netlink_speed",
+        "virtualjaguar_voice_chat",
+        "virtualjaguar_voice_chat_gate",
+        "virtualjaguar_voice_chat_ptt_key",
+        "virtualjaguar_voice_chat_volume",
+        "virtualjaguar_voice_chat_vad",
+        "virtualjaguar_voice_chat_monitor",
+        "virtualjaguar_crash_detect",
+        "virtualjaguar_cd_trace",
+        "virtualjaguar_texture_dump",
+        "virtualjaguar_texdump_16bpp",
+        "virtualjaguar_gdb_stub",
+        "virtualjaguar_gdb_bind",
+        "virtualjaguar_gdb_port",
+        "virtualjaguar_gdb_wait",
+        "virtualjaguar_gdb_halt_timeout"
+    ],
     "quasi88": [
         "q88_save_to_disk_image"
     ],

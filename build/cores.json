@@ -915,7 +915,10 @@
             "makescript": "Makefile",
             "arguments": []
         },
-        "options": {},
+        "options": {
+            "noThreads": true,
+            "noWebgl2": true
+        },
         "save": "srm",
         "license": "",
         "repo": "https://github.com/libretro/opera-libretro"
@@ -938,7 +941,10 @@
             "makescript": "Makefile",
             "arguments": []
         },
-        "options": {},
+        "options": {
+            "noThreads": true,
+            "noWebgl2": true
+        },
         "save": "srm",
         "license": "LICENSE",
         "repo": "https://github.com/libretro/virtualjaguar-libretro"

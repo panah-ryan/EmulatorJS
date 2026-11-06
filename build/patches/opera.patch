@@ -1,18 +1,39 @@
 diff --git a/Makefile.common b/Makefile.common
-index 565b96f..b55a54f 100644
+index 913877a..f20b21f 100644
 --- a/Makefile.common
 +++ b/Makefile.common
-@@ -137,7 +137,12 @@ SOURCES_C += \
-         $(LIBRETRO_COMM_DIR)/formats/7z/r7z_lzma.c \
-         $(LIBRETRO_COMM_DIR)/formats/flac/rflac.c
+@@ -136,7 +136,14 @@ endif
  
+ # The built-in boot ROM is inflated by rinflate, so a static build needs
+ # it (and the CRC32/CPU-feature code it uses) with or without CHD.
 -ifeq ($(STATIC_LINKING), 1)
 +ifeq ($(platform), emscripten)
 +# RetroArch's older copy lacks encoding_crc16_ccitt, so build this one with encoding_crc32 renamed
 +SOURCES_C += \
-+        $(LIBRETRO_COMM_DIR)/encodings/encoding_crc32.c
++        $(CORE_DIR)/opera_lr_filestream_compat.c \
++        $(LIBRETRO_COMM_DIR)/encodings/encoding_crc32.c \
++        $(LIBRETRO_COMM_DIR)/encodings/encoding_deflate.c
 +$(LIBRETRO_COMM_DIR)/encodings/encoding_crc32.o: CFLAGS += -Dencoding_crc32=opera_encoding_crc32
 +else ifeq ($(STATIC_LINKING), 1)
  SOURCES_C += \
          $(LIBRETRO_COMM_DIR)/encodings/encoding_crc32.c \
-         $(LIBRETRO_COMM_DIR)/features/features_cpu.c
+         $(LIBRETRO_COMM_DIR)/encodings/encoding_deflate.c \
+diff --git a/opera_lr_filestream_compat.c b/opera_lr_filestream_compat.c
+new file mode 100644
+index 0000000..0054c30
+--- /dev/null
++++ b/opera_lr_filestream_compat.c
+@@ -0,0 +1,13 @@
++/* RetroArch's libretro-common lacks these, so a static build supplies them */
++#include <streams/file_stream.h>
++
++const uint8_t *filestream_get_mapped_ptr(RFILE *stream, int64_t *len)
++{
++   if (len)
++      *len = 0;
++   return NULL;
++}
++
++void filestream_prefetch(RFILE *stream, uint64_t offset, uint64_t len)
++{
++}
